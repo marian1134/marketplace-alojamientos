@@ -1,44 +1,21 @@
-import { useState } from 'react'
+import RegistroUsuario from './components/RegistroUsuario'
 import './App.css'
 
 function App() {
-  const [mensaje, setMensaje] = useState('')
-  const [cargando, setCargando] = useState(false)
-
-  async function comprobarConexion() {
-    setCargando(true)
-    setMensaje('')
-
-    try {
-      const respuesta = await fetch('/api/estado')
-
-      if (!respuesta.ok) {
-        throw new Error('El backend devolvió un error')
-      }
-
-      const texto = await respuesta.text()
-      setMensaje(texto)
-    } catch {
-      setMensaje('No se pudo conectar con el backend')
-    } finally {
-      setCargando(false)
-    }
-  }
-
   return (
-    <main>
-      <h1>Inversiones LR</h1>
-      <p>Marketplace de alojamientos</p>
+    <main className="registro-pagina">
+      <aside className="registro-imagen">
+        <span className="registro-marca">StayHub</span>
 
-      <button
-        type="button"
-        onClick={comprobarConexion}
-        disabled={cargando}
-      >
-        {cargando ? 'Conectando...' : 'Probar conexión'}
-      </button>
+        <div className="registro-bienvenida">
+          <h2>Crea tu cuenta</h2>
+          <p>
+            Encuentra tu próximo destino o comparte tu alojamiento.
+          </p>
+        </div>
+      </aside>
 
-      <p role="status">{mensaje}</p>
+      <RegistroUsuario />
     </main>
   )
 }
