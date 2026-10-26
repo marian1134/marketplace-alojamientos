@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import com.inversioneslr.marketplace.dto.InicioSesionRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -110,4 +111,57 @@ public class UsuarioService {
                 guardado.getEstado()
         );
     }
+
+    @Transactional(readOnly = true)
+public UsuarioResponse iniciarSesion(InicioSesionRequest datos) {
+
+    String correo = datos.correo()
+            .trim()
+            .toLowerCase(Locale.ROOT);
+
+    Usuario usuario = usuarioRepository
+            .findByCorreoIgnoreCase(correo)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Correo o contraseña incorrectos"
+            ));
+
+    if (datos.contrasena()
+            .getBytes(StandardCharsets.UTF_8).length > 72) {
+
+        throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Correo o contraseña incorrectos"
+        );
+    }
+
+    boolean contrasenaCorrecta = passwordEncoder.matches(
+            datos.contrasena(),
+            usuario.getContrasenaHash()
+    );
+
+    if (!contrasenaCorrecta) {
+        throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "Correo o contraseña incorrectos"
+        );
+    }
+
+    if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "El usuario no se encuentra activo"
+        );
+    }
+
+    return new UsuarioResponse(
+            usuario.getIdUsuario(),
+            usuario.getNombre(),
+            usuario.getApellido(),
+            usuario.getCorreo(),
+            usuario.getTelefono(),
+            usuario.getEstado()
+    );
+}
+
 }

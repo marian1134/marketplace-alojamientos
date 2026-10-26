@@ -226,3 +226,89 @@ main.registro-pagina > section {
     grid-template-columns: 1fr;
   }
 }
+
+.registro-pagina > section > section > p {
+  margin: 0 0 28px;
+  color: #657574;
+  text-align: center;
+}
+
+.registro-pagina .cambio-pantalla {
+  margin: 24px 0 0;
+  color: #657574;
+  text-align: center;
+}
+
+.boton-enlace {
+  padding: 0;
+  color: #07594d;
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.recuperar-contrasena {
+  align-self: flex-end;
+  font-size: 14px;
+}
+
+.modal-recuperacion {
+  position: fixed;
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100svh - 32px);
+  margin: auto;
+  padding: 40px 28px 28px;
+  overflow-y: auto;
+  color: #142b2b;
+  background: white;
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 25%);
+}
+
+.modal-recuperacion::backdrop {
+  background: rgb(8 30 26 / 60%);
+  backdrop-filter: blur(4px);
+}
+
+.modal-recuperacion h2 {
+  margin: 0 24px 12px 0;
+  color: #102828;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.modal-recuperacion > p {
+  margin: 0 0 24px;
+  color: #657574;
+  line-height: 1.5;
+}
+
+.modal-cerrar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #657574;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.modal-cerrar:hover {
+  color: #07594d;
+  background: #edf6f2;
+}
+
+.modal-recuperacion form > .boton-enlace {
+  align-self: center;
+}
