@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react'
+import { enviarDatos } from '../api'
 
-function InicioSesion() {
+function InicioSesion({ onSesion }) {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [mensajeRecuperacion, setMensajeRecuperacion] = useState('')
-  const ventanaRecuperacion = useRef(null)
   const [enviandoCorreo, setEnviandoCorreo] = useState(false)
+
+  const ventanaRecuperacion = useRef(null)
 
   async function iniciarSesion(evento) {
     evento.preventDefault()
@@ -17,13 +19,10 @@ function InicioSesion() {
     setMensaje('')
 
     try {
-      const respuesta = await fetch('/api/usuarios/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(datos),
-      })
+      const respuesta = await enviarDatos(
+        '/api/usuarios/login',
+        datos
+      )
 
       if (respuesta.status === 401) {
         setMensaje('Correo o contraseña incorrectos')
@@ -31,7 +30,9 @@ function InicioSesion() {
       }
 
       if (respuesta.status === 403) {
-        setMensaje('Tu cuenta no se encuentra activa')
+        setMensaje(
+          'No se pudo autorizar el acceso. Revisa que tu cuenta esté activa o recarga la página.'
+        )
         return
       }
 
@@ -41,16 +42,21 @@ function InicioSesion() {
       }
 
       if (!respuesta.ok) {
-        setMensaje('No se pudo iniciar sesión. Intenta nuevamente.')
+        setMensaje(
+          'No se pudo iniciar sesión. Intenta nuevamente.'
+        )
         return
       }
 
       const usuario = await respuesta.json()
 
-      setMensaje(`¡Bienvenido/a, ${usuario.nombre}!`)
       formulario.reset()
+      setMensaje(`¡Bienvenido/a, ${usuario.nombre}!`)
+      onSesion?.(usuario)
     } catch {
-      setMensaje('No se pudo conectar con el servidor.')
+      setMensaje(
+        'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
+      )
     } finally {
       setEnviando(false)
     }
@@ -65,47 +71,46 @@ function InicioSesion() {
     ventanaRecuperacion.current.close()
   }
 
- async function solicitarRecuperacion(evento) {
-  evento.preventDefault()
+  async function solicitarRecuperacion(evento) {
+    evento.preventDefault()
 
-  const datos = Object.fromEntries(
-    new FormData(evento.currentTarget)
-  )
-
-  setEnviandoCorreo(true)
-  setMensajeRecuperacion('')
-
-  try {
-    const respuesta = await fetch('/api/usuarios/recuperar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(datos),
-    })
-
-    if (respuesta.status === 400) {
-      setMensajeRecuperacion('Escribe un correo electrónico válido.')
-      return
-    }
-
-    if (!respuesta.ok) {
-      setMensajeRecuperacion(
-        'No se pudo solicitar el enlace. Intenta nuevamente.'
-      )
-      return
-    }
-
-    const resultado = await respuesta.json()
-    setMensajeRecuperacion(resultado.mensaje)
-  } catch {
-    setMensajeRecuperacion(
-      'No se pudo conectar con el servidor.'
+    const datos = Object.fromEntries(
+      new FormData(evento.currentTarget)
     )
-  } finally {
-    setEnviandoCorreo(false)
+
+    setEnviandoCorreo(true)
+    setMensajeRecuperacion('')
+
+    try {
+      const respuesta = await enviarDatos(
+        '/api/usuarios/recuperar',
+        datos
+      )
+
+      if (respuesta.status === 400) {
+        setMensajeRecuperacion(
+          'Escribe un correo electrónico válido.'
+        )
+        return
+      }
+
+      if (!respuesta.ok) {
+        setMensajeRecuperacion(
+          'No se pudo solicitar el enlace. Intenta nuevamente.'
+        )
+        return
+      }
+
+      const resultado = await respuesta.json()
+      setMensajeRecuperacion(resultado.mensaje)
+    } catch {
+      setMensajeRecuperacion(
+        'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
+      )
+    } finally {
+      setEnviandoCorreo(false)
+    }
   }
-}
 
   return (
     <section>
@@ -114,7 +119,10 @@ function InicioSesion() {
 
       <form onSubmit={iniciarSesion}>
         <div>
-          <label htmlFor="login-correo">Correo electrónico</label>
+          <label htmlFor="login-correo">
+            Correo electrónico
+          </label>
+
           <input
             id="login-correo"
             name="correo"
@@ -126,7 +134,10 @@ function InicioSesion() {
         </div>
 
         <div>
-          <label htmlFor="login-contrasena">Contraseña</label>
+          <label htmlFor="login-contrasena">
+            Contraseña
+          </label>
+
           <input
             id="login-contrasena"
             name="contrasena"
@@ -168,7 +179,9 @@ function InicioSesion() {
           ×
         </button>
 
-        <h2 id="recuperacion-titulo">Recuperar contraseña</h2>
+        <h2 id="recuperacion-titulo">
+          Recuperar contraseña
+        </h2>
 
         <p id="recuperacion-descripcion">
           Escribe el correo electrónico asociado a tu cuenta.
@@ -192,10 +205,10 @@ function InicioSesion() {
           </div>
 
           <button type="submit" disabled={enviandoCorreo}>
-  {enviandoCorreo
-    ? 'Enviando...'
-    : 'Enviar enlace de recuperación'}
-</button>
+            {enviandoCorreo
+              ? 'Enviando...'
+              : 'Enviar enlace de recuperación'}
+          </button>
 
           <p role="status">{mensajeRecuperacion}</p>
 

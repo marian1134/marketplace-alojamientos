@@ -163,5 +163,31 @@ public UsuarioResponse iniciarSesion(InicioSesionRequest datos) {
             usuario.getEstado()
     );
 }
+@Transactional(readOnly = true)
+public UsuarioResponse obtenerPerfil(String correo) {
+
+    Usuario usuario = usuarioRepository
+            .findByCorreoIgnoreCase(correo)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "La cuenta de la sesión no existe"
+            ));
+
+    if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+        throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED,
+                "La cuenta no se encuentra activa"
+        );
+    }
+
+    return new UsuarioResponse(
+            usuario.getIdUsuario(),
+            usuario.getNombre(),
+            usuario.getApellido(),
+            usuario.getCorreo(),
+            usuario.getTelefono(),
+            usuario.getEstado()
+    );
+}
 
 }
