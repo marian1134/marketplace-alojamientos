@@ -312,3 +312,49 @@ main.registro-pagina > section {
 .modal-recuperacion form > .boton-enlace {
   align-self: center;
 }
+.perfil-datos {
+  margin: 28px 0;
+  padding: 24px;
+  background: #f4f8f6;
+  border: 1px solid #d8e0dc;
+  border-radius: 14px;
+}
+
+.perfil-datos dt {
+  margin-top: 18px;
+  color: #657574;
+  font-size: 14px;
+}
+
+.perfil-datos dt:first-child {
+  margin-top: 0;
+}
+
+.perfil-datos dd {
+  margin: 6px 0 0;
+  color: #142b2b;
+  overflow-wrap: anywhere;
+}
+
+.boton-salir {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 20px;
+  color: white;
+  background: #07594d;
+  border: none;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-salir:hover:not(:disabled) {
+  background: #03483e;
+}
+
+.mensaje-sesion {
+  margin-top: 20px;
+  line-height: 1.5;
+  text-align: center;
+}
