@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { enviarDatos } from '../api'
 
 function RegistroUsuario() {
   const [mensaje, setMensaje] = useState('')
@@ -10,40 +11,58 @@ function RegistroUsuario() {
     const formulario = evento.currentTarget
     const datos = Object.fromEntries(new FormData(formulario))
 
-    setEnviando(true)
     setMensaje('')
 
+    if (new TextEncoder().encode(datos.contrasena).length > 72) {
+      setMensaje('La contraseña no puede superar 72 bytes.')
+      return
+    }
+
+    setEnviando(true)
+
     try {
-      const respuesta = await fetch('/api/usuarios/registro', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(datos),
-      })
+      const respuesta = await enviarDatos(
+        '/api/usuarios/registro',
+        datos
+      )
 
       if (respuesta.status === 409) {
-        setMensaje('Ese correo ya está registrado')
+        setMensaje('Ese correo ya está registrado.')
         return
       }
 
       if (respuesta.status === 400) {
         setMensaje(
-          'Revisa los datos. La contraseña debe tener entre 8 y 72 caracteres y no superar 72 bytes.'
+          'Revisa los datos. Completa todos los campos y usa una contraseña de entre 8 y 72 caracteres.'
+        )
+        return
+      }
+
+      if (respuesta.status === 403) {
+        setMensaje(
+          'No se pudo autorizar la solicitud. Recarga la página e intenta nuevamente.'
         )
         return
       }
 
       if (!respuesta.ok) {
-        throw new Error('Error al registrar')
+        setMensaje(
+          'No se pudo completar el registro. Intenta nuevamente.'
+        )
+        return
       }
 
       const usuario = await respuesta.json()
 
-      setMensaje(`¡Registro exitoso! Bienvenido/a, ${usuario.nombre}`)
+      setMensaje(
+        `¡Registro exitoso! Bienvenido/a, ${usuario.nombre}`
+      )
+
       formulario.reset()
     } catch {
-      setMensaje('No se pudo completar el registro. Intenta nuevamente.')
+      setMensaje(
+        'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
+      )
     } finally {
       setEnviando(false)
     }
@@ -55,44 +74,46 @@ function RegistroUsuario() {
       <p>Regístrate en Inversiones LR</p>
 
       <form onSubmit={registrar}>
-  <fieldset>
-    <legend>¿Cómo quieres usar StayHub?</legend>
+        <fieldset>
+          <legend>¿Cómo quieres usar StayHub?</legend>
 
-    <label>
-      <input
-        type="radio"
-        name="rol"
-        value="USUARIO"
-        defaultChecked
-        required
-      />
-      Huésped
-    </label>
+          <label>
+            <input
+              type="radio"
+              name="rol"
+              value="USUARIO"
+              defaultChecked
+              required
+            />
+            Huésped
+          </label>
 
-    <label>
-      <input
-        type="radio"
-        name="rol"
-        value="ANFITRION"
-        required
-      />
-      Anfitrión
-    </label>
-  </fieldset>
+          <label>
+            <input
+              type="radio"
+              name="rol"
+              value="ANFITRION"
+              required
+            />
+            Anfitrión
+          </label>
+        </fieldset>
 
-  <div>
-    <label htmlFor="nombre">Nombre</label>
-    <input
-      id="nombre"
-      name="nombre"
-      autoComplete="given-name"
-      maxLength={80}
-      required
-    />
-  </div>
+        <div>
+          <label htmlFor="nombre">Nombre</label>
+
+          <input
+            id="nombre"
+            name="nombre"
+            autoComplete="given-name"
+            maxLength={80}
+            required
+          />
+        </div>
 
         <div>
           <label htmlFor="apellido">Apellido</label>
+
           <input
             id="apellido"
             name="apellido"
@@ -104,6 +125,7 @@ function RegistroUsuario() {
 
         <div>
           <label htmlFor="correo">Correo electrónico</label>
+
           <input
             id="correo"
             name="correo"
@@ -116,6 +138,7 @@ function RegistroUsuario() {
 
         <div>
           <label htmlFor="contrasena">Contraseña</label>
+
           <input
             id="contrasena"
             name="contrasena"
@@ -128,17 +151,19 @@ function RegistroUsuario() {
         </div>
 
         <div>
-  <label htmlFor="telefono">Teléfono</label>
-  <input
-    id="telefono"
-    name="telefono"
-    type="tel"
-    autoComplete="tel"
-    pattern="\+?[0-9]{7,15}"
-    title="Entre 7 y 15 dígitos. Puede empezar con +."
-    required
-  />
-</div>
+          <label htmlFor="telefono">Teléfono</label>
+
+          <input
+            id="telefono"
+            name="telefono"
+            type="tel"
+            autoComplete="tel"
+            maxLength={16}
+            pattern="[+]?[0-9]{7,15}"
+            title="Entre 7 y 15 dígitos. Puede empezar con +."
+            required
+          />
+        </div>
 
         <button type="submit" disabled={enviando}>
           {enviando ? 'Registrando...' : 'Crear cuenta'}

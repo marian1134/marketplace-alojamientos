@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { enviarDatos } from '../api'
 
 function NuevaClave({ token, onVolver }) {
   const [mensaje, setMensaje] = useState('')
@@ -28,16 +29,13 @@ function NuevaClave({ token, onVolver }) {
     setEnviando(true)
 
     try {
-      const respuesta = await fetch('/api/usuarios/nueva-clave', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const respuesta = await enviarDatos(
+        '/api/usuarios/nueva-clave',
+        {
           token,
           contrasena: datos.contrasena,
-        }),
-      })
+        }
+      )
 
       if (respuesta.status === 400) {
         setMensaje(
@@ -46,16 +44,29 @@ function NuevaClave({ token, onVolver }) {
         return
       }
 
+      if (respuesta.status === 403) {
+        setMensaje(
+          'No se pudo autorizar la solicitud. Recarga la página e intenta nuevamente.'
+        )
+        return
+      }
+
       if (!respuesta.ok) {
-        setMensaje('No se pudo guardar la contraseña. Intenta nuevamente.')
+        setMensaje(
+          'No se pudo guardar la contraseña. Intenta nuevamente.'
+        )
         return
       }
 
       formulario.reset()
       setActualizada(true)
-      setMensaje('Contraseña actualizada. Ya puedes iniciar sesión.')
+      setMensaje(
+        'Contraseña actualizada. Ya puedes iniciar sesión.'
+      )
     } catch {
-      setMensaje('No se pudo conectar con el servidor.')
+      setMensaje(
+        'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
+      )
     } finally {
       setEnviando(false)
     }
