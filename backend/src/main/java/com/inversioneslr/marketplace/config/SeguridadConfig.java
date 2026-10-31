@@ -18,13 +18,17 @@ public class SeguridadConfig {
 
         http
                 .authorizeHttpRequests(rutas -> rutas
-                        .dispatcherTypeMatchers(DispatcherType.ERROR)
+                        .dispatcherTypeMatchers(
+                                DispatcherType.ERROR
+                        )
                         .permitAll()
 
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/estado",
                                 "/api/usuarios/csrf",
+                                "/api/v1/alojamientos",
+                                "/api/v1/alojamientos/ciudad/**",
                                 "/api/v1/alojamientos/*/imagenes",
                                 "/uploads/alojamientos/**"
                         )
@@ -51,28 +55,45 @@ public class SeguridadConfig {
 
                 .exceptionHandling(errores -> errores
                         .authenticationEntryPoint(
-                                (solicitud, respuesta, excepcion) ->
+                                (
+                                        solicitud,
+                                        respuesta,
+                                        excepcion
+                                ) ->
                                         respuesta.setStatus(
-                                                HttpServletResponse.SC_UNAUTHORIZED
+                                                HttpServletResponse
+                                                        .SC_UNAUTHORIZED
                                         )
                         )
                 )
 
                 .requestCache(cache -> cache.disable())
 
-                .formLogin(formulario -> formulario.disable())
+                .formLogin(
+                        formulario ->
+                                formulario.disable()
+                )
 
-                .httpBasic(basico -> basico.disable())
+                .httpBasic(
+                        basico -> basico.disable()
+                )
 
                 .logout(salida -> salida
-                        .logoutUrl("/api/usuarios/logout")
+                        .logoutUrl(
+                                "/api/usuarios/logout"
+                        )
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
                         .logoutSuccessHandler(
-                                (solicitud, respuesta, autenticacion) ->
+                                (
+                                        solicitud,
+                                        respuesta,
+                                        autenticacion
+                                ) ->
                                         respuesta.setStatus(
-                                                HttpServletResponse.SC_NO_CONTENT
+                                                HttpServletResponse
+                                                        .SC_NO_CONTENT
                                         )
                         )
                 );

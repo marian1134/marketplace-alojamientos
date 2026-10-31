@@ -3,35 +3,46 @@ import RegistroUsuario from './components/RegistroUsuario'
 import InicioSesion from './components/InicioSesion'
 import NuevaClave from './components/NuevaClave'
 import Alojamientos from './components/Alojamientos'
+import Portada from './components/Portada'
 import { enviarDatos } from './api'
 import './App.css'
 
 function App() {
-  const [pantalla, setPantalla] = useState('login')
-  const [vistaUsuario, setVistaUsuario] = useState('perfil')
+  const [pantalla, setPantalla] = useState('portada')
+  const [vistaUsuario, setVistaUsuario] =
+    useState('perfil')
   const [usuario, setUsuario] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [cerrando, setCerrando] = useState(false)
-  const [mensajeSesion, setMensajeSesion] = useState('')
+  const [mensajeSesion, setMensajeSesion] =
+    useState('')
 
   const [token, setToken] = useState(() =>
-    new URLSearchParams(window.location.search).get('token')
+    new URLSearchParams(window.location.search).get(
+      'token'
+    )
   )
 
   const esRecuperacion = token !== null
   const esLogin = pantalla === 'login'
+
   const mostrandoAlojamientos =
-    usuario && vistaUsuario === 'alojamientos'
+    usuario &&
+    pantalla === 'perfil' &&
+    vistaUsuario === 'alojamientos'
 
   useEffect(() => {
     let activo = true
 
     async function consultarSesion() {
       try {
-        const respuesta = await fetch('/api/usuarios/perfil', {
-          credentials: 'same-origin',
-          cache: 'no-store',
-        })
+        const respuesta = await fetch(
+          '/api/usuarios/perfil',
+          {
+            credentials: 'same-origin',
+            cache: 'no-store',
+          }
+        )
 
         if (respuesta.status === 401) {
           if (activo) {
@@ -41,7 +52,9 @@ function App() {
         }
 
         if (!respuesta.ok) {
-          throw new Error('No se pudo consultar la sesión')
+          throw new Error(
+            'No se pudo consultar la sesión'
+          )
         }
 
         const datos = await respuesta.json()
@@ -72,6 +85,7 @@ function App() {
   function recibirSesion(datos) {
     setUsuario(datos)
     setVistaUsuario('perfil')
+    setPantalla('perfil')
     setMensajeSesion('')
   }
 
@@ -86,12 +100,14 @@ function App() {
       )
 
       if (!respuesta.ok) {
-        throw new Error('No se pudo cerrar la sesión')
+        throw new Error(
+          'No se pudo cerrar la sesión'
+        )
       }
 
       setUsuario(null)
       setVistaUsuario('perfil')
-      setPantalla('login')
+      setPantalla('portada')
     } catch {
       setMensajeSesion(
         'No se pudo cerrar la sesión. Intenta nuevamente.'
@@ -115,7 +131,45 @@ function App() {
 
     setToken(null)
     setPantalla('login')
-    window.location.reload()
+  }
+
+  function mostrarPortada() {
+    setPantalla('portada')
+    setVistaUsuario('perfil')
+    setMensajeSesion('')
+  }
+
+  function mostrarLogin() {
+    setPantalla('login')
+    setVistaUsuario('perfil')
+    setMensajeSesion('')
+  }
+
+  function mostrarRegistro() {
+    setPantalla('registro')
+    setVistaUsuario('perfil')
+    setMensajeSesion('')
+  }
+
+  function mostrarPerfil() {
+    setPantalla('perfil')
+    setVistaUsuario('perfil')
+    setMensajeSesion('')
+  }
+
+  if (
+    !esRecuperacion &&
+    !cargando &&
+    pantalla === 'portada'
+  ) {
+    return (
+      <Portada
+        usuario={usuario}
+        onIniciarSesion={mostrarLogin}
+        onRegistrarse={mostrarRegistro}
+        onPerfil={mostrarPerfil}
+      />
+    )
   }
 
   let titulo = 'Crea tu cuenta'
@@ -133,36 +187,62 @@ function App() {
   return (
     <main className="registro-pagina">
       <aside className="registro-imagen">
-        <span className="registro-marca">StayHub</span>
+        <button
+          type="button"
+          className="registro-marca boton-marca"
+          onClick={mostrarPortada}
+        >
+          StayHub
+        </button>
 
         <div className="registro-bienvenida">
           <h2>{titulo}</h2>
 
           <p>
-            Encuentra tu próximo destino o comparte tu alojamiento.
+            Encuentra tu próximo destino o comparte tu
+            alojamiento.
           </p>
         </div>
       </aside>
 
       <section>
+        {!esRecuperacion &&
+          !mostrandoAlojamientos && (
+            <button
+              type="button"
+              className="boton-enlace volver-portada"
+              onClick={mostrarPortada}
+            >
+              ← Volver a la portada
+            </button>
+          )}
+
         {esRecuperacion ? (
           <NuevaClave
             token={token}
             onVolver={volverAlInicio}
           />
         ) : cargando ? (
-          <p role="status">Comprobando sesión...</p>
+          <p role="status">
+            Comprobando sesión...
+          </p>
         ) : mostrandoAlojamientos ? (
           <Alojamientos
-            onVolver={() => setVistaUsuario('perfil')}
+            onVolver={() =>
+              setVistaUsuario('perfil')
+            }
           />
         ) : usuario ? (
           <section>
             <h1>Hola, {usuario.nombre}</h1>
-            <p>Tu sesión está iniciada en StayHub.</p>
+
+            <p>
+              Tu sesión está iniciada en StayHub.
+            </p>
 
             <dl className="perfil-datos">
               <dt>Nombre</dt>
+
               <dd>
                 {usuario.nombre} {usuario.apellido}
               </dd>
@@ -200,7 +280,9 @@ function App() {
         ) : (
           <>
             {esLogin ? (
-              <InicioSesion onSesion={recibirSesion} />
+              <InicioSesion
+                onSesion={recibirSesion}
+              />
             ) : (
               <RegistroUsuario />
             )}
@@ -214,10 +296,11 @@ function App() {
                 type="button"
                 className="boton-enlace"
                 onClick={() => {
-                  setPantalla(
-                    esLogin ? 'registro' : 'login'
-                  )
-                  setMensajeSesion('')
+                  if (esLogin) {
+                    mostrarRegistro()
+                  } else {
+                    mostrarLogin()
+                  }
                 }}
               >
                 {esLogin
