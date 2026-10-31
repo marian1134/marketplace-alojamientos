@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import RegistroUsuario from './components/RegistroUsuario'
 import InicioSesion from './components/InicioSesion'
 import NuevaClave from './components/NuevaClave'
+import Alojamientos from './components/Alojamientos'
 import { enviarDatos } from './api'
 import './App.css'
 
 function App() {
   const [pantalla, setPantalla] = useState('login')
+  const [vistaUsuario, setVistaUsuario] = useState('perfil')
   const [usuario, setUsuario] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [cerrando, setCerrando] = useState(false)
@@ -18,6 +20,8 @@ function App() {
 
   const esRecuperacion = token !== null
   const esLogin = pantalla === 'login'
+  const mostrandoAlojamientos =
+    usuario && vistaUsuario === 'alojamientos'
 
   useEffect(() => {
     let activo = true
@@ -67,6 +71,7 @@ function App() {
 
   function recibirSesion(datos) {
     setUsuario(datos)
+    setVistaUsuario('perfil')
     setMensajeSesion('')
   }
 
@@ -85,6 +90,7 @@ function App() {
       }
 
       setUsuario(null)
+      setVistaUsuario('perfil')
       setPantalla('login')
     } catch {
       setMensajeSesion(
@@ -102,13 +108,13 @@ function App() {
     window.history.replaceState(
       null,
       '',
-      direccion.pathname + direccion.search + direccion.hash
+      direccion.pathname +
+        direccion.search +
+        direccion.hash
     )
 
     setToken(null)
     setPantalla('login')
-
-    // Consultar nuevamente la sesión después de cambiar la clave.
     window.location.reload()
   }
 
@@ -116,6 +122,8 @@ function App() {
 
   if (esRecuperacion) {
     titulo = 'Recupera tu cuenta'
+  } else if (mostrandoAlojamientos) {
+    titulo = 'Comparte tu alojamiento'
   } else if (usuario) {
     titulo = 'Bienvenido a StayHub'
   } else if (esLogin) {
@@ -144,6 +152,10 @@ function App() {
           />
         ) : cargando ? (
           <p role="status">Comprobando sesión...</p>
+        ) : mostrandoAlojamientos ? (
+          <Alojamientos
+            onVolver={() => setVistaUsuario('perfil')}
+          />
         ) : usuario ? (
           <section>
             <h1>Hola, {usuario.nombre}</h1>
@@ -162,14 +174,28 @@ function App() {
               <dd>{usuario.telefono}</dd>
             </dl>
 
-            <button
-              type="button"
-              className="boton-salir"
-              onClick={cerrarSesion}
-              disabled={cerrando}
-            >
-              {cerrando ? 'Cerrando sesión...' : 'Cerrar sesión'}
-            </button>
+            <div className="acciones-perfil">
+              <button
+                type="button"
+                className="boton-gestionar"
+                onClick={() =>
+                  setVistaUsuario('alojamientos')
+                }
+              >
+                Gestionar alojamientos
+              </button>
+
+              <button
+                type="button"
+                className="boton-salir"
+                onClick={cerrarSesion}
+                disabled={cerrando}
+              >
+                {cerrando
+                  ? 'Cerrando sesión...'
+                  : 'Cerrar sesión'}
+              </button>
+            </div>
           </section>
         ) : (
           <>
@@ -180,24 +206,33 @@ function App() {
             )}
 
             <p className="cambio-pantalla">
-              {esLogin ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '}
+              {esLogin
+                ? '¿No tienes cuenta? '
+                : '¿Ya tienes cuenta? '}
 
               <button
                 type="button"
                 className="boton-enlace"
                 onClick={() => {
-                  setPantalla(esLogin ? 'registro' : 'login')
+                  setPantalla(
+                    esLogin ? 'registro' : 'login'
+                  )
                   setMensajeSesion('')
                 }}
               >
-                {esLogin ? 'Regístrate' : 'Inicia sesión'}
+                {esLogin
+                  ? 'Regístrate'
+                  : 'Inicia sesión'}
               </button>
             </p>
           </>
         )}
 
         {mensajeSesion && (
-          <p className="mensaje-sesion" role="status">
+          <p
+            className="mensaje-sesion"
+            role="status"
+          >
             {mensajeSesion}
           </p>
         )}

@@ -358,3 +358,314 @@ main.registro-pagina > section {
   line-height: 1.5;
   text-align: center;
 }
+
+/* Acciones del perfil */
+.acciones-perfil {
+  display: grid;
+  gap: 12px;
+}
+
+.boton-gestionar,
+.boton-salir {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-gestionar {
+  color: white;
+  background: #07594d;
+  border: none;
+}
+
+.boton-gestionar:hover {
+  background: #03483e;
+}
+
+.boton-salir {
+  color: #07594d;
+  background: white;
+  border: 1px solid #07594d;
+}
+
+.boton-salir:hover:not(:disabled) {
+  color: white;
+  background: #07594d;
+}
+
+/* Pantalla de alojamientos */
+.alojamientos-panel {
+  width: 100%;
+}
+
+.alojamientos-encabezado {
+  margin-bottom: 24px;
+}
+
+.alojamientos-encabezado .boton-enlace {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.alojamientos-encabezado h1 {
+  margin-bottom: 10px;
+}
+
+.alojamientos-encabezado p {
+  margin: 0;
+  color: #657574;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Formulario de alojamientos */
+.alojamiento-formulario {
+  padding: 24px;
+  background: #f4f8f6;
+  border: 1px solid #d8e0dc;
+  border-radius: 16px;
+}
+
+.alojamiento-formulario h2,
+.alojamientos-lista h2 {
+  margin: 0 0 18px;
+  color: #102828;
+  font-size: 22px;
+}
+
+.alojamiento-formulario > div,
+.formulario-dos-columnas > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alojamiento-formulario input,
+.alojamiento-formulario textarea,
+.alojamiento-formulario select {
+  width: 100%;
+  padding: 12px 14px;
+  color: #142b2b;
+  background: white;
+  border: 1px solid #d8e0dc;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.alojamiento-formulario input,
+.alojamiento-formulario select {
+  min-height: 48px;
+}
+
+.alojamiento-formulario textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.alojamiento-formulario input:focus-visible,
+.alojamiento-formulario textarea:focus-visible,
+.alojamiento-formulario select:focus-visible,
+.acciones-alojamiento select:focus-visible {
+  outline: 3px solid #c7e4da;
+  outline-offset: 2px;
+  border-color: #086456;
+}
+
+.alojamiento-formulario .formulario-dos-columnas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.alojamiento-formulario .acciones-formulario {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.acciones-formulario > button {
+  flex: 1;
+}
+
+/* Botones secundarios */
+.boton-secundario {
+  min-height: 46px;
+  padding: 10px 18px;
+  color: #07594d;
+  background: white;
+  border: 1px solid #91aaa3;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-secundario:hover:not(:disabled) {
+  background: #edf6f2;
+  border-color: #07594d;
+}
+
+/* Mensajes */
+.mensaje-alojamientos {
+  margin: 18px 0 0;
+  color: #304b47;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.mensaje-alojamientos:empty {
+  display: none;
+}
+
+/* Lista y tarjetas */
+.alojamientos-lista {
+  margin-top: 32px;
+}
+
+.alojamientos-lista > p {
+  padding: 20px;
+  color: #657574;
+  background: #f8faf9;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.alojamiento-tarjeta {
+  margin-top: 16px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #d8e0dc;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgb(16 49 43 / 6%);
+}
+
+.alojamiento-tarjeta-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.alojamiento-tarjeta h3 {
+  margin: 0 0 6px;
+  color: #102828;
+  font-size: 19px;
+}
+
+.alojamiento-tarjeta-cabecera p,
+.alojamiento-tarjeta > p {
+  margin: 0;
+  color: #657574;
+  line-height: 1.5;
+}
+
+.alojamiento-tarjeta > p {
+  margin-top: 16px;
+}
+
+.alojamiento-tarjeta dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.alojamiento-tarjeta dl > div {
+  padding: 12px;
+  background: #f4f8f6;
+  border-radius: 10px;
+}
+
+.alojamiento-tarjeta dt {
+  color: #657574;
+  font-size: 13px;
+}
+
+.alojamiento-tarjeta dd {
+  margin: 5px 0 0;
+  color: #142b2b;
+  font-weight: 600;
+}
+
+/* Estados */
+.estado {
+  flex-shrink: 0;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.estado-borrador {
+  color: #5f6470;
+  background: #eceef1;
+}
+
+.estado-pendiente_revision {
+  color: #805500;
+  background: #fff1c7;
+}
+
+.estado-activo {
+  color: #07594d;
+  background: #dcefe8;
+}
+
+.estado-pausado {
+  color: #8a3f18;
+  background: #fbe4d7;
+}
+
+.estado-bloqueado {
+  color: #8c1d2c;
+  background: #f8dce0;
+}
+
+/* Acciones de cada alojamiento */
+.acciones-alojamiento {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.acciones-alojamiento select {
+  min-height: 46px;
+  padding: 10px 12px;
+  color: #142b2b;
+  background: white;
+  border: 1px solid #91aaa3;
+  border-radius: 10px;
+  font: inherit;
+}
+
+/* Adaptación para celulares */
+@media (max-width: 600px) {
+  .alojamiento-formulario {
+    padding: 20px;
+  }
+
+  .alojamiento-formulario .formulario-dos-columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .alojamiento-formulario .acciones-formulario {
+    flex-direction: column;
+  }
+
+  .alojamiento-tarjeta-cabecera {
+    flex-direction: column;
+  }
+
+  .alojamiento-tarjeta dl {
+    grid-template-columns: 1fr;
+  }
+
+  .acciones-alojamiento {
+    grid-template-columns: 1fr;
+  }
+}
