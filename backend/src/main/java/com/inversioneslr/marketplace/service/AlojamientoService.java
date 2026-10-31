@@ -7,6 +7,7 @@ import com.inversioneslr.marketplace.model.EstadoPublicacion;
 import com.inversioneslr.marketplace.model.EstadoUsuario;
 import com.inversioneslr.marketplace.model.Usuario;
 import com.inversioneslr.marketplace.repository.AlojamientoRepository;
+import com.inversioneslr.marketplace.repository.ImagenAlojamientoRepository;
 import com.inversioneslr.marketplace.repository.UsuarioRepository;
 import com.inversioneslr.marketplace.repository.UsuarioRolRepository;
 import org.springframework.http.HttpStatus;
@@ -21,15 +22,18 @@ import java.util.List;
 public class AlojamientoService {
 
     private final AlojamientoRepository alojamientoRepository;
+    private final ImagenAlojamientoRepository imagenRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
 
     public AlojamientoService(
             AlojamientoRepository alojamientoRepository,
+            ImagenAlojamientoRepository imagenRepository,
             UsuarioRepository usuarioRepository,
             UsuarioRolRepository usuarioRolRepository) {
 
         this.alojamientoRepository = alojamientoRepository;
+        this.imagenRepository = imagenRepository;
         this.usuarioRepository = usuarioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
     }
@@ -142,6 +146,21 @@ public class AlojamientoService {
 
         verificarPropietario(alojamiento, anfitrion);
 
+        boolean necesitaImagen =
+                estado == EstadoPublicacion.PENDIENTE_REVISION
+                || estado == EstadoPublicacion.ACTIVO;
+
+        long cantidadImagenes = imagenRepository
+                .countByAlojamiento_IdAlojamiento(id);
+
+        if (necesitaImagen && cantidadImagenes == 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Debes agregar al menos una imagen "
+                            + "antes de publicar el alojamiento"
+            );
+        }
+
         alojamiento.setEstado(estado);
 
         Alojamiento guardado =
@@ -219,17 +238,23 @@ public class AlojamientoService {
             Alojamiento alojamiento) {
 
         alojamiento.setTitulo(request.titulo().trim());
+
         alojamiento.setDescripcion(
                 request.descripcion().trim()
         );
+
         alojamiento.setCiudad(request.ciudad().trim());
+
         alojamiento.setDireccion(
                 request.direccion().trim()
         );
+
         alojamiento.setTipoAlojamiento(
                 request.tipoAlojamiento()
         );
+
         alojamiento.setCapacidad(request.capacidad());
+
         alojamiento.setPrecioNoche(
                 request.precioNoche()
         );

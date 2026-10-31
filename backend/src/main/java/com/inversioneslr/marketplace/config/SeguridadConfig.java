@@ -24,7 +24,9 @@ public class SeguridadConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/estado",
-                                "/api/usuarios/csrf"
+                                "/api/usuarios/csrf",
+                                "/api/v1/alojamientos/*/imagenes",
+                                "/uploads/alojamientos/**"
                         )
                         .permitAll()
 

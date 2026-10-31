@@ -34,3 +34,6 @@ build/
 
 # Credenciales locales
 /config/application-local.properties
+
+# Imágenes cargadas localmente
+/uploads/
