@@ -1,17 +1,27 @@
-export async function enviarDatos(ruta, datos) {
-  const respuestaCsrf = await fetch('/api/usuarios/csrf', {
+async function obtenerCsrf() {
+  const respuesta = await fetch('/api/usuarios/csrf', {
     credentials: 'same-origin',
     cache: 'no-store',
   })
 
-  if (!respuestaCsrf.ok) {
-    throw new Error('No se pudo obtener la protección del formulario')
+  if (!respuesta.ok) {
+    throw new Error(
+      'No se pudo obtener la protección del formulario'
+    )
   }
 
-  const csrf = await respuestaCsrf.json()
+  return respuesta.json()
+}
+
+export async function enviarDatos(
+  ruta,
+  datos,
+  metodo = 'POST'
+) {
+  const csrf = await obtenerCsrf()
 
   return fetch(ruta, {
-    method: 'POST',
+    method: metodo,
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
