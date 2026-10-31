@@ -30,3 +30,19 @@ export async function enviarDatos(
     body: JSON.stringify(datos),
   })
 }
+
+export async function enviarArchivo(ruta, archivo) {
+  const csrf = await obtenerCsrf()
+  const formulario = new FormData()
+
+  formulario.append('imagen', archivo)
+
+  return fetch(ruta, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      [csrf.headerName]: csrf.token,
+    },
+    body: formulario,
+  })
+}
