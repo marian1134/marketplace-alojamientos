@@ -669,3 +669,188 @@ main.registro-pagina > section {
     grid-template-columns: 1fr;
   }
 }
+/* Galería de imágenes de los alojamientos */
+.imagenes-alojamiento {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #d8e0dc;
+}
+
+.imagenes-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.imagenes-encabezado h4 {
+  margin: 0 0 4px;
+  color: #102828;
+  font-size: 20px;
+}
+
+.imagenes-encabezado p {
+  margin: 0;
+  color: #657574;
+  font-size: 14px;
+}
+
+.boton-agregar-imagen {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  color: white;
+  background: #07594d;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton-agregar-imagen:hover {
+  background: #03483e;
+}
+
+.boton-agregar-imagen:has(input:disabled) {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.boton-agregar-imagen input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.sin-imagenes {
+  padding: 22px;
+  color: #657574;
+  background: #f4f8f6;
+  border: 1px dashed #b8c8c2;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.galeria-imagenes {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(180px, 1fr)
+  );
+  gap: 16px;
+}
+
+.imagen-tarjeta {
+  min-width: 0;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #d8e0dc;
+  border-radius: 12px;
+}
+
+.imagen-contenedor {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #edf2ef;
+}
+
+.imagen-contenedor img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.etiqueta-portada {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 6px 10px;
+  color: white;
+  background: rgb(7 89 77 / 92%);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.imagen-acciones {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.imagen-acciones button {
+  min-height: 38px;
+  padding: 8px 10px;
+  color: #07594d;
+  background: white;
+  border: 1px solid #91aaa2;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.imagen-acciones button:hover {
+  background: #edf6f2;
+}
+
+.imagen-acciones .boton-eliminar-imagen {
+  color: #9b2c2c;
+  border-color: #dfb8b8;
+}
+
+.imagen-acciones .boton-eliminar-imagen:hover {
+  background: #fff1f1;
+}
+
+.mensaje-imagenes {
+  margin: 16px 0 0;
+  color: #365b55;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .imagenes-encabezado {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .boton-agregar-imagen {
+    width: 100%;
+  }
+
+  .galeria-imagenes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mensaje-alojamientos:empty {
+  display: none;
+}
+
+.mensaje-alojamientos:not(:empty) {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  z-index: 1000;
+  width: min(520px, calc(100% - 32px));
+  margin: 0;
+  padding: 14px 18px;
+  color: white;
+  background: #07594d;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 25%);
+  text-align: center;
+  transform: translateX(-50%);
+}

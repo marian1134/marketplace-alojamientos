@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { enviarDatos } from '../api'
+import ImagenesAlojamiento from './ImagenesAlojamiento'
 
 const formularioInicial = {
   titulo: '',
@@ -13,7 +14,8 @@ const formularioInicial = {
 
 function Alojamientos({ onVolver }) {
   const [alojamientos, setAlojamientos] = useState([])
-  const [formulario, setFormulario] = useState(formularioInicial)
+  const [formulario, setFormulario] =
+    useState(formularioInicial)
   const [editandoId, setEditandoId] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -42,7 +44,9 @@ function Alojamientos({ onVolver }) {
         }
 
         if (!respuesta.ok) {
-          throw new Error('No se pudieron consultar los alojamientos')
+          throw new Error(
+            'No se pudieron consultar los alojamientos'
+          )
         }
 
         const datos = await respuesta.json()
@@ -69,6 +73,20 @@ function Alojamientos({ onVolver }) {
       activo = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!mensaje) {
+      return undefined
+    }
+
+    const temporizador = window.setTimeout(() => {
+      setMensaje('')
+    }, 4000)
+
+    return () => {
+      window.clearTimeout(temporizador)
+    }
+  }, [mensaje])
 
   function actualizarCampo(evento) {
     const { name, value } = evento.target
@@ -105,47 +123,44 @@ function Alojamientos({ onVolver }) {
       )
 
       if (respuesta.status === 403) {
-        setMensaje(
+        throw new Error(
           'Solo una cuenta anfitrión puede gestionar alojamientos.'
         )
-        return
-      }
-
-      if (respuesta.status === 400) {
-        setMensaje(
-          'Revisa la información ingresada en el formulario.'
-        )
-        return
       }
 
       if (!respuesta.ok) {
-        throw new Error('No se pudo guardar el alojamiento')
+        throw new Error(
+          'No se pudo guardar el alojamiento.'
+        )
       }
 
-      const guardado = await respuesta.json()
+      const alojamientoGuardado =
+        await respuesta.json()
 
       setAlojamientos((actuales) => {
         if (editandoId) {
           return actuales.map((alojamiento) =>
             alojamiento.idAlojamiento === editandoId
-              ? guardado
+              ? alojamientoGuardado
               : alojamiento
           )
         }
 
-        return [guardado, ...actuales]
+        return [alojamientoGuardado, ...actuales]
       })
 
       setFormulario(formularioInicial)
       setEditandoId(null)
+
       setMensaje(
         editandoId
           ? 'Alojamiento actualizado correctamente.'
           : 'Alojamiento creado correctamente.'
       )
-    } catch {
+    } catch (error) {
       setMensaje(
-        'No se pudo guardar el alojamiento. Intenta nuevamente.'
+        error.message ||
+          'No se pudo guardar el alojamiento.'
       )
     } finally {
       setGuardando(false)
@@ -153,17 +168,19 @@ function Alojamientos({ onVolver }) {
   }
 
   function editarAlojamiento(alojamiento) {
+    setEditandoId(alojamiento.idAlojamiento)
+
     setFormulario({
       titulo: alojamiento.titulo,
       descripcion: alojamiento.descripcion,
       ciudad: alojamiento.ciudad,
       direccion: alojamiento.direccion,
-      tipoAlojamiento: alojamiento.tipoAlojamiento,
+      tipoAlojamiento:
+        alojamiento.tipoAlojamiento,
       capacidad: String(alojamiento.capacidad),
       precioNoche: String(alojamiento.precioNoche),
     })
 
-    setEditandoId(alojamiento.idAlojamiento)
     setMensaje('')
 
     window.scrollTo({
@@ -173,12 +190,15 @@ function Alojamientos({ onVolver }) {
   }
 
   function cancelarEdicion() {
-    setFormulario(formularioInicial)
     setEditandoId(null)
+    setFormulario(formularioInicial)
     setMensaje('')
   }
 
-  async function cambiarEstado(idAlojamiento, estado) {
+  async function cambiarEstado(
+    idAlojamiento,
+    estado
+  ) {
     setMensaje('')
 
     try {
@@ -193,23 +213,35 @@ function Alojamientos({ onVolver }) {
       )
 
       if (!respuesta.ok) {
-        throw new Error('No se pudo cambiar el estado')
+        if (respuesta.status === 400) {
+          throw new Error(
+            'Debes agregar al menos una fotografía antes de enviar el alojamiento a revisión.'
+          )
+        }
+
+        throw new Error(
+          'No se pudo cambiar el estado del alojamiento.'
+        )
       }
 
       const actualizado = await respuesta.json()
 
       setAlojamientos((actuales) =>
         actuales.map((alojamiento) =>
-          alojamiento.idAlojamiento === idAlojamiento
+          alojamiento.idAlojamiento ===
+          idAlojamiento
             ? actualizado
             : alojamiento
         )
       )
 
-      setMensaje('Estado actualizado correctamente.')
-    } catch {
       setMensaje(
-        'No se pudo cambiar el estado del alojamiento.'
+        'Estado actualizado correctamente.'
+      )
+    } catch (error) {
+      setMensaje(
+        error.message ||
+          'No se pudo cambiar el estado del alojamiento.'
       )
     }
   }
@@ -228,8 +260,8 @@ function Alojamientos({ onVolver }) {
         <h1>Mis alojamientos</h1>
 
         <p>
-          Crea y administra los alojamientos que compartes en
-          StayHub.
+          Crea y administra los alojamientos que
+          compartes en StayHub.
         </p>
       </div>
 
@@ -322,12 +354,19 @@ function Alojamientos({ onVolver }) {
               <option value="APARTAMENTO">
                 Apartamento
               </option>
+
               <option value="CASA">Casa</option>
+
               <option value="HABITACION">
                 Habitación
               </option>
+
               <option value="FINCA">Finca</option>
-              <option value="CABAÑA">Cabaña</option>
+
+              <option value="CABAÑA">
+                Cabaña
+              </option>
+
               <option value="OTRO">Otro</option>
             </select>
           </div>
@@ -368,7 +407,10 @@ function Alojamientos({ onVolver }) {
         </div>
 
         <div className="acciones-formulario">
-          <button type="submit" disabled={guardando}>
+          <button
+            type="submit"
+            disabled={guardando}
+          >
             {guardando
               ? 'Guardando...'
               : editandoId
@@ -389,7 +431,10 @@ function Alojamientos({ onVolver }) {
         </div>
       </form>
 
-      <p role="status" className="mensaje-alojamientos">
+      <p
+        role="status"
+        className="mensaje-alojamientos"
+      >
         {mensaje}
       </p>
 
@@ -399,7 +444,9 @@ function Alojamientos({ onVolver }) {
         {cargando ? (
           <p>Cargando alojamientos...</p>
         ) : alojamientos.length === 0 ? (
-          <p>Todavía no tienes alojamientos registrados.</p>
+          <p>
+            Todavía no tienes alojamientos registrados.
+          </p>
         ) : (
           alojamientos.map((alojamiento) => (
             <article
@@ -409,6 +456,7 @@ function Alojamientos({ onVolver }) {
               <div className="alojamiento-tarjeta-cabecera">
                 <div>
                   <h3>{alojamiento.titulo}</h3>
+
                   <p>
                     {alojamiento.ciudad} ·{' '}
                     {alojamiento.tipoAlojamiento}
@@ -416,9 +464,15 @@ function Alojamientos({ onVolver }) {
                 </div>
 
                 <span
-                  className={`estado estado-${alojamiento.estado.toLowerCase()}`}
+                  className={
+                    `estado estado-` +
+                    alojamiento.estado.toLowerCase()
+                  }
                 >
-                  {alojamiento.estado.replaceAll('_', ' ')}
+                  {alojamiento.estado.replaceAll(
+                    '_',
+                    ' '
+                  )}
                 </span>
               </div>
 
@@ -427,13 +481,18 @@ function Alojamientos({ onVolver }) {
               <dl>
                 <div>
                   <dt>Capacidad</dt>
-                  <dd>{alojamiento.capacidad} personas</dd>
+
+                  <dd>
+                    {alojamiento.capacidad} personas
+                  </dd>
                 </div>
 
                 <div>
                   <dt>Precio por noche</dt>
+
                   <dd>
-                    ${Number(
+                    $
+                    {Number(
                       alojamiento.precioNoche
                     ).toLocaleString('es-CO')}
                   </dd>
@@ -452,7 +511,10 @@ function Alojamientos({ onVolver }) {
                 </button>
 
                 <select
-                  aria-label={`Cambiar estado de ${alojamiento.titulo}`}
+                  aria-label={
+                    `Cambiar estado de ` +
+                    alojamiento.titulo
+                  }
                   value={alojamiento.estado}
                   onChange={(evento) =>
                     cambiarEstado(
@@ -461,14 +523,29 @@ function Alojamientos({ onVolver }) {
                     )
                   }
                 >
-                  <option value="BORRADOR">Borrador</option>
+                  <option value="BORRADOR">
+                    Borrador
+                  </option>
+
                   <option value="PENDIENTE_REVISION">
                     Pendiente de revisión
                   </option>
-                  <option value="ACTIVO">Activo</option>
-                  <option value="PAUSADO">Pausado</option>
+
+                  <option value="ACTIVO">
+                    Activo
+                  </option>
+
+                  <option value="PAUSADO">
+                    Pausado
+                  </option>
                 </select>
               </div>
+
+              <ImagenesAlojamiento
+                idAlojamiento={
+                  alojamiento.idAlojamiento
+                }
+              />
             </article>
           ))
         )}
