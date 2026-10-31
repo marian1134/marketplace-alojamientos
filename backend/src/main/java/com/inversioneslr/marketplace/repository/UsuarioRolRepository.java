@@ -13,4 +13,9 @@ public interface UsuarioRolRepository
     List<UsuarioRol> findByUsuario_IdUsuarioAndEstadoTrue(
             Long idUsuario
     );
+
+    boolean existsByUsuario_IdUsuarioAndRol_NombreIgnoreCaseAndEstadoTrue(
+            Long idUsuario,
+            String nombreRol
+    );
 }
