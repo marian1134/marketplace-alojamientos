@@ -2,7 +2,6 @@ package com.inversioneslr.marketplace.service;
 
 import com.inversioneslr.marketplace.dto.InicioSesionRequest;
 import com.inversioneslr.marketplace.dto.UsuarioResponse;
-import com.inversioneslr.marketplace.repository.UsuarioRolRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,25 +13,18 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
+import java.util.List;
 
 @Service
 public class SesionService {
 
     private final UsuarioService usuarioService;
-    private final UsuarioRolRepository roles;
 
-    public SesionService(
-            UsuarioService usuarioService,
-            UsuarioRolRepository roles) {
-
+    public SesionService(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
-        this.roles = roles;
     }
 
-    @Transactional(readOnly = true)
     public UsuarioResponse iniciarSesion(
             InicioSesionRequest datos,
             HttpServletRequest solicitud,
@@ -40,17 +32,9 @@ public class SesionService {
 
         UsuarioResponse usuario = usuarioService.iniciarSesion(datos);
 
-        var permisos = roles
-                .findByUsuario_IdUsuarioAndEstadoTrue(
-                        usuario.idUsuario()
-                )
-                .stream()
-                .map(asignacion -> new SimpleGrantedAuthority(
-                        "ROLE_" + asignacion.getRol()
-                                .getNombre()
-                                .toUpperCase(Locale.ROOT)
-                ))
-                .toList();
+        var permisos = List.of(
+                new SimpleGrantedAuthority("ROLE_" + usuario.rol().name())
+        );
 
         var autenticacion =
                 UsernamePasswordAuthenticationToken.authenticated(

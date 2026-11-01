@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { enviarDatos } from '../api'
 import ImagenesAlojamiento from './ImagenesAlojamiento'
+import { NOMBRES_TIPO } from '../tipos'
 
 const formularioInicial = {
   titulo: '',
@@ -10,7 +11,10 @@ const formularioInicial = {
   tipoAlojamiento: 'APARTAMENTO',
   capacidad: '1',
   precioNoche: '',
+  tarifaLimpieza: '0',
+  tipoPolitica: 'MODERADA',
 }
+
 
 function Alojamientos({ onVolver }) {
   const [alojamientos, setAlojamientos] = useState([])
@@ -107,6 +111,7 @@ function Alojamientos({ onVolver }) {
       ...formulario,
       capacidad: Number(formulario.capacidad),
       precioNoche: Number(formulario.precioNoche),
+      tarifaLimpieza: Number(formulario.tarifaLimpieza || 0),
     }
 
     const ruta = editandoId
@@ -179,6 +184,8 @@ function Alojamientos({ onVolver }) {
         alojamiento.tipoAlojamiento,
       capacidad: String(alojamiento.capacidad),
       precioNoche: String(alojamiento.precioNoche),
+      tarifaLimpieza: String(alojamiento.tarifaLimpieza ?? 0),
+      tipoPolitica: alojamiento.tipoPolitica ?? 'MODERADA',
     })
 
     setMensaje('')
@@ -300,7 +307,7 @@ function Alojamientos({ onVolver }) {
             name="descripcion"
             value={formulario.descripcion}
             onChange={actualizarCampo}
-            maxLength={2000}
+            maxLength={5000}
             rows={4}
             required
           />
@@ -317,14 +324,14 @@ function Alojamientos({ onVolver }) {
               name="ciudad"
               value={formulario.ciudad}
               onChange={actualizarCampo}
-              maxLength={150}
+              maxLength={80}
               required
             />
           </div>
 
           <div>
             <label htmlFor="alojamiento-direccion">
-              Dirección
+              Ubicación
             </label>
 
             <input
@@ -332,7 +339,8 @@ function Alojamientos({ onVolver }) {
               name="direccion"
               value={formulario.direccion}
               onChange={actualizarCampo}
-              maxLength={150}
+              placeholder="Ej.: a 5 min del malecón"
+              maxLength={200}
               required
             />
           </div>
@@ -351,23 +359,13 @@ function Alojamientos({ onVolver }) {
               onChange={actualizarCampo}
               required
             >
-              <option value="APARTAMENTO">
-                Apartamento
-              </option>
-
-              <option value="CASA">Casa</option>
-
-              <option value="HABITACION">
-                Habitación
-              </option>
-
-              <option value="FINCA">Finca</option>
-
-              <option value="CABAÑA">
-                Cabaña
-              </option>
-
-              <option value="OTRO">Otro</option>
+              {Object.entries(NOMBRES_TIPO).map(
+                ([valor, nombre]) => (
+                  <option key={valor} value={valor}>
+                    {nombre}
+                  </option>
+                )
+              )}
             </select>
           </div>
 
@@ -404,6 +402,49 @@ function Alojamientos({ onVolver }) {
             step="0.01"
             required
           />
+        </div>
+
+        <div className="formulario-dos-columnas">
+          <div>
+            <label htmlFor="alojamiento-limpieza">
+              Tarifa de limpieza
+            </label>
+
+            <input
+              id="alojamiento-limpieza"
+              name="tarifaLimpieza"
+              type="number"
+              value={formulario.tarifaLimpieza}
+              onChange={actualizarCampo}
+              min="0"
+              step="0.01"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="alojamiento-politica">
+              Política de cancelación
+            </label>
+
+            <select
+              id="alojamiento-politica"
+              name="tipoPolitica"
+              value={formulario.tipoPolitica}
+              onChange={actualizarCampo}
+            >
+              <option value="FLEXIBLE">
+                Flexible: devolución total hasta 1 día antes
+              </option>
+
+              <option value="MODERADA">
+                Moderada: total hasta 5 días antes, 50 % después
+              </option>
+
+              <option value="ESTRICTA">
+                Estricta: 50 % hasta 7 días antes
+              </option>
+            </select>
+          </div>
         </div>
 
         <div className="acciones-formulario">
@@ -459,7 +500,8 @@ function Alojamientos({ onVolver }) {
 
                   <p>
                     {alojamiento.ciudad} ·{' '}
-                    {alojamiento.tipoAlojamiento}
+                    {NOMBRES_TIPO[alojamiento.tipoAlojamiento] ??
+                      alojamiento.tipoAlojamiento}
                   </p>
                 </div>
 
@@ -531,13 +573,19 @@ function Alojamientos({ onVolver }) {
                     Pendiente de revisión
                   </option>
 
-                  <option value="ACTIVO">
-                    Activo
+                  <option value="ACTIVA">
+                    Activa
                   </option>
 
-                  <option value="PAUSADO">
-                    Pausado
+                  <option value="PAUSADA">
+                    Pausada
                   </option>
+
+                  {alojamiento.estado === 'BLOQUEADA' && (
+                    <option value="BLOQUEADA" disabled>
+                      Bloqueada por el administrador
+                    </option>
+                  )}
                 </select>
               </div>
 

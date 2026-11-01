@@ -243,27 +243,34 @@ function App() {
             <dl className="perfil-datos">
               <dt>Nombre</dt>
 
-              <dd>
-                {usuario.nombre} {usuario.apellido}
-              </dd>
+              <dd>{usuario.nombre}</dd>
 
               <dt>Correo electrónico</dt>
               <dd>{usuario.correo}</dd>
 
+              <dt>Tipo de cuenta</dt>
+              <dd>
+                {usuario.rol === 'ANFITRION'
+                  ? 'Anfitrión'
+                  : 'Huésped'}
+              </dd>
+
               <dt>Teléfono</dt>
-              <dd>{usuario.telefono}</dd>
+              <dd>{usuario.telefono || 'Sin registrar'}</dd>
             </dl>
 
             <div className="acciones-perfil">
-              <button
-                type="button"
-                className="boton-gestionar"
-                onClick={() =>
-                  setVistaUsuario('alojamientos')
-                }
-              >
-                Gestionar alojamientos
-              </button>
+              {usuario.rol === 'ANFITRION' && (
+                <button
+                  type="button"
+                  className="boton-gestionar"
+                  onClick={() =>
+                    setVistaUsuario('alojamientos')
+                  }
+                >
+                  Gestionar alojamientos
+                </button>
+              )}
 
               <button
                 type="button"

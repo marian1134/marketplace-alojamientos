@@ -8,50 +8,34 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
-import java.time.LocalDateTime;
-
+// Tabla marketplace.imagen (01_crear_marketplace.sql).
+// La imagen principal es la de orden 0.
 @Entity
-@Table(name = "imagen_alojamiento")
+@Table(name = "imagen")
 public class ImagenAlojamiento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_imagen")
+    @Column(name = "id", columnDefinition = "INT UNSIGNED")
     private Long idImagen;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_alojamiento", nullable = false)
+    @JoinColumn(name = "publicacion_id", nullable = false, columnDefinition = "INT UNSIGNED")
     private Alojamiento alojamiento;
 
-    @Column(name = "url_imagen", nullable = false, length = 500)
+    @Column(name = "url", nullable = false, length = 500)
     private String urlImagen;
 
-    @Column(name = "nombre_original", nullable = false, length = 255)
-    private String nombreOriginal;
-
-    @Column(name = "tipo_contenido", nullable = false, length = 100)
-    private String tipoContenido;
-
-    @Column(nullable = false)
-    private boolean principal;
-
-    @Column(name = "orden_imagen", nullable = false)
+    @Column(name = "orden", nullable = false, columnDefinition = "SMALLINT")
     private Integer ordenImagen = 0;
-
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion;
 
     public ImagenAlojamiento() {
     }
 
-    @PrePersist
-    public void antesDeGuardar() {
-        if (fechaCreacion == null) {
-            fechaCreacion = LocalDateTime.now();
-        }
+    public boolean isPrincipal() {
+        return ordenImagen != null && ordenImagen == 0;
     }
 
     public Long getIdImagen() {
@@ -78,39 +62,11 @@ public class ImagenAlojamiento {
         this.urlImagen = urlImagen;
     }
 
-    public String getNombreOriginal() {
-        return nombreOriginal;
-    }
-
-    public void setNombreOriginal(String nombreOriginal) {
-        this.nombreOriginal = nombreOriginal;
-    }
-
-    public String getTipoContenido() {
-        return tipoContenido;
-    }
-
-    public void setTipoContenido(String tipoContenido) {
-        this.tipoContenido = tipoContenido;
-    }
-
-    public boolean isPrincipal() {
-        return principal;
-    }
-
-    public void setPrincipal(boolean principal) {
-        this.principal = principal;
-    }
-
     public Integer getOrdenImagen() {
         return ordenImagen;
     }
 
     public void setOrdenImagen(Integer ordenImagen) {
         this.ordenImagen = ordenImagen;
-    }
-
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
     }
 }

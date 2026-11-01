@@ -3,34 +3,27 @@ package com.inversioneslr.marketplace.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+// Tabla marketplace.token_recuperacion (01_crear_marketplace.sql)
 @Entity
-@Table(
-    name = "token_recuperacion",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_token_recuperacion_hash",
-            columnNames = "token_hash"
-        )
-    }
-)
+@Table(name = "token_recuperacion")
 public class TokenRecuperacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_token")
+    @Column(name = "id", columnDefinition = "INT UNSIGNED")
     private Long idToken;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_usuario", nullable = false)
+    @JoinColumn(name = "usuario_id", nullable = false, columnDefinition = "INT UNSIGNED")
     private Usuario usuario;
 
-    @Column(name = "token_hash", nullable = false, length = 64)
+    @Column(name = "token_hash", nullable = false, unique = true, length = 255)
     private String tokenHash;
 
-    @Column(name = "fecha_creacion", nullable = false)
+    @Column(name = "creado_en", nullable = false)
     private LocalDateTime fechaCreacion;
 
-    @Column(name = "fecha_expiracion", nullable = false)
+    @Column(name = "expira_en", nullable = false)
     private LocalDateTime fechaExpiracion;
 
     @Column(nullable = false)

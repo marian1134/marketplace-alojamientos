@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { NOMBRES_TIPO } from '../tipos'
 
 function IconoCasa() {
   return (
@@ -523,9 +524,9 @@ function Portada({
                     )}
 
                     <span className="portada-tipo">
-                      {
+                      {NOMBRES_TIPO[
                         alojamiento.tipoAlojamiento
-                      }
+                      ] ?? alojamiento.tipoAlojamiento}
                     </span>
 
                     <button
