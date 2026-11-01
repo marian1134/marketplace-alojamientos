@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { enviarDatos } from '../api'
+import CampoContrasena from './CampoContrasena'
 
 // Mínimo 8 caracteres, con una letra, un número y un símbolo
 const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u
 
-function RegistroUsuario() {
+function RegistroUsuario({ onSesion }) {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -72,10 +73,28 @@ function RegistroUsuario() {
       const usuario = await respuesta.json()
 
       setMensaje(
-        `¡Registro exitoso! Bienvenido/a, ${usuario.nombre}`
+        `¡Registro exitoso! Bienvenido/a, ${usuario.nombre}. Entrando...`
       )
 
+      // Inicia la sesión de una vez para que pueda buscar su destino
+      const respuestaSesion = await enviarDatos(
+        '/api/usuarios/login',
+        {
+          correo: datos.correo,
+          contrasena: datos.contrasena,
+        }
+      )
+
+      if (!respuestaSesion.ok) {
+        setMensaje(
+          `¡Registro exitoso, ${usuario.nombre}! Ahora inicia sesión con tu correo y contraseña.`
+        )
+        formulario.reset()
+        return
+      }
+
       formulario.reset()
+      onSesion?.(await respuestaSesion.json())
     } catch {
       setMensaje(
         'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
@@ -145,10 +164,9 @@ function RegistroUsuario() {
         <div>
           <label htmlFor="contrasena">Contraseña</label>
 
-          <input
+          <CampoContrasena
             id="contrasena"
             name="contrasena"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
@@ -166,10 +184,9 @@ function RegistroUsuario() {
             Confirmar contraseña
           </label>
 
-          <input
+          <CampoContrasena
             id="confirmarContrasena"
             name="confirmarContrasena"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
