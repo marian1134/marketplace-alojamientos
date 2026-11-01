@@ -58,7 +58,7 @@ public class RecuperacionService {
                 .orElse(null);
 
         if (usuario == null
-                || usuario.getEstado() != EstadoUsuario.ACTIVO) {
+                || usuario.getEstado() != EstadoUsuario.ACTIVA) {
             return;
         }
 
@@ -111,7 +111,7 @@ public void cambiarClave(DatosNuevaClave datos) {
 
     Usuario usuario = recuperacion.getUsuario();
 
-    if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+    if (usuario.getEstado() != EstadoUsuario.ACTIVA) {
         throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "No se puede cambiar la contraseña de esta cuenta"

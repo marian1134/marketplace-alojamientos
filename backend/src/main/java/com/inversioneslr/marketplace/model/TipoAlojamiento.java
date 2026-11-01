@@ -1,11 +1,10 @@
 package com.inversioneslr.marketplace.model;
 
 public enum TipoAlojamiento {
-    APARTAMENTO,
     CASA,
+    APARTAMENTO,
     HABITACION,
+    CABANA,
     FINCA,
-    CABAÑA,
-    OTRO
-
+    GLAMPING
 }

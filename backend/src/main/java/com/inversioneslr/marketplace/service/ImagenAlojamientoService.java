@@ -4,11 +4,11 @@ import com.inversioneslr.marketplace.dto.ImagenAlojamientoResponse;
 import com.inversioneslr.marketplace.model.Alojamiento;
 import com.inversioneslr.marketplace.model.EstadoUsuario;
 import com.inversioneslr.marketplace.model.ImagenAlojamiento;
+import com.inversioneslr.marketplace.model.Rol;
 import com.inversioneslr.marketplace.model.Usuario;
 import com.inversioneslr.marketplace.repository.AlojamientoRepository;
 import com.inversioneslr.marketplace.repository.ImagenAlojamientoRepository;
 import com.inversioneslr.marketplace.repository.UsuarioRepository;
-import com.inversioneslr.marketplace.repository.UsuarioRolRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -42,21 +43,18 @@ public class ImagenAlojamientoService {
     private final ImagenAlojamientoRepository imagenRepository;
     private final AlojamientoRepository alojamientoRepository;
     private final UsuarioRepository usuarioRepository;
-    private final UsuarioRolRepository usuarioRolRepository;
     private final Path carpetaImagenes;
 
     public ImagenAlojamientoService(
             ImagenAlojamientoRepository imagenRepository,
             AlojamientoRepository alojamientoRepository,
             UsuarioRepository usuarioRepository,
-            UsuarioRolRepository usuarioRolRepository,
             @Value("${app.ruta-imagenes:uploads/alojamientos}")
             String rutaImagenes) {
 
         this.imagenRepository = imagenRepository;
         this.alojamientoRepository = alojamientoRepository;
         this.usuarioRepository = usuarioRepository;
-        this.usuarioRolRepository = usuarioRolRepository;
         this.carpetaImagenes = Path.of(rutaImagenes)
                 .toAbsolutePath()
                 .normalize();
@@ -74,7 +72,7 @@ public class ImagenAlojamientoService {
         }
 
         return imagenRepository
-                .findByAlojamiento_IdAlojamientoOrderByPrincipalDescOrdenImagenAsc(
+                .findByAlojamiento_IdAlojamientoOrderByOrdenImagenAscIdImagenAsc(
                         idAlojamiento
                 )
                 .stream()
@@ -141,11 +139,7 @@ public class ImagenAlojamientoService {
         imagen.setUrlImagen(
                 "/uploads/alojamientos/" + nombreGuardado
         );
-        imagen.setNombreOriginal(
-                limitarNombreOriginal(archivo.getOriginalFilename())
-        );
-        imagen.setTipoContenido(tipoContenido);
-        imagen.setPrincipal(cantidad == 0);
+        // La primera imagen queda como principal (orden 0)
         imagen.setOrdenImagen((int) cantidad);
 
         ImagenAlojamiento guardada;
@@ -180,21 +174,18 @@ public class ImagenAlojamientoService {
                 authentication
         );
 
-        List<ImagenAlojamiento> imagenes = imagenRepository
-                .findByAlojamiento_IdAlojamientoOrderByPrincipalDescOrdenImagenAsc(
+        List<ImagenAlojamiento> imagenes = new ArrayList<>(imagenRepository
+                .findByAlojamiento_IdAlojamientoOrderByOrdenImagenAscIdImagenAsc(
                         idAlojamiento
-                );
+                ));
 
-        for (ImagenAlojamiento imagen : imagenes) {
-            imagen.setPrincipal(
-                    Objects.equals(
-                            imagen.getIdImagen(),
-                            seleccionada.getIdImagen()
-                    )
-            );
-        }
-
-        imagenRepository.saveAll(imagenes);
+        // La seleccionada pasa a orden 0 y las demás se corren conservando su orden
+        imagenes.removeIf(imagen -> Objects.equals(
+                imagen.getIdImagen(),
+                seleccionada.getIdImagen()
+        ));
+        imagenes.add(0, seleccionada);
+        reordenar(imagenes);
 
         return convertirRespuesta(seleccionada);
     }
@@ -215,8 +206,6 @@ public class ImagenAlojamientoService {
                 authentication
         );
 
-        boolean eraPrincipal = imagen.isPrincipal();
-
         imagenRepository.delete(imagen);
         imagenRepository.flush();
 
@@ -228,18 +217,17 @@ public class ImagenAlojamientoService {
 
         eliminarArchivoFisico(archivo);
 
-        if (eraPrincipal) {
-            List<ImagenAlojamiento> restantes = imagenRepository
-                    .findByAlojamiento_IdAlojamientoOrderByPrincipalDescOrdenImagenAsc(
-                            idAlojamiento
-                    );
+        // Se vuelve a numerar 0, 1, 2…; si se borró la principal, la siguiente toma su lugar
+        reordenar(new ArrayList<>(imagenRepository
+                .findByAlojamiento_IdAlojamientoOrderByOrdenImagenAscIdImagenAsc(idAlojamiento)));
+    }
 
-            if (!restantes.isEmpty()) {
-                ImagenAlojamiento nuevaPrincipal = restantes.get(0);
-                nuevaPrincipal.setPrincipal(true);
-                imagenRepository.save(nuevaPrincipal);
-            }
+    private void reordenar(List<ImagenAlojamiento> imagenes) {
+        for (int i = 0; i < imagenes.size(); i++) {
+            imagenes.get(i).setOrdenImagen(i);
         }
+
+        imagenRepository.saveAll(imagenes);
     }
 
     private ImagenAlojamiento obtenerImagen(Long idImagen) {
@@ -271,18 +259,14 @@ public class ImagenAlojamientoService {
                         "La sesión no es válida"
                 ));
 
-        if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+        if (usuario.getEstado() != EstadoUsuario.ACTIVA) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "La cuenta no está activa"
             );
         }
 
-        boolean esAnfitrion = usuarioRolRepository
-                .existsByUsuario_IdUsuarioAndRol_NombreIgnoreCaseAndEstadoTrue(
-                        usuario.getIdUsuario(),
-                        "ANFITRION"
-                );
+        boolean esAnfitrion = usuario.getRol() == Rol.ANFITRION;
 
         if (!esAnfitrion) {
             throw new ResponseStatusException(
@@ -351,17 +335,6 @@ public class ImagenAlojamientoService {
         };
     }
 
-    private String limitarNombreOriginal(String nombre) {
-        String resultado = nombre == null || nombre.isBlank()
-                ? "imagen"
-                : Path.of(nombre).getFileName().toString();
-
-        if (resultado.length() > 255) {
-            return resultado.substring(resultado.length() - 255);
-        }
-
-        return resultado;
-    }
 
     private void eliminarArchivoFisico(Path archivo) {
         try {
@@ -378,11 +351,8 @@ public class ImagenAlojamientoService {
                 imagen.getIdImagen(),
                 imagen.getAlojamiento().getIdAlojamiento(),
                 imagen.getUrlImagen(),
-                imagen.getNombreOriginal(),
-                imagen.getTipoContenido(),
                 imagen.isPrincipal(),
-                imagen.getOrdenImagen(),
-                imagen.getFechaCreacion()
+                imagen.getOrdenImagen()
         );
     }
 }

@@ -19,7 +19,10 @@ public record DatosNuevaClave(
                 max = 72,
                 message = "La contraseña debe tener entre 8 y 72 caracteres"
         )
+        @Pattern(
+                regexp = "^(?=.*\\p{L})(?=.*\\d)(?=.*[^\\p{L}\\d\\s]).+$",
+                message = "La contraseña debe tener al menos una letra, un número y un símbolo"
+        )
         String contrasena
-
 ) {
 }

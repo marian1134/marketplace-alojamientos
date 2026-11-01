@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { enviarDatos } from '../api'
 
+// Mínimo 8 caracteres, con una letra, un número y un símbolo
+const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u
+
 function RegistroUsuario() {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -9,12 +12,26 @@ function RegistroUsuario() {
     evento.preventDefault()
 
     const formulario = evento.currentTarget
-    const datos = Object.fromEntries(new FormData(formulario))
+    const { confirmarContrasena, ...datos } = Object.fromEntries(
+      new FormData(formulario)
+    )
 
     setMensaje('')
 
     if (new TextEncoder().encode(datos.contrasena).length > 72) {
       setMensaje('La contraseña no puede superar 72 bytes.')
+      return
+    }
+
+    if (!CONTRASENA_SEGURA.test(datos.contrasena)) {
+      setMensaje(
+        'La contraseña debe tener mínimo 8 caracteres, con una letra, un número y un símbolo.'
+      )
+      return
+    }
+
+    if (datos.contrasena !== confirmarContrasena) {
+      setMensaje('Las contraseñas no coinciden.')
       return
     }
 
@@ -33,7 +50,7 @@ function RegistroUsuario() {
 
       if (respuesta.status === 400) {
         setMensaje(
-          'Revisa los datos. Completa todos los campos y usa una contraseña de entre 8 y 72 caracteres.'
+          'Revisa los datos. Completa los campos obligatorios y usa una contraseña de mínimo 8 caracteres, con una letra, un número y un símbolo.'
         )
         return
       }
@@ -81,7 +98,7 @@ function RegistroUsuario() {
             <input
               type="radio"
               name="rol"
-              value="USUARIO"
+              value="HUESPED"
               defaultChecked
               required
             />
@@ -100,25 +117,14 @@ function RegistroUsuario() {
         </fieldset>
 
         <div>
-          <label htmlFor="nombre">Nombre</label>
+          <label htmlFor="nombre">Nombre completo</label>
 
           <input
             id="nombre"
             name="nombre"
-            autoComplete="given-name"
-            maxLength={80}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="apellido">Apellido</label>
-
-          <input
-            id="apellido"
-            name="apellido"
-            autoComplete="family-name"
-            maxLength={80}
+            autoComplete="name"
+            placeholder="Tu nombre completo"
+            maxLength={100}
             required
           />
         </div>
@@ -146,12 +152,33 @@ function RegistroUsuario() {
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
+            aria-describedby="ayuda-contrasena"
+            required
+          />
+
+          <small id="ayuda-contrasena">
+            Mínimo 8 caracteres, con una letra, un número y un símbolo.
+          </small>
+        </div>
+
+        <div>
+          <label htmlFor="confirmarContrasena">
+            Confirmar contraseña
+          </label>
+
+          <input
+            id="confirmarContrasena"
+            name="confirmarContrasena"
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={72}
             required
           />
         </div>
 
         <div>
-          <label htmlFor="telefono">Teléfono</label>
+          <label htmlFor="telefono">Teléfono (opcional)</label>
 
           <input
             id="telefono"
@@ -161,7 +188,6 @@ function RegistroUsuario() {
             maxLength={16}
             pattern="[+]?[0-9]{7,15}"
             title="Entre 7 y 15 dígitos. Puede empezar con +."
-            required
           />
         </div>
 
