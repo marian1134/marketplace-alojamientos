@@ -1576,3 +1576,121 @@ main.registro-pagina > section {
   font-weight: 600;
   text-align: center;
 }
+/* Ventana "Inicia sesión para continuar" (mockup 2) */
+.modal-sesion {
+  position: fixed;
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100svh - 32px);
+  margin: auto;
+  padding: 40px 28px 28px;
+  overflow-y: auto;
+  color: #142b2b;
+  text-align: center;
+  background: #fffdfa;
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 25%);
+}
+
+.modal-sesion::backdrop {
+  background: rgb(8 30 26 / 60%);
+  backdrop-filter: blur(4px);
+}
+
+.modal-sesion-ilustracion {
+  display: block;
+  width: min(240px, 80%);
+  margin: 0 auto 16px;
+}
+
+.modal-sesion h2 {
+  margin: 0 0 12px;
+  color: #102828;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.modal-sesion p {
+  margin: 0 0 24px;
+  color: #657574;
+  line-height: 1.5;
+}
+
+.modal-sesion-principal,
+.modal-sesion-secundario {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-sesion-principal {
+  margin-bottom: 12px;
+  color: white;
+  background: #0d3b34;
+  border: 1px solid #0d3b34;
+}
+
+.modal-sesion-principal:hover {
+  background: #07594d;
+}
+
+.modal-sesion-secundario {
+  color: #102828;
+  background: white;
+  border: 1px solid #d7dfdc;
+}
+
+.modal-sesion-secundario:hover {
+  background: #edf6f2;
+}
+
+.modal-sesion button:focus-visible {
+  outline: 3px solid #8bc5b5;
+  outline-offset: 2px;
+}
+
+/* Campo de contraseña con botón de ojo */
+.campo-contrasena {
+  position: relative;
+}
+
+.campo-contrasena input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 52px 12px 14px;
+  color: #142b2b;
+  background: #fbfcfb;
+  border: 1px solid #d8e0dc;
+  border-radius: 10px;
+}
+
+.campo-contrasena .boton-ojo {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #657574;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.campo-contrasena .boton-ojo:hover {
+  color: #07594d;
+  background: #edf6f2;
+}
+
+.campo-contrasena .boton-ojo svg {
+  width: 22px;
+  height: 22px;
+}

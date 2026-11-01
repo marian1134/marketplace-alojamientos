@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { enviarDatos } from '../api'
+import CampoContrasena from './CampoContrasena'
 
 function InicioSesion({ onSesion }) {
   const [mensaje, setMensaje] = useState('')
@@ -138,10 +139,9 @@ function InicioSesion({ onSesion }) {
             Contraseña
           </label>
 
-          <input
+          <CampoContrasena
             id="login-contrasena"
             name="contrasena"
-            type="password"
             autoComplete="current-password"
             required
           />
