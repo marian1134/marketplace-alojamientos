@@ -611,17 +611,17 @@ main.registro-pagina > section {
   background: #fff1c7;
 }
 
-.estado-activo {
+.estado-activa {
   color: #07594d;
   background: #dcefe8;
 }
 
-.estado-pausado {
+.estado-pausada {
   color: #8a3f18;
   background: #fbe4d7;
 }
 
-.estado-bloqueado {
+.estado-bloqueada {
   color: #8c1d2c;
   background: #f8dce0;
 }

@@ -13,54 +13,73 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+// Tabla marketplace.publicacion (01_crear_marketplace.sql)
 @Entity
-@Table(name = "alojamiento")
-
+@Table(name = "publicacion")
 public class Alojamiento {
 
-       @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_alojamiento")
+    @Column(name = "id", columnDefinition = "INT UNSIGNED")
     private Long idAlojamiento;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_anfitrion", nullable = false)
+    @JoinColumn(name = "anfitrion_id", nullable = false, columnDefinition = "INT UNSIGNED")
     private Usuario anfitrion;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 120)
     private String titulo;
 
-    @Column(nullable = false, length = 2000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 80)
     private String ciudad;
 
-    @Column(nullable = false, length = 150)
+    @Column(name = "ubicacion_descripcion", nullable = false, length = 200)
     private String direccion;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_alojamiento", nullable = false, length = 30)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "tipo", nullable = false, length = 20)
     private TipoAlojamiento tipoAlojamiento;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "SMALLINT")
     private Integer capacidad;
 
     @Column(name = "precio_noche", nullable = false, precision = 12, scale = 2)
     private BigDecimal precioNoche;
 
+    @Column(name = "tarifa_limpieza", nullable = false, precision = 12, scale = 2)
+    private BigDecimal tarifaLimpieza = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "modo_reserva", nullable = false, length = 20)
+    private ModoReserva modoReserva = ModoReserva.INMEDIATA;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "politica_id", nullable = false, columnDefinition = "INT UNSIGNED")
+    private PoliticaCancelacion politica;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "etapa", nullable = false, length = 25)
     private EstadoPublicacion estado = EstadoPublicacion.BORRADOR;
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    @Column(name = "motivo_etapa", length = 500)
+    private String motivoEstado;
+
+    @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
-    @Column(name = "fecha_actualizacion", nullable = false)
+    @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime fechaActualizacion;
 
     public Alojamiento() {
@@ -69,11 +88,9 @@ public class Alojamiento {
     @PrePersist
     public void antesDeGuardar() {
         LocalDateTime ahora = LocalDateTime.now();
-
         if (fechaCreacion == null) {
             fechaCreacion = ahora;
         }
-
         fechaActualizacion = ahora;
     }
 
@@ -154,12 +171,44 @@ public class Alojamiento {
         this.precioNoche = precioNoche;
     }
 
+    public BigDecimal getTarifaLimpieza() {
+        return tarifaLimpieza;
+    }
+
+    public void setTarifaLimpieza(BigDecimal tarifaLimpieza) {
+        this.tarifaLimpieza = tarifaLimpieza;
+    }
+
+    public ModoReserva getModoReserva() {
+        return modoReserva;
+    }
+
+    public void setModoReserva(ModoReserva modoReserva) {
+        this.modoReserva = modoReserva;
+    }
+
+    public PoliticaCancelacion getPolitica() {
+        return politica;
+    }
+
+    public void setPolitica(PoliticaCancelacion politica) {
+        this.politica = politica;
+    }
+
     public EstadoPublicacion getEstado() {
         return estado;
     }
 
     public void setEstado(EstadoPublicacion estado) {
         this.estado = estado;
+    }
+
+    public String getMotivoEstado() {
+        return motivoEstado;
+    }
+
+    public void setMotivoEstado(String motivoEstado) {
+        this.motivoEstado = motivoEstado;
     }
 
     public LocalDateTime getFechaCreacion() {
@@ -169,5 +218,4 @@ public class Alojamiento {
     public LocalDateTime getFechaActualizacion() {
         return fechaActualizacion;
     }
-
 }

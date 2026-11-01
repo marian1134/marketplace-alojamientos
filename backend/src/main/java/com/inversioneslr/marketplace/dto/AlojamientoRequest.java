@@ -1,7 +1,10 @@
 package com.inversioneslr.marketplace.dto;
 
+import com.inversioneslr.marketplace.model.ModoReserva;
 import com.inversioneslr.marketplace.model.TipoAlojamiento;
+import com.inversioneslr.marketplace.model.TipoPolitica;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,19 +15,20 @@ import java.math.BigDecimal;
 public record AlojamientoRequest(
 
         @NotBlank
-        @Size(max = 150)
+        @Size(max = 120)
         String titulo,
 
         @NotBlank
-        @Size(max = 2000)
+        @Size(max = 5000)
         String descripcion,
 
         @NotBlank
-        @Size(max = 150)
+        @Size(max = 80)
         String ciudad,
 
+        // Columna ubicacion_descripcion
         @NotBlank
-        @Size(max = 150)
+        @Size(max = 200)
         String direccion,
 
         @NotNull
@@ -32,11 +36,19 @@ public record AlojamientoRequest(
 
         @NotNull
         @Positive
+        @Max(1000)
         Integer capacidad,
 
         @NotNull
         @DecimalMin(value = "0.01")
-        BigDecimal precioNoche
+        BigDecimal precioNoche,
 
+        // Opcionales: si no llegan se usa 0, INMEDIATA y MODERADA
+        @DecimalMin(value = "0.00")
+        BigDecimal tarifaLimpieza,
+
+        ModoReserva modoReserva,
+
+        TipoPolitica tipoPolitica
 ) {
 }

@@ -8,14 +8,10 @@ import java.util.List;
 public interface ImagenAlojamientoRepository
         extends JpaRepository<ImagenAlojamiento, Long> {
 
-    List<ImagenAlojamiento>
-            findByAlojamiento_IdAlojamientoOrderByPrincipalDescOrdenImagenAsc(
-                    Long idAlojamiento
-            );
-
-    long countByAlojamiento_IdAlojamiento(Long idAlojamiento);
-
-    boolean existsByAlojamiento_IdAlojamientoAndPrincipalTrue(
+    // La primera de la lista (orden 0) es la principal
+    List<ImagenAlojamiento> findByAlojamiento_IdAlojamientoOrderByOrdenImagenAscIdImagenAsc(
             Long idAlojamiento
     );
+
+    long countByAlojamiento_IdAlojamiento(Long idAlojamiento);
 }

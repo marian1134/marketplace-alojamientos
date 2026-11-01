@@ -1,11 +1,10 @@
 package com.inversioneslr.marketplace.model;
 
+// Columna publicacion.etapa
 public enum EstadoPublicacion {
-
     BORRADOR,
     PENDIENTE_REVISION,
-    ACTIVO,
-    PAUSADO,
-    BLOQUEADO
-
+    ACTIVA,
+    PAUSADA,
+    BLOQUEADA
 }
