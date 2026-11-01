@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NOMBRES_TIPO } from '../tipos'
 
 function IconoCasa() {
@@ -20,11 +20,49 @@ function IconoCasa() {
   )
 }
 
+// Casa con candado del mockup "Inicia sesión para continuar"
+function IlustracionCandado() {
+  return (
+    <svg
+      viewBox="0 0 220 120"
+      aria-hidden="true"
+      className="modal-sesion-ilustracion"
+    >
+      <ellipse cx="110" cy="70" rx="100" ry="48" fill="#f6ede4" />
+      <path
+        d="M20 108h180"
+        stroke="#7a9a6a"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <circle cx="42" cy="84" r="14" fill="#8fb48a" />
+      <rect x="40" y="94" width="4" height="14" fill="#6b5a45" />
+      <circle cx="180" cy="80" r="16" fill="#7fa77c" />
+      <rect x="178" y="92" width="4" height="16" fill="#6b5a45" />
+      <path d="M62 66 110 34l48 32" fill="#6d4c3d" />
+      <rect x="70" y="64" width="80" height="44" rx="2" fill="#d9a77c" />
+      <rect x="102" y="82" width="16" height="26" rx="2" fill="#7b5236" />
+      <rect x="80" y="74" width="12" height="10" rx="1" fill="#557a6a" />
+      <rect x="128" y="74" width="12" height="10" rx="1" fill="#557a6a" />
+      <path
+        d="M98 30v-8a12 12 0 0 1 24 0v8"
+        fill="none"
+        stroke="#b07d55"
+        strokeWidth="5"
+      />
+      <rect x="94" y="28" width="32" height="24" rx="4" fill="#c99366" />
+      <circle cx="110" cy="40" r="3" fill="#6d4c3d" />
+    </svg>
+  )
+}
+
 function Portada({
   usuario,
   onIniciarSesion,
   onRegistrarse,
-  onPerfil,
+  onNavegar,
+  onCerrarSesion,
+  onVerAlojamiento,
 }) {
   const [destino, setDestino] = useState('')
   const [entrada, setEntrada] = useState('')
@@ -39,6 +77,47 @@ function Portada({
 
   const [mensajeAlojamientos, setMensajeAlojamientos] =
     useState('')
+
+  // Ventana que pide iniciar sesión antes de buscar
+  const ventanaSesion = useRef(null)
+
+  // Alojamiento que quiso abrir sin sesión (se abre después del login)
+  const alojamientoDeseado = useRef(null)
+
+  function pedirSesion(idAlojamiento) {
+    alojamientoDeseado.current = idAlojamiento ?? null
+
+    const ventana = ventanaSesion.current
+
+    if (ventana && !ventana.open) {
+      ventana.showModal()
+    }
+  }
+
+  function cerrarVentanaSesion() {
+    ventanaSesion.current?.close()
+  }
+
+  function abrirAlojamiento(idAlojamiento) {
+    if (!usuario) {
+      pedirSesion(idAlojamiento)
+      return
+    }
+
+    onVerAlojamiento(idAlojamiento, {
+      entrada,
+      salida,
+      huespedes,
+    })
+  }
+
+  // Sin sesión, cualquier clic en el buscador abre la ventana
+  function revisarSesion(evento) {
+    if (!usuario) {
+      evento.preventDefault()
+      pedirSesion()
+    }
+  }
 
   const [filtros, setFiltros] = useState({
     destino: '',
@@ -177,6 +256,11 @@ function Portada({
     evento.preventDefault()
     setMensajeBusqueda('')
 
+    if (!usuario) {
+      pedirSesion()
+      return
+    }
+
     const cantidadHuespedes = Number(huespedes)
 
     if (!destino.trim()) {
@@ -267,19 +351,48 @@ function Portada({
             </span>
 
             {usuario ? (
-              <button
-                type="button"
-                className="portada-boton-claro"
-                onClick={onPerfil}
-              >
-                Mi perfil
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="portada-boton-claro"
+                  onClick={() => onNavegar('viajes')}
+                >
+                  Mis viajes
+                </button>
+
+                {usuario.rol === 'ANFITRION' && (
+                  <button
+                    type="button"
+                    className="portada-boton-claro"
+                    onClick={() => onNavegar('panel')}
+                  >
+                    Panel anfitrión
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="portada-boton-principal"
+                  onClick={() => onNavegar('perfil')}
+                  title="Mi perfil"
+                >
+                  {usuario.nombre.split(' ')[0]}
+                </button>
+
+                <button
+                  type="button"
+                  className="portada-boton-claro"
+                  onClick={onCerrarSesion}
+                >
+                  Salir
+                </button>
+              </>
             ) : (
               <>
                 <button
                   type="button"
                   className="portada-boton-claro"
-                  onClick={onIniciarSesion}
+                  onClick={() => onIniciarSesion()}
                 >
                   Iniciar sesión
                 </button>
@@ -287,7 +400,7 @@ function Portada({
                 <button
                   type="button"
                   className="portada-boton-principal"
-                  onClick={onRegistrarse}
+                  onClick={() => onRegistrarse()}
                 >
                   Registrarse
                 </button>
@@ -311,6 +424,7 @@ function Portada({
           <form
             className="portada-buscador"
             onSubmit={buscarAlojamientos}
+            onClick={revisarSesion}
             noValidate
           >
             <label>
@@ -327,6 +441,7 @@ function Portada({
                     setMensajeBusqueda('')
                   }}
                   placeholder="Ciudad o destino"
+                  readOnly={!usuario}
                   required
                 />
               </span>
@@ -353,6 +468,7 @@ function Portada({
                       setSalida('')
                     }
                   }}
+                  readOnly={!usuario}
                   required
                 />
               </span>
@@ -372,6 +488,7 @@ function Portada({
                     setSalida(evento.target.value)
                     setMensajeBusqueda('')
                   }}
+                  readOnly={!usuario}
                   required
                 />
               </span>
@@ -395,6 +512,7 @@ function Portada({
                     setMensajeBusqueda('')
                   }}
                   placeholder="Cantidad"
+                  readOnly={!usuario}
                   required
                 />
               </span>
@@ -487,6 +605,10 @@ function Portada({
           >
             {mensajeAlojamientos}
           </p>
+        ) : alojamientos.length === 0 ? (
+          <p className="portada-estado">
+            Aún no hay alojamientos publicados.
+          </p>
         ) : alojamientosFiltrados.length === 0 ? (
           <p className="portada-estado">
             No encontramos alojamientos disponibles
@@ -497,9 +619,14 @@ function Portada({
             {alojamientosFiltrados.map(
               (alojamiento) => (
                 <article
-                  className="portada-tarjeta"
+                  className="portada-tarjeta tarjeta-clic"
                   key={
                     alojamiento.idAlojamiento
+                  }
+                  onClick={() =>
+                    abrirAlojamiento(
+                      alojamiento.idAlojamiento
+                    )
                   }
                 >
                   <div className="portada-tarjeta-imagen">
@@ -532,6 +659,9 @@ function Portada({
                     <button
                       type="button"
                       className="portada-favorito"
+                      onClick={(evento) =>
+                        evento.stopPropagation()
+                      }
                       aria-label={
                         `Agregar ${alojamiento.titulo} a favoritos`
                       }
@@ -580,6 +710,19 @@ function Portada({
                         {alojamiento.direccion}
                       </span>
                     </div>
+
+                    <button
+                      type="button"
+                      className="boton-ver-alojamiento"
+                      onClick={(evento) => {
+                        evento.stopPropagation()
+                        abrirAlojamiento(
+                          alojamiento.idAlojamiento
+                        )
+                      }}
+                    >
+                      Ver disponibilidad y reservar
+                    </button>
                   </div>
                 </article>
               )
@@ -587,6 +730,54 @@ function Portada({
           </div>
         )}
       </section>
+
+      <dialog
+        ref={ventanaSesion}
+        className="modal-sesion"
+        aria-labelledby="modal-sesion-titulo"
+      >
+        <button
+          type="button"
+          className="modal-cerrar"
+          onClick={cerrarVentanaSesion}
+          aria-label="Cerrar"
+        >
+          ×
+        </button>
+
+        <IlustracionCandado />
+
+        <h2 id="modal-sesion-titulo">
+          Inicia sesión para continuar
+        </h2>
+
+        <p>
+          Para buscar alojamientos, ver disponibilidad y
+          reservar, necesitas una cuenta en StayHub.
+        </p>
+
+        <button
+          type="button"
+          className="modal-sesion-principal"
+          onClick={() => {
+            cerrarVentanaSesion()
+            onIniciarSesion(alojamientoDeseado.current)
+          }}
+        >
+          Iniciar sesión
+        </button>
+
+        <button
+          type="button"
+          className="modal-sesion-secundario"
+          onClick={() => {
+            cerrarVentanaSesion()
+            onRegistrarse(alojamientoDeseado.current)
+          }}
+        >
+          Crear cuenta
+        </button>
+      </dialog>
 
       <section
         className="portada-nosotros"
