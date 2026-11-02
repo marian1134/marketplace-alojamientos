@@ -581,7 +581,6 @@ function Portada({
 
         <div
           className="portada-beneficios"
-          id="como-funciona"
         >
           <article>
             <span aria-hidden="true">⌂</span>
@@ -646,7 +645,6 @@ function Portada({
           ))}
         </div>
 
-        <p className="destinos-credito">Fotos: Pexels</p>
       </section>
 
       {hayAlojamientos && (
@@ -861,16 +859,121 @@ function Portada({
       </dialog>
 
       <section
+        className="portada-como-funciona"
+        id="como-funciona"
+      >
+        <p className="portada-etiqueta">Cómo funciona</p>
+
+        <h2>Tu viaje en 3 pasos</h2>
+
+        <ol className="pasos-viaje">
+          <li>
+            <span aria-hidden="true">1</span>
+            <h3>Busca tu destino</h3>
+            <p>
+              Elige a dónde quieres ir, tus fechas y cuántas
+              personas viajan contigo.
+            </p>
+          </li>
+
+          <li>
+            <span aria-hidden="true">2</span>
+            <h3>Reserva y paga seguro</h3>
+            <p>
+              Ves el precio total antes de pagar, sin
+              sorpresas. Tus fechas quedan bloqueadas al
+              instante.
+            </p>
+          </li>
+
+          <li>
+            <span aria-hidden="true">3</span>
+            <h3>Vive la experiencia</h3>
+            <p>
+              Llega, disfruta y gestiona tu reserva desde
+              Mis viajes cuando lo necesites.
+            </p>
+          </li>
+        </ol>
+
+        <div className="invitacion-anfitrion">
+          <div>
+            <strong>¿Tienes un alojamiento?</strong>
+            <p>
+              Publícalo en StayHub y empieza a recibir
+              viajeros de todo el país.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="portada-boton-principal"
+            onClick={() =>
+              usuario?.rol === 'ANFITRION'
+                ? onNavegar('panel')
+                : onRegistrarse()
+            }
+          >
+            Quiero ser anfitrión
+          </button>
+        </div>
+      </section>
+
+      <section
         className="portada-nosotros"
         id="sobre-nosotros"
       >
-        <h2>Descubre Colombia con StayHub</h2>
+        <p className="portada-etiqueta">Sobre nosotros</p>
+
+        <h2>Somos StayHub, expertos en tus viajes</h2>
 
         <p>
-          Conectamos viajeros con alojamientos cómodos,
-          confiables y llenos de experiencias.
+          Somos una empresa colombiana de Inversiones LR
+          enfocada en que tu viaje empiece mucho antes de
+          llegar: te ayudamos a encontrar el lugar ideal,
+          reservarlo con tranquilidad y disfrutarlo sin
+          preocupaciones.
+        </p>
+
+        <div className="nosotros-valores">
+          <article>
+            <span aria-hidden="true">◆</span>
+            <h3>Confianza</h3>
+            <p>
+              Revisamos cada alojamiento antes de
+              publicarlo y protegemos cada pago.
+            </p>
+          </article>
+
+          <article>
+            <span aria-hidden="true">✦</span>
+            <h3>Experiencias locales</h3>
+            <p>
+              Del Caribe a los Andes: cabañas, fincas,
+              glampings y casas con alma colombiana.
+            </p>
+          </article>
+
+          <article>
+            <span aria-hidden="true">♥</span>
+            <h3>Te acompañamos</h3>
+            <p>
+              Antes, durante y después de tu viaje, con
+              reglas claras y cancelaciones justas.
+            </p>
+          </article>
+        </div>
+
+        <p className="nosotros-firma">
+          Viajar es coleccionar momentos. Nosotros nos
+          encargamos del lugar; tú, de los recuerdos.
         </p>
       </section>
+
+      <footer className="portada-pie">
+        © {new Date().getFullYear()} StayHub · Inversiones
+        LR · Hecho en Colombia
+      </footer>
     </main>
   )
 }
