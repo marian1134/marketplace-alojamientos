@@ -6,6 +6,7 @@ import {
   fechaCorta,
   fotoRespaldo,
   NOMBRES_POLITICA,
+  plural,
   pesos,
 } from '../formato'
 
@@ -49,14 +50,52 @@ function formatearTarjeta(valor) {
     .replace(/(\d{4})(?=\d)/g, '$1 ')
 }
 
+// Fecha MM/AA: el mes solo puede ir de 01 a 12
 function formatearExpiracion(valor) {
-  const digitos = valor.replace(/\D/g, '').slice(0, 4)
+  let digitos = valor.replace(/\D/g, '').slice(0, 4)
+
+  // "4" se vuelve "04": ningún mes empieza por 2 o más
+  if (digitos.length > 0 && Number(digitos[0]) > 1) {
+    digitos = `0${digitos}`.slice(0, 4)
+  }
+
+  if (digitos.length >= 2) {
+    let mes = Number(digitos.slice(0, 2))
+
+    if (mes > 12) mes = 12
+    if (mes === 0) mes = 1
+
+    digitos = String(mes).padStart(2, '0') + digitos.slice(2)
+  }
 
   if (digitos.length <= 2) {
     return digitos
   }
 
   return `${digitos.slice(0, 2)}/${digitos.slice(2)}`
+}
+
+// ¿La tarjeta MM/AA ya venció?
+function expiracionInvalida(texto) {
+  if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(texto)) {
+    return 'Escribe la fecha de expiración como MM/AA.'
+  }
+
+  const mes = Number(texto.slice(0, 2))
+  const anio = 2000 + Number(texto.slice(3))
+  const hoy = new Date()
+  const actual = hoy.getFullYear() * 12 + hoy.getMonth() + 1
+  const tarjeta = anio * 12 + mes
+
+  if (tarjeta < actual) {
+    return 'La tarjeta está vencida.'
+  }
+
+  if (tarjeta > actual + 20 * 12) {
+    return 'La fecha de expiración no es válida.'
+  }
+
+  return ''
 }
 
 function Pasos({ actual }) {
@@ -107,7 +146,9 @@ function Resumen({ alojamiento, imagen, entrada, salida, huespedes, precio, poli
         <h3>{alojamiento.titulo}</h3>
         <p className="texto-suave">
           ⌖ {alojamiento.ciudad} ·{' '}
-          {NOMBRES_TIPO[alojamiento.tipoAlojamiento]}
+          {NOMBRES_TIPO[alojamiento.tipoAlojamiento]} ·{' '}
+          {plural(alojamiento.habitaciones ?? 1, 'habitación', 'habitaciones')} ·{' '}
+          {plural(alojamiento.banos ?? 1, 'baño', 'baños')}
         </p>
 
         <h4>Tu reserva</h4>
@@ -217,7 +258,7 @@ function Reservar({
 
     if (name === 'numero') valor = formatearTarjeta(value)
     if (name === 'expiracion') valor = formatearExpiracion(value)
-    if (name === 'cvc') valor = value.replace(/\D/g, '').slice(0, 4)
+    if (name === 'cvc') valor = value.replace(/\D/g, '').slice(0, 3)
 
     setTarjeta({ ...tarjeta, [name]: valor })
     setMensaje('')
@@ -225,6 +266,25 @@ function Reservar({
 
   async function pagar(evento) {
     evento.preventDefault()
+
+    const numero = tarjeta.numero.replace(/\D/g, '')
+
+    if (numero.length < 13) {
+      setMensaje('El número de tarjeta debe tener entre 13 y 19 dígitos.')
+      return
+    }
+
+    const errorFecha = expiracionInvalida(tarjeta.expiracion)
+
+    if (errorFecha) {
+      setMensaje(errorFecha)
+      return
+    }
+
+    if (tarjeta.cvc.length !== 3) {
+      setMensaje('El CVC debe tener 3 dígitos.')
+      return
+    }
 
     if (!acepta) {
       setMensaje('Debes aceptar los términos y condiciones.')
@@ -349,7 +409,9 @@ function Reservar({
                   <h3>{alojamiento.titulo}</h3>
                   <p className="texto-suave">⌖ {alojamiento.ciudad}</p>
                   <p className="texto-suave">
-                    {NOMBRES_TIPO[alojamiento.tipoAlojamiento]} · Hasta{' '}
+                    {NOMBRES_TIPO[alojamiento.tipoAlojamiento]} ·{' '}
+                    {plural(alojamiento.habitaciones ?? 1, 'habitación', 'habitaciones')} ·{' '}
+                    {plural(alojamiento.banos ?? 1, 'baño', 'baños')} · Hasta{' '}
                     {alojamiento.capacidad} huéspedes
                   </p>
                 </div>
@@ -377,7 +439,7 @@ function Reservar({
                   <strong>Política de cancelación</strong>
                   <p>{NOMBRES_POLITICA[politica.tipo]}</p>
                   <p className="texto-suave">
-                    {explicarPolitica(politica)}
+                    {explicarPolitica(politica, entrada)}
                   </p>
                 </div>
               </div>
@@ -469,6 +531,7 @@ function Reservar({
                     inputMode="numeric"
                     autoComplete="cc-exp"
                     placeholder="MM/AA"
+                    maxLength={5}
                     value={tarjeta.expiracion}
                     onChange={cambiarTarjeta}
                     required
@@ -482,6 +545,7 @@ function Reservar({
                     inputMode="numeric"
                     autoComplete="cc-csc"
                     placeholder="123"
+                    maxLength={3}
                     value={tarjeta.cvc}
                     onChange={cambiarTarjeta}
                     required
@@ -682,7 +746,7 @@ function Reservar({
                 <strong>Política de cancelación</strong>
                 <p className="texto-suave">
                   {NOMBRES_POLITICA[politica.tipo]}.{' '}
-                  {explicarPolitica(politica)}
+                  {explicarPolitica(politica, entrada)}
                 </p>
               </li>
             </ol>

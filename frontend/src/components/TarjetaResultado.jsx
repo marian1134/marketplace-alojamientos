@@ -1,5 +1,5 @@
 import { NOMBRES_TIPO } from '../tipos'
-import { fotoRespaldo, pesos } from '../formato'
+import { fotoRespaldo, pesos, plural } from '../formato'
 import { IconoCorazon, IconoEstrella, IconoUbicacion } from './Iconos'
 
 // Tarjeta de un alojamiento en resultados y favoritos
@@ -50,6 +50,10 @@ function TarjetaResultado({ resultado, esFavorito, onFavorito, onAbrir }) {
           <span className="texto-suave con-icono">
             <IconoUbicacion tamano={15} />
             {alojamiento.ciudad} · hasta {alojamiento.capacidad} huéspedes
+          </span>
+          <span className="texto-suave">
+            {plural(alojamiento.habitaciones ?? 1, 'habitación', 'habitaciones')} ·{' '}
+            {plural(alojamiento.banos ?? 1, 'baño', 'baños')}
           </span>
           <span className="resultado-precio">
             <strong>{pesos(alojamiento.precioNoche)}</strong> noche

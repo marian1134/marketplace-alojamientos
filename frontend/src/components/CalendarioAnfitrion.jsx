@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
-import { aTexto, fechaCorta, hoyTexto } from '../formato'
+import { aTexto, fechaCorta, hoyTexto, sumarDias } from '../formato'
+import CampoFecha from './CampoFecha'
 
 const DIAS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
 
@@ -169,6 +170,11 @@ function CalendarioAnfitrion({ onGestionarAlojamientos }) {
     evento.preventDefault()
     setMensaje('')
 
+    if (!inicio || !fin) {
+      setMensaje('Elige las fechas de inicio y fin del periodo.')
+      return
+    }
+
     const respuesta = await enviarDatos(
       `/api/v1/alojamientos/${idElegido}/periodos`,
       { fechaInicio: inicio, fechaFin: fin }
@@ -336,27 +342,31 @@ function CalendarioAnfitrion({ onGestionarAlojamientos }) {
 
                 <form onSubmit={agregarPeriodo}>
                   <h3>Agregar periodo</h3>
-                  <div className="dos-columnas">
-                    <label>
-                      Desde
-                      <input
-                        type="date"
-                        value={inicio}
-                        min={hoyTexto()}
-                        onChange={(evento) => setInicio(evento.target.value)}
-                        required
-                      />
-                    </label>
-                    <label>
-                      Hasta
-                      <input
-                        type="date"
-                        value={fin}
-                        min={inicio || hoyTexto()}
-                        onChange={(evento) => setFin(evento.target.value)}
-                        required
-                      />
-                    </label>
+                  <div className="campo-barra">
+                    <span>Desde</span>
+                    <CampoFecha
+                      etiqueta="Inicio del periodo"
+                      value={inicio}
+                      min={hoyTexto()}
+                      max={sumarDias(hoyTexto(), 730)}
+                      onChange={(valor) => {
+                        setInicio(valor)
+                        if (fin && fin <= valor) {
+                          setFin('')
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="campo-barra">
+                    <span>Hasta</span>
+                    <CampoFecha
+                      etiqueta="Fin del periodo"
+                      value={fin}
+                      min={sumarDias(inicio || hoyTexto(), 1)}
+                      max={sumarDias(inicio || hoyTexto(), 730)}
+                      onChange={setFin}
+                    />
                   </div>
 
                   {mensaje && (
