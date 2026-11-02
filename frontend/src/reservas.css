@@ -1855,3 +1855,538 @@ p.etiqueta-verde {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Mis alojamientos (anfitrión) ---------- */
+.migas-anfitrion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+.migas-anfitrion button {
+  padding: 0;
+  color: var(--verde);
+  background: none;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.migas-anfitrion button:hover {
+  text-decoration: underline;
+}
+
+.mis-alojamientos-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mis-alojamientos-cabecera .titulo-serif {
+  margin-top: 0;
+}
+
+.resumen-alojamientos {
+  display: flex;
+  gap: 12px;
+}
+
+.resumen-alojamientos div {
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+  padding: 12px 18px;
+  background: white;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+}
+
+.resumen-alojamientos strong {
+  font-size: 24px;
+}
+
+.resumen-alojamientos span {
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.aviso-flotante {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 70;
+  max-width: 360px;
+  margin: 0;
+  padding: 14px 18px;
+  color: white;
+  background: var(--verde-oscuro);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 20%);
+}
+
+.mis-alojamientos-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.formulario-alojamiento {
+  padding: 26px;
+  background: white;
+  border: 1px solid var(--borde);
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgb(16 49 43 / 5%);
+}
+
+.formulario-alojamiento-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.formulario-alojamiento-titulo h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.seccion-formulario {
+  margin: 0;
+  padding: 22px 0;
+  border: 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.seccion-formulario legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 22px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.numero-seccion {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: white;
+  background: var(--verde-oscuro);
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.formulario-alojamiento .campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.formulario-alojamiento .campo:last-child {
+  margin-bottom: 0;
+}
+
+.formulario-alojamiento label,
+.formulario-alojamiento .etiqueta-campo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.campo-etiqueta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.contador {
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.formulario-alojamiento input,
+.formulario-alojamiento select,
+.formulario-alojamiento textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  color: var(--texto);
+  background: #fbfcfb;
+  border: 1px solid #d8e0dc;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.formulario-alojamiento textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.formulario-alojamiento input:focus,
+.formulario-alojamiento select:focus,
+.formulario-alojamiento textarea:focus {
+  border-color: var(--verde);
+  outline: 3px solid #c7e4da;
+  outline-offset: 0;
+}
+
+.campos-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.campo-corto {
+  max-width: 260px;
+}
+
+.ayuda {
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ayuda.centrada {
+  margin: 12px 0 0;
+  text-align: center;
+}
+
+.contadores {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.contador-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fbfcfb;
+  border: 1px solid #d8e0dc;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.contador-botones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contador-botones button {
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  padding: 0;
+  color: var(--verde-oscuro);
+  background: white;
+  border: 1px solid #c9d3cf;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.contador-botones button:hover:not(:disabled) {
+  border-color: var(--verde);
+}
+
+.contador-botones button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.contador-botones strong {
+  font-size: 18px;
+}
+
+.campo-dinero {
+  display: flex;
+  align-items: stretch;
+}
+
+.campo-dinero span {
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  color: var(--texto-suave);
+  background: #edf3f0;
+  border: 1px solid #d8e0dc;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.campo-dinero span:first-child {
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+}
+
+.campo-dinero span:last-child {
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+}
+
+.formulario-alojamiento .campo-dinero input {
+  min-width: 0;
+  border-radius: 0;
+}
+
+.opciones-politica {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.formulario-alojamiento .opciones-politica label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  background: #fbfcfb;
+  border: 1px solid #d8e0dc;
+  border-radius: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.formulario-alojamiento .opciones-politica label.elegida {
+  background: var(--verde-claro);
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde);
+}
+
+.pagina-interna .formulario-alojamiento .opciones-politica input[type='radio'] {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 18px;
+  min-height: 0;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  accent-color: var(--verde);
+}
+
+.opciones-politica strong {
+  font-size: 15px;
+}
+
+.opciones-politica span {
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.acciones-alojamiento-form {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 20px;
+}
+
+.acciones-alojamiento-form .boton-principal {
+  min-width: 200px;
+}
+
+.vista-previa {
+  position: sticky;
+  top: 84px;
+}
+
+.etiqueta-vista {
+  margin: 0 0 10px;
+  color: var(--texto-suave);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.vista-previa-tarjeta {
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--borde);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgb(16 49 43 / 8%);
+}
+
+.vista-previa-foto {
+  position: relative;
+  height: 170px;
+  background:
+    linear-gradient(to top, rgb(0 0 0 / 35%), transparent 60%),
+    url('/imagenes/registro-fondo.png') center / cover;
+}
+
+.vista-previa-foto span {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  color: var(--verde-oscuro);
+  background: white;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.vista-previa-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px 16px;
+  font-size: 14px;
+}
+
+.vista-previa-info > strong {
+  font-size: 17px;
+}
+
+.consejos-anfitrion {
+  margin: 16px 0 0;
+  padding: 16px 16px 16px 34px;
+  color: var(--texto-suave);
+  background: var(--verde-claro);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.lista-mis-alojamientos {
+  margin-top: 36px;
+}
+
+.lista-mis-alojamientos h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+}
+
+.grilla-mis-alojamientos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.tarjeta-mi-alojamiento {
+  margin: 0;
+}
+
+.tarjeta-mi-alojamiento-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tarjeta-mi-alojamiento h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.tarjeta-mi-alojamiento .estado {
+  flex: none;
+  text-transform: capitalize;
+}
+
+.datos-mi-alojamiento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.datos-mi-alojamiento li {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  color: var(--texto-suave);
+  background: #fbfcfb;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.datos-mi-alojamiento strong {
+  color: var(--texto);
+  font-size: 15px;
+}
+
+.acciones-mi-alojamiento {
+  display: flex;
+  gap: 10px;
+}
+
+.acciones-mi-alojamiento select {
+  flex: 1;
+  min-height: 46px;
+  padding: 0 12px;
+  background: white;
+  border: 1px solid #cfd8d4;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.fotos-mi-alojamiento {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+}
+
+.fotos-mi-alojamiento summary {
+  color: var(--verde);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .mis-alojamientos-columnas {
+    grid-template-columns: 1fr;
+  }
+
+  .vista-previa {
+    position: static;
+  }
+
+  .grilla-mis-alojamientos {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .campos-dos,
+  .contadores,
+  .opciones-politica {
+    grid-template-columns: 1fr;
+  }
+
+  .datos-mi-alojamiento {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .acciones-alojamiento-form {
+    flex-direction: column-reverse;
+  }
+
+  .formulario-alojamiento {
+    padding: 18px;
+  }
+}

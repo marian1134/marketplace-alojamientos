@@ -403,7 +403,7 @@ function App() {
           )}
 
           {pantalla === 'alojamientos' && (
-            <section className="contenedor contenedor-estrecho">
+            <section className="contenedor">
               <Alojamientos onVolver={() => navegar('panel')} />
             </section>
           )}
