@@ -362,7 +362,7 @@ function Alojamientos({ onVolver }) {
               name="direccion"
               value={formulario.direccion}
               onChange={actualizarCampo}
-              placeholder="Ej.: a 5 min del malecón"
+              placeholder="Barrio o punto de referencia"
               maxLength={200}
               required
             />

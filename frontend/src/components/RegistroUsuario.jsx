@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { enviarDatos } from '../api'
 import CampoContrasena from './CampoContrasena'
+import { CANTIDAD_PRIMEROS, PAISES, validarCelular } from '../telefonos'
 
 // Mínimo 8 caracteres, con una letra, un número y un símbolo
 const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u
@@ -13,12 +14,15 @@ function RegistroUsuario({ onSesion }) {
     evento.preventDefault()
 
     const formulario = evento.currentTarget
-    const { confirmarContrasena, celular, ...datos } = Object.fromEntries(
+    const { confirmarContrasena, celular, pais, ...datos } = Object.fromEntries(
       new FormData(formulario)
     )
 
-    // Celular de Colombia: se guarda con el prefijo +57
-    datos.telefono = celular ? `+57${celular}` : ''
+    // El celular se guarda con el prefijo del país: +573001234567
+    const prefijo =
+      PAISES.find((item) => item.nombre === pais)?.prefijo ?? '+57'
+
+    datos.telefono = celular ? `${prefijo}${celular}` : ''
 
     setMensaje('')
 
@@ -39,8 +43,10 @@ function RegistroUsuario({ onSesion }) {
       return
     }
 
-    if (celular && !/^3\d{9}$/.test(celular)) {
-      setMensaje('El celular debe tener 10 dígitos y empezar por 3.')
+    const errorCelular = validarCelular(prefijo, celular)
+
+    if (errorCelular) {
+      setMensaje(errorCelular)
       return
     }
 
@@ -206,29 +212,41 @@ function RegistroUsuario({ onSesion }) {
           <label htmlFor="celular">Celular (opcional)</label>
 
           <div className="campo-celular">
-            <span aria-hidden="true">🇨🇴 +57</span>
+            <select
+              name="pais"
+              defaultValue="Colombia"
+              aria-label="País del celular"
+            >
+              {PAISES.map((item) => (
+                <option key={item.nombre} value={item.nombre}>
+                  {item.nombre} ({item.prefijo})
+                </option>
+              )).flatMap((opcion, indice) =>
+                indice === CANTIDAD_PRIMEROS
+                  ? [
+                      <option key="separador" disabled>
+                        ──────────
+                      </option>,
+                      opcion,
+                    ]
+                  : [opcion]
+              )}
+            </select>
+
             <input
               id="celular"
               name="celular"
               type="tel"
               inputMode="numeric"
               autoComplete="tel-national"
-              placeholder="300 123 4567"
-              maxLength={10}
-              pattern="3[0-9]{9}"
-              title="10 dígitos que empiezan por 3"
-              aria-describedby="ayuda-celular"
+              maxLength={14}
               onInput={(evento) => {
                 evento.currentTarget.value = evento.currentTarget.value
                   .replace(/\D/g, '')
-                  .slice(0, 10)
+                  .slice(0, 14)
               }}
             />
           </div>
-
-          <small id="ayuda-celular">
-            10 dígitos, empieza por 3. Ej.: 300 123 4567
-          </small>
         </div>
 
         <button type="submit" disabled={enviando}>
