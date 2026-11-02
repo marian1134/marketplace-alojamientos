@@ -65,6 +65,7 @@ function Portada({
   onNavegar,
   onCerrarSesion,
   onVerAlojamiento,
+  onBuscar,
 }) {
   const [destino, setDestino] = useState('')
   const [entrada, setEntrada] = useState('')
@@ -120,11 +121,6 @@ function Portada({
       pedirSesion()
     }
   }
-
-  const [filtros, setFiltros] = useState({
-    destino: '',
-    huespedes: 0,
-  })
 
   const fechaActual = new Date()
 
@@ -239,16 +235,13 @@ function Portada({
       return
     }
 
-    setDestino(destino.nombre)
-    setFiltros({
+    onBuscar({
       destino: destino.nombre,
       ciudades: destino.ciudades,
-      huespedes: 0,
+      entrada,
+      salida,
+      huespedes: '',
     })
-
-    document
-      .querySelector('#alojamientos-destacados')
-      ?.scrollIntoView({ behavior: 'smooth' })
   }
 
   // Si no hay alojamientos publicados, la sección no se muestra
@@ -256,37 +249,6 @@ function Portada({
     cargandoAlojamientos ||
     mensajeAlojamientos !== '' ||
     alojamientos.length > 0
-
-  const alojamientosFiltrados =
-    alojamientos.filter((alojamiento) => {
-      const ciudad =
-        alojamiento.ciudad?.toLocaleLowerCase(
-          'es'
-        ) ?? ''
-
-      const titulo =
-        alojamiento.titulo?.toLocaleLowerCase(
-          'es'
-        ) ?? ''
-
-      const destinoBuscado =
-        filtros.destino
-          .trim()
-          .toLocaleLowerCase('es')
-
-      const coincideDestino =
-        destinoBuscado === '' ||
-        filtros.ciudades?.includes(ciudad) ||
-        ciudad.includes(destinoBuscado) ||
-        titulo.includes(destinoBuscado)
-
-      const coincideCapacidad =
-        Number(filtros.huespedes) === 0 ||
-        Number(alojamiento.capacidad) >=
-          Number(filtros.huespedes)
-
-      return coincideDestino && coincideCapacidad
-    })
 
   function buscarAlojamientos(evento) {
     evento.preventDefault()
@@ -337,16 +299,13 @@ function Portada({
       return
     }
 
-    setFiltros({
+    // Abre la pantalla de resultados
+    onBuscar({
       destino: destino.trim(),
+      entrada,
+      salida,
       huespedes: cantidadHuespedes,
     })
-
-    document
-      .querySelector('#alojamientos-destacados')
-      ?.scrollIntoView({
-        behavior: 'smooth',
-      })
   }
 
   return (
@@ -674,27 +633,9 @@ function Portada({
           >
             {mensajeAlojamientos}
           </p>
-        ) : alojamientosFiltrados.length === 0 ? (
-          <div className="portada-estado">
-            <p>
-              No encontramos alojamientos disponibles
-              con esos criterios.
-            </p>
-
-            <button
-              type="button"
-              className="boton-ver-todos"
-              onClick={() => {
-                setDestino('')
-                setFiltros({ destino: '', huespedes: 0 })
-              }}
-            >
-              Ver todos los alojamientos
-            </button>
-          </div>
         ) : (
           <div className="portada-tarjetas">
-            {alojamientosFiltrados.map(
+            {alojamientos.map(
               (alojamiento) => (
                 <article
                   className="portada-tarjeta tarjeta-clic"

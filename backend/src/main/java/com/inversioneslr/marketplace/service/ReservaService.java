@@ -6,6 +6,7 @@ import com.inversioneslr.marketplace.dto.DetalleAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.ImagenAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.ReservaRequest;
 import com.inversioneslr.marketplace.dto.ReservaResponse;
+import com.inversioneslr.marketplace.dto.ResultadoBusqueda;
 import com.inversioneslr.marketplace.model.Alojamiento;
 import com.inversioneslr.marketplace.model.Cancelacion;
 import com.inversioneslr.marketplace.model.ConfiguracionTarifas;
@@ -38,11 +39,13 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -153,6 +156,105 @@ public class ReservaService {
                         politica.getPorcentajeDespues()
                 )
         );
+    }
+
+    // ------------------------------------------------------------------
+    // Búsqueda: alojamientos activos y libres en las fechas elegidas
+    // ------------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public List<ResultadoBusqueda> buscar(
+            String destino,
+            List<String> ciudades,
+            LocalDate llegada,
+            LocalDate salida,
+            Integer huespedes,
+            String correo) {
+
+        obtenerUsuario(correo);
+
+        boolean conFechas = llegada != null && salida != null;
+
+        if (conFechas) {
+            if (llegada.isBefore(LocalDate.now())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "La fecha de llegada no puede estar en el pasado"
+                );
+            }
+
+            if (!salida.isAfter(llegada)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "La fecha de salida debe ser posterior a la de llegada"
+                );
+            }
+        }
+
+        String texto = normalizar(destino);
+        List<String> listaCiudades = ciudades == null
+                ? List.of()
+                : ciudades.stream().map(this::normalizar).toList();
+
+        long noches = conFechas
+                ? ChronoUnit.DAYS.between(llegada, salida)
+                : 0;
+
+        return alojamientoRepository
+                .findByEstado(EstadoPublicacion.ACTIVA)
+                .stream()
+                .filter(alojamiento -> {
+                    String ciudad = normalizar(alojamiento.getCiudad());
+                    String titulo = normalizar(alojamiento.getTitulo());
+
+                    if (!listaCiudades.isEmpty()) {
+                        return listaCiudades.contains(ciudad);
+                    }
+
+                    return texto.isEmpty()
+                            || ciudad.contains(texto)
+                            || titulo.contains(texto);
+                })
+                .filter(alojamiento -> huespedes == null
+                        || alojamiento.getCapacidad() >= huespedes)
+                .filter(alojamiento -> !conFechas
+                        || !nocheRepository.existsByIdAlojamientoAndFechaBetween(
+                                alojamiento.getIdAlojamiento(),
+                                llegada,
+                                salida.minusDays(1)
+                        ))
+                .map(alojamiento -> new ResultadoBusqueda(
+                        alojamientoService.obtenerPorId(
+                                alojamiento.getIdAlojamiento()
+                        ),
+                        imagenRepository
+                                .findByAlojamiento_IdAlojamientoOrderByOrdenImagenAscIdImagenAsc(
+                                        alojamiento.getIdAlojamiento()
+                                )
+                                .stream()
+                                .findFirst()
+                                .map(img -> img.getUrlImagen())
+                                .orElse(null),
+                        noches,
+                        conFechas
+                                ? alojamiento.getPrecioNoche()
+                                        .multiply(BigDecimal.valueOf(noches))
+                                        .add(alojamiento.getTarifaLimpieza())
+                                : null
+                ))
+                .toList();
+    }
+
+    // "Medellín " -> "medellin" (sin tildes ni mayúsculas)
+    private String normalizar(String texto) {
+
+        if (texto == null) {
+            return "";
+        }
+
+        return Normalizer.normalize(texto.trim(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT);
     }
 
     // ------------------------------------------------------------------
