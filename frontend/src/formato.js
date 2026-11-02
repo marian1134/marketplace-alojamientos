@@ -82,12 +82,29 @@ export function explicarPolitica(politica, fechaLlegada) {
   const despues = Number(politica.porcentajeDespues)
   const dias = politica.diasAnticipacion
 
-  let plazo = `hasta ${dias} ${dias === 1 ? 'día' : 'días'} antes de la llegada`
+  const textoDias = `${dias} ${dias === 1 ? 'día' : 'días'}`
+
+  const despuesTexto =
+    despues > 0
+      ? `te devolvemos el ${despues} % del pago`
+      : 'no hay devolución'
+
+  let plazo = `hasta ${textoDias} antes de la llegada`
 
   if (fechaLlegada) {
-    const limite = aFecha(fechaLlegada)
-    limite.setDate(limite.getDate() - dias)
-    plazo = `hasta el ${fechaCorta(aTexto(limite))}`
+    const limite = sumarDias(fechaLlegada, -dias)
+    const hoy = hoyTexto()
+
+    // La fecha límite ya pasó: solo aplica la regla de "después"
+    if (limite < hoy) {
+      return (
+        `Tu llegada es en menos de ${textoDias}, así que ya pasó el plazo ` +
+        `de cancelación con devolución del ${antes} %. ` +
+        `Si cancelas, ${despuesTexto}.`
+      )
+    }
+
+    plazo = limite === hoy ? 'hasta hoy' : `hasta el ${fechaCorta(limite)}`
   }
 
   const primera =
@@ -95,10 +112,7 @@ export function explicarPolitica(politica, fechaLlegada) {
       ? `Cancelación gratis ${plazo}: te devolvemos el 100 % del pago.`
       : `Si cancelas ${plazo}, te devolvemos el ${antes} % del pago.`
 
-  const segunda =
-    despues > 0
-      ? `Si cancelas después, te devolvemos el ${despues} %.`
-      : 'Si cancelas después, no hay devolución.'
+  const segunda = `Si cancelas después, ${despuesTexto}.`
 
   return `${primera} ${segunda}`
 }
