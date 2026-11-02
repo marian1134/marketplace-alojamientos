@@ -427,8 +427,7 @@ function Reservar({
                 <div>
                   <h2>Tarjeta de crédito o débito</h2>
                   <p className="texto-suave">
-                    Pago seguro con nuestro proveedor de pagos (modo de
-                    pruebas).
+                    Pago seguro con nuestro proveedor de pagos.
                   </p>
                 </div>
                 <span className="marcas-tarjeta" aria-hidden="true">
@@ -488,19 +487,6 @@ function Reservar({
                     required
                   />
                 </label>
-              </div>
-
-              <div className="aviso aviso-azul">
-                <strong>🔒 Pago de prueba</strong>
-                <p>
-                  Esta es una operación en un entorno de pruebas. No se
-                  realizará ningún cobro real.
-                </p>
-                <p>
-                  Aprobada: <code>4242 4242 4242 4242</code> · Rechazada:{' '}
-                  <code>4000 0000 0000 0002</code> · Cualquier fecha
-                  futura y CVC de 3 dígitos.
-                </p>
               </div>
 
               <label className="casilla">

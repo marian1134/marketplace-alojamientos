@@ -64,9 +64,6 @@ public class ReservaService {
     private static final long MAXIMO_NOCHES = 90;
     private static final BigDecimal CIEN = new BigDecimal("100");
 
-    // Tarjeta de prueba que siempre se rechaza (las demás válidas se aprueban)
-    private static final String TARJETA_RECHAZADA = "4000000000000002";
-
     private static final Set<EstadoReserva> CANCELABLES = Set.of(
             EstadoReserva.CONFIRMADA,
             EstadoReserva.PENDIENTE_APROBACION
@@ -498,14 +495,6 @@ public class ReservaService {
 
         String numeroTarjeta = validarTarjeta(datos);
 
-        if (numeroTarjeta.equals(TARJETA_RECHAZADA)) {
-            throw new ResponseStatusException(
-                    HttpStatus.PAYMENT_REQUIRED,
-                    "El pago fue rechazado por el banco (tarjeta de prueba "
-                            + "rechazada). Intenta con otra tarjeta."
-            );
-        }
-
         ConfiguracionTarifas configuracion = obtenerConfiguracion();
         CotizacionResponse precio = calcularPrecio(
                 alojamiento,
@@ -869,15 +858,16 @@ public class ReservaService {
                 .divide(CIEN, 0, RoundingMode.HALF_UP);
     }
 
-    // Validación de la tarjeta de prueba: número (Luhn), fecha y CVC
+    // Validación de la tarjeta: número de 13 a 19 dígitos, fecha y CVC.
+    // El pago es simulado: cualquier número con ese formato se aprueba.
     private String validarTarjeta(ReservaRequest datos) {
 
         String numero = datos.numeroTarjeta().replaceAll("[\\s-]", "");
 
-        if (!numero.matches("\\d{13,19}") || !cumpleLuhn(numero)) {
+        if (!numero.matches("\\d{13,19}")) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "El número de tarjeta no es válido"
+                    "El número de tarjeta debe tener entre 13 y 19 dígitos"
             );
         }
 
@@ -906,28 +896,6 @@ public class ReservaService {
         }
 
         return numero;
-    }
-
-    private boolean cumpleLuhn(String numero) {
-
-        int suma = 0;
-        boolean doblar = false;
-
-        for (int i = numero.length() - 1; i >= 0; i--) {
-            int digito = numero.charAt(i) - '0';
-
-            if (doblar) {
-                digito *= 2;
-                if (digito > 9) {
-                    digito -= 9;
-                }
-            }
-
-            suma += digito;
-            doblar = !doblar;
-        }
-
-        return suma % 10 == 0;
     }
 
     private void devolverDinero(Pago pago, BigDecimal valor) {
