@@ -1062,9 +1062,14 @@ main.registro-pagina > section {
 }
 
 .buscador-icono {
+  display: grid;
   flex: 0 0 auto;
-  color: #123f39;
-  font-size: 28px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: #0d3b34;
+  background: #e8f3ee;
+  border-radius: 12px;
   line-height: 1;
 }
 
@@ -1960,4 +1965,20 @@ main.registro-pagina > section {
   margin-top: 32px;
   padding: 14px 28px;
   font-size: 16px;
+}
+
+.portada-boton-buscar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.portada-favorito {
+  display: grid;
+  place-items: center;
+}
+
+.portada-favorito.activo {
+  color: #e0245e;
 }

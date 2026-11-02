@@ -8,7 +8,11 @@ import {
   pesos,
 } from '../formato'
 
-function PanelAnfitrion({ usuario, onGestionarAlojamientos }) {
+function PanelAnfitrion({
+  usuario,
+  onGestionarAlojamientos,
+  onCalendario,
+}) {
   const [alojamientos, setAlojamientos] = useState([])
   const [reservas, setReservas] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -159,13 +163,22 @@ function PanelAnfitrion({ usuario, onGestionarAlojamientos }) {
             país.
           </p>
         </div>
-        <button
-          type="button"
-          className="boton-principal"
-          onClick={onGestionarAlojamientos}
-        >
-          + Publicar un alojamiento
-        </button>
+        <div className="viaje-acciones">
+          <button
+            type="button"
+            className="boton-secundario"
+            onClick={onCalendario}
+          >
+            ▦ Calendario y disponibilidad
+          </button>
+          <button
+            type="button"
+            className="boton-principal"
+            onClick={onGestionarAlojamientos}
+          >
+            + Publicar un alojamiento
+          </button>
+        </div>
       </div>
 
       {cargando ? (

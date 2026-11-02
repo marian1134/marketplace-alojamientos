@@ -14,7 +14,13 @@ public record DetalleAlojamientoResponse(
         Integer anfitrionDesde,
         List<LocalDate> nochesOcupadas,
         BigDecimal porcentajeServicio,
-        Politica politica
+        Politica politica,
+        Double promedioCalificacion,
+        long cantidadResenas,
+        List<Long> distribucionEstrellas,
+        List<ResenaResponse> resenas,
+        List<CalendarioResponse.Periodo> periodosDisponibles,
+        boolean esFavorito
 ) {
 
     public record Politica(
