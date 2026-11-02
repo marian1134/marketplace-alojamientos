@@ -4,6 +4,7 @@ import { Estrellas, IconoEstrella } from './Iconos'
 import {
   fechaCorta,
   fotoRespaldo,
+  horaBonita,
   NOMBRES_ESTADO_RESERVA,
   NOMBRES_POLITICA,
   pesos,
@@ -37,6 +38,10 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
   const [cancelando, setCancelando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const ventana = useRef(null)
+
+  // Check-in
+  const [haciendoCheckIn, setHaciendoCheckIn] = useState(null)
+  const [avisoCheckIn, setAvisoCheckIn] = useState(null)
 
   // Ventana para dejar reseña
   const ventanaResena = useRef(null)
@@ -112,6 +117,45 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
       setMensaje('No se pudo conectar con el servidor.')
     } finally {
       setCancelando(false)
+    }
+  }
+
+  async function hacerCheckIn(reserva) {
+    setHaciendoCheckIn(reserva.idReserva)
+    setAvisoCheckIn(null)
+
+    try {
+      const respuesta = await enviarDatos(
+        `/api/v1/reservas/${reserva.idReserva}/check-in`,
+        {}
+      )
+
+      if (!respuesta.ok) {
+        setAvisoCheckIn({
+          error: true,
+          texto: await leerError(respuesta, 'No se pudo hacer el check-in.'),
+        })
+        return
+      }
+
+      const actualizada = await respuesta.json()
+
+      setReservas((actuales) =>
+        actuales.map((item) =>
+          item.idReserva === actualizada.idReserva ? actualizada : item
+        )
+      )
+      setAvisoCheckIn({
+        error: false,
+        texto: `¡Check-in listo en ${actualizada.tituloAlojamiento}! Le avisamos al anfitrión. Disfruta tu estadía.`,
+      })
+    } catch {
+      setAvisoCheckIn({
+        error: true,
+        texto: 'No se pudo conectar con el servidor.',
+      })
+    } finally {
+      setHaciendoCheckIn(null)
     }
   }
 
@@ -202,6 +246,15 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
         })}
       </div>
 
+      {avisoCheckIn && (
+        <p
+          className={avisoCheckIn.error ? 'aviso aviso-error' : 'aviso'}
+          role={avisoCheckIn.error ? 'alert' : 'status'}
+        >
+          {avisoCheckIn.texto}
+        </p>
+      )}
+
       {cargando ? (
         <p className="cargando" role="status">
           Cargando tus viajes...
@@ -286,6 +339,23 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                   </p>
                 )}
 
+                {reserva.checkInEn ? (
+                  <p className="etiqueta-verde">
+                    ✓ Check-in hecho a las{' '}
+                    {horaBonita(reserva.checkInEn.slice(11, 16))}
+                  </p>
+                ) : (
+                  reserva.estado === 'CONFIRMADA' &&
+                  reserva.horaCheckIn && (
+                    <p className="texto-suave">
+                      Check-in: {fechaCorta(reserva.fechaLlegada)}, desde las{' '}
+                      {horaBonita(reserva.horaCheckIn)} hasta las 11:59 p. m.
+                      Si no lo haces ese día, el anfitrión podrá cancelar tu
+                      reserva.
+                    </p>
+                  )
+                )}
+
                 {reserva.calificacionResena && (
                   <p className="tu-resena">
                     Tu reseña:{' '}
@@ -294,6 +364,19 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                 )}
 
                 <div className="viaje-acciones">
+                  {reserva.puedeHacerCheckIn && (
+                    <button
+                      type="button"
+                      className="boton-principal"
+                      onClick={() => hacerCheckIn(reserva)}
+                      disabled={haciendoCheckIn === reserva.idReserva}
+                    >
+                      {haciendoCheckIn === reserva.idReserva
+                        ? 'Haciendo check-in...'
+                        : '✓ Hacer check-in'}
+                    </button>
+                  )}
+
                   {reserva.puedeResenar && (
                     <button
                       type="button"
