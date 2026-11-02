@@ -75,6 +75,7 @@ public class ReservaService {
     private final UsuarioRepository usuarioRepository;
     private final AlojamientoService alojamientoService;
     private final ImagenAlojamientoService imagenService;
+    private final AvisosReserva avisos;
 
     private final SecureRandom aleatorio = new SecureRandom();
 
@@ -89,7 +90,8 @@ public class ReservaService {
             ImagenAlojamientoRepository imagenRepository,
             UsuarioRepository usuarioRepository,
             AlojamientoService alojamientoService,
-            ImagenAlojamientoService imagenService) {
+            ImagenAlojamientoService imagenService,
+            AvisosReserva avisos) {
 
         this.reservaRepository = reservaRepository;
         this.nocheRepository = nocheRepository;
@@ -102,6 +104,7 @@ public class ReservaService {
         this.usuarioRepository = usuarioRepository;
         this.alojamientoService = alojamientoService;
         this.imagenService = imagenService;
+        this.avisos = avisos;
     }
 
     // ------------------------------------------------------------------
@@ -415,6 +418,8 @@ public class ReservaService {
         pago.setClaveIdempotencia(UUID.randomUUID().toString());
         pagoRepository.save(pago);
 
+        avisos.reservaCreada(reserva, pago, precio.total());
+
         return convertir(reserva);
     }
 
@@ -536,6 +541,8 @@ public class ReservaService {
         cancelacion.setEstadoFinal(EstadoReserva.CANCELADA.name());
         cancelacionRepository.save(cancelacion);
 
+        avisos.reservaCancelada(reserva, motivo.trim(), devolucion);
+
         return convertir(reserva);
     }
 
@@ -549,6 +556,8 @@ public class ReservaService {
 
         reserva.setEstado(EstadoReserva.CONFIRMADA);
         reservaRepository.save(reserva);
+
+        avisos.reservaAprobada(reserva);
 
         return convertir(reserva);
     }
@@ -570,6 +579,11 @@ public class ReservaService {
         reserva.setEstado(EstadoReserva.RECHAZADA);
         reserva.setMotivoRechazo(motivo.trim());
         reservaRepository.save(reserva);
+
+        avisos.reservaRechazada(
+                reserva,
+                pago != null ? pago.getMonto() : BigDecimal.ZERO
+        );
 
         return convertir(reserva);
     }
