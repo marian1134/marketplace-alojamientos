@@ -6,12 +6,15 @@ import com.inversioneslr.marketplace.dto.DetalleAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.MotivoRequest;
 import com.inversioneslr.marketplace.dto.ReservaRequest;
 import com.inversioneslr.marketplace.dto.ReservaResponse;
+import com.inversioneslr.marketplace.dto.ResultadoBusqueda;
 import com.inversioneslr.marketplace.service.ReservaService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -29,6 +32,27 @@ public class ReservaController {
             Authentication autenticacion) {
 
         return reservaService.obtenerDetalle(id, autenticacion.getName());
+    }
+
+    @GetMapping("/api/v1/busqueda")
+    public List<ResultadoBusqueda> buscar(
+            @RequestParam(required = false) String destino,
+            @RequestParam(required = false) List<String> ciudades,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate llegada,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
+            @RequestParam(required = false) Integer huespedes,
+            Authentication autenticacion) {
+
+        return reservaService.buscar(
+                destino,
+                ciudades,
+                llegada,
+                salida,
+                huespedes,
+                autenticacion.getName()
+        );
     }
 
     @PostMapping("/api/v1/reservas/cotizacion")

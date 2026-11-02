@@ -9,12 +9,14 @@ import DetalleAlojamiento from './components/DetalleAlojamiento'
 import Reservar from './components/Reservar'
 import MisViajes from './components/MisViajes'
 import PanelAnfitrion from './components/PanelAnfitrion'
+import ResultadosBusqueda from './components/ResultadosBusqueda'
 import { enviarDatos } from './api'
 import './App.css'
 import './reservas.css'
 
 // Pantallas que solo ve un usuario con sesión, con la barra superior
 const PANTALLAS_INTERNAS = [
+  'resultados',
   'detalle',
   'reservar',
   'viajes',
@@ -33,6 +35,9 @@ function App() {
   const [idAlojamiento, setIdAlojamiento] = useState(null)
   const [busqueda, setBusqueda] = useState(null)
   const [solicitudReserva, setSolicitudReserva] = useState(null)
+
+  // Pantalla a la que vuelve el botón "Volver" del detalle
+  const [origenDetalle, setOrigenDetalle] = useState('portada')
 
   // Alojamiento que quiso ver antes de iniciar sesión
   const [pendiente, setPendiente] = useState(null)
@@ -148,8 +153,19 @@ function App() {
     setPantalla('login')
   }
 
+  // "Buscar" abre la pantalla de resultados
+  function buscar(datosBusqueda) {
+    setBusqueda(datosBusqueda)
+    navegar('resultados')
+  }
+
   function verAlojamiento(id, datosBusqueda) {
     setIdAlojamiento(id)
+    setOrigenDetalle(
+      pantalla === 'resultados' || pantalla === 'viajes'
+        ? pantalla
+        : 'portada'
+    )
 
     if (datosBusqueda !== undefined) {
       setBusqueda(datosBusqueda)
@@ -180,6 +196,7 @@ function App() {
         onNavegar={navegar}
         onCerrarSesion={cerrarSesion}
         onVerAlojamiento={verAlojamiento}
+        onBuscar={buscar}
       />
     )
   }
@@ -194,6 +211,7 @@ function App() {
           onNavegar={navegar}
           onCerrarSesion={cerrarSesion}
           onVerAlojamiento={verAlojamiento}
+          onBuscar={buscar}
         />
       )
     }
@@ -208,12 +226,21 @@ function App() {
         />
 
         <main>
+          {pantalla === 'resultados' && busqueda && (
+            <ResultadosBusqueda
+              key={JSON.stringify(busqueda)}
+              busqueda={busqueda}
+              onBuscar={buscar}
+              onVerAlojamiento={(id) => verAlojamiento(id)}
+            />
+          )}
+
           {pantalla === 'detalle' && (
             <DetalleAlojamiento
               key={idAlojamiento}
               idAlojamiento={idAlojamiento}
               busqueda={busqueda}
-              onVolver={() => navegar('portada')}
+              onVolver={() => navegar(origenDetalle)}
               onReservar={(datos) => {
                 setSolicitudReserva(datos)
                 setBusqueda({
