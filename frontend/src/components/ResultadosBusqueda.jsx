@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { consultar, leerError } from '../api'
 import { NOMBRES_TIPO } from '../tipos'
 import { DESTINOS } from '../destinos'
-import { fechaCorta, hoyTexto, pesos } from '../formato'
+import { fechaCorta, fotoRespaldo, hoyTexto, pesos } from '../formato'
 
 const ORDENES = {
   recomendados: 'Recomendados',
@@ -23,6 +23,9 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
   const [error, setError] = useState('')
   const [tipo, setTipo] = useState('TODOS')
   const [orden, setOrden] = useState('recomendados')
+
+  // Se muestran de a 24 para que la página cargue rápido
+  const [cantidadVisible, setCantidadVisible] = useState(24)
 
   useEffect(() => {
     let activo = true
@@ -205,7 +208,10 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
           Ordenar por
           <select
             value={orden}
-            onChange={(evento) => setOrden(evento.target.value)}
+            onChange={(evento) => {
+              setOrden(evento.target.value)
+              setCantidadVisible(24)
+            }}
           >
             {Object.entries(ORDENES).map(([valor, texto]) => (
               <option key={valor} value={valor}>
@@ -224,7 +230,10 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
               type="button"
               className={tipo === valor ? 'activo' : ''}
               aria-pressed={tipo === valor}
-              onClick={() => setTipo(valor)}
+              onClick={() => {
+                setTipo(valor)
+                setCantidadVisible(24)
+              }}
             >
               {valor === 'TODOS' ? 'Todos' : NOMBRES_TIPO[valor]}
             </button>
@@ -287,7 +296,9 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
         </div>
       ) : (
         <ul className="grilla-resultados">
-          {visibles.map(({ alojamiento, imagenPortada, noches, totalEstimado }) => (
+          {visibles
+            .slice(0, cantidadVisible)
+            .map(({ alojamiento, imagenPortada, noches, totalEstimado }) => (
             <li key={alojamiento.idAlojamiento}>
               <button
                 type="button"
@@ -296,7 +307,12 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
               >
                 <span className="resultado-foto">
                   {imagenPortada ? (
-                    <img src={imagenPortada} alt="" loading="lazy" />
+                    <img
+                      src={imagenPortada}
+                      alt=""
+                      loading="lazy"
+                      onError={fotoRespaldo}
+                    />
                   ) : (
                     <span className="sin-foto sin-foto-baja">⌂</span>
                   )}
@@ -325,6 +341,21 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {!cargando && visibles.length > cantidadVisible && (
+        <div className="ver-mas">
+          <p className="texto-suave">
+            Mostrando {cantidadVisible} de {visibles.length}
+          </p>
+          <button
+            type="button"
+            className="boton-secundario"
+            onClick={() => setCantidadVisible(cantidadVisible + 24)}
+          >
+            Ver más alojamientos
+          </button>
+        </div>
       )}
     </section>
   )

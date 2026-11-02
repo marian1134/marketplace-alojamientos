@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
 import {
   fechaCorta,
+  fotoRespaldo,
   NOMBRES_ESTADO_RESERVA,
   NOMBRES_POLITICA,
   pesos,
@@ -174,7 +175,11 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
           {visibles.map((reserva) => (
             <li key={reserva.idReserva} className="tarjeta viaje">
               {reserva.imagenPortada ? (
-                <img src={reserva.imagenPortada} alt="" />
+                <img
+                  src={reserva.imagenPortada}
+                  alt=""
+                  onError={fotoRespaldo}
+                />
               ) : (
                 <div className="sin-foto sin-foto-baja">⌂</div>
               )}

@@ -1955,3 +1955,9 @@ main.registro-pagina > section {
   color: #087465;
   font-size: 14px;
 }
+
+.boton-ver-todos-grande {
+  margin-top: 32px;
+  padding: 14px 28px;
+  font-size: 16px;
+}

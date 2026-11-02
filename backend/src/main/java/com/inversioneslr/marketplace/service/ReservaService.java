@@ -200,41 +200,60 @@ public class ReservaService {
                 ? ChronoUnit.DAYS.between(llegada, salida)
                 : 0;
 
-        return alojamientoRepository
+        // Alojamientos con alguna noche ocupada en esas fechas (una consulta)
+        Set<Long> ocupados = conFechas
+                ? new java.util.HashSet<>(nocheRepository.alojamientosOcupados(
+                        llegada,
+                        salida.minusDays(1)
+                ))
+                : Set.of();
+
+        List<Alojamiento> encontrados = alojamientoRepository
                 .findByEstado(EstadoPublicacion.ACTIVA)
                 .stream()
                 .filter(alojamiento -> {
                     String ciudad = normalizar(alojamiento.getCiudad());
-                    String titulo = normalizar(alojamiento.getTitulo());
 
                     if (!listaCiudades.isEmpty()) {
                         return listaCiudades.contains(ciudad);
                     }
 
+                    // Busca en ciudad, título y ubicación (incluye el departamento)
                     return texto.isEmpty()
                             || ciudad.contains(texto)
-                            || titulo.contains(texto);
+                            || normalizar(alojamiento.getTitulo()).contains(texto)
+                            || normalizar(alojamiento.getDireccion()).contains(texto);
                 })
                 .filter(alojamiento -> huespedes == null
                         || alojamiento.getCapacidad() >= huespedes)
-                .filter(alojamiento -> !conFechas
-                        || !nocheRepository.existsByIdAlojamientoAndFechaBetween(
-                                alojamiento.getIdAlojamiento(),
-                                llegada,
-                                salida.minusDays(1)
-                        ))
+                .filter(alojamiento -> !ocupados.contains(
+                        alojamiento.getIdAlojamiento()
+                ))
+                .toList();
+
+        // Foto principal de cada alojamiento (una consulta)
+        java.util.Map<Long, String> portadas = new java.util.HashMap<>();
+
+        if (!encontrados.isEmpty()) {
+            imagenRepository
+                    .findByAlojamiento_IdAlojamientoInOrderByOrdenImagenAscIdImagenAsc(
+                            encontrados.stream()
+                                    .map(Alojamiento::getIdAlojamiento)
+                                    .toList()
+                    )
+                    .forEach(imagen -> portadas.putIfAbsent(
+                            imagen.getAlojamiento().getIdAlojamiento(),
+                            imagen.getUrlImagen()
+                    ));
+        }
+
+        return encontrados
+                .stream()
                 .map(alojamiento -> new ResultadoBusqueda(
                         alojamientoService.obtenerPorId(
                                 alojamiento.getIdAlojamiento()
                         ),
-                        imagenRepository
-                                .findByAlojamiento_IdAlojamientoOrderByOrdenImagenAscIdImagenAsc(
-                                        alojamiento.getIdAlojamiento()
-                                )
-                                .stream()
-                                .findFirst()
-                                .map(img -> img.getUrlImagen())
-                                .orElse(null),
+                        portadas.get(alojamiento.getIdAlojamiento()),
                         noches,
                         conFechas
                                 ? alojamiento.getPrecioNoche()

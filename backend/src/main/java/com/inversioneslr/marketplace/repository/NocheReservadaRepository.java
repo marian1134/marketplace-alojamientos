@@ -25,6 +25,14 @@ public interface NocheReservadaRepository
             LocalDate hasta
     );
 
+    // Alojamientos que tienen alguna noche ocupada en el rango (para la búsqueda)
+    @Query("select distinct n.idAlojamiento from NocheReservada n "
+            + "where n.fecha between :desde and :hasta")
+    List<Long> alojamientosOcupados(
+            @Param("desde") LocalDate desde,
+            @Param("hasta") LocalDate hasta
+    );
+
     @Modifying
     @Query("delete from NocheReservada n where n.reserva.idReserva = :idReserva")
     void liberarNoches(@Param("idReserva") Long idReserva);

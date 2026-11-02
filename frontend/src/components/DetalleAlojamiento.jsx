@@ -6,6 +6,7 @@ import {
   aTexto,
   explicarPolitica,
   fechaCorta,
+  fotoRespaldo,
   hoyTexto,
   NOMBRES_POLITICA,
   pesos,
@@ -252,6 +253,7 @@ function DetalleAlojamiento({
             <img
               src={portada.urlImagen}
               alt={`Foto de ${alojamiento.titulo}`}
+              onError={fotoRespaldo}
             />
           ) : (
             <div className="sin-foto">
@@ -279,7 +281,11 @@ function DetalleAlojamiento({
                 onClick={() => setImagenActual(indice)}
                 aria-label={`Ver foto ${indice + 1}`}
               >
-                <img src={imagen.urlImagen} alt="" />
+                <img
+                  src={imagen.urlImagen}
+                  alt=""
+                  onError={fotoRespaldo}
+                />
               </button>
             ))}
           </div>
