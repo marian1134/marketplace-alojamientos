@@ -27,11 +27,13 @@ public class CorreoService {
 
     public CorreoService(
             JavaMailSender emisor,
-            @Value("${spring.mail.username}") String remitente,
+            @Value("${spring.mail.username}") String correoRemitente,
+            @Value("${app.correo.nombre:Alojamientos Marketplace}") String nombreRemitente,
             CorreoEnviadoRepository correoRepository) {
 
         this.emisor = emisor;
-        this.remitente = remitente;
+        // Así se ve en la bandeja: "Alojamientos Marketplace <cuenta@gmail.com>"
+        this.remitente = nombreRemitente + " <" + correoRemitente + ">";
         this.correoRepository = correoRepository;
     }
 
@@ -63,6 +65,21 @@ public class CorreoService {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void enviarAviso(CorreoPendiente correo) {
+
+        CorreoEnviado prueba = correoRepository
+                .findById(correo.idCorreo())
+                .orElse(null);
+
+        // Los usuarios de los datos de prueba (…@…stayhub.co) no tienen buzón
+        // real: no se les envía para no recibir avisos de "dirección no encontrada"
+        if (correo.destinatario().toLowerCase().endsWith("stayhub.co")) {
+            if (prueba != null) {
+                prueba.setEstado(EstadoCorreo.FALLIDO);
+                prueba.setError("Usuario de prueba: no tiene buzón real");
+                correoRepository.save(prueba);
+            }
+            return;
+        }
 
         SimpleMailMessage mensaje = new SimpleMailMessage();
 
