@@ -4,6 +4,7 @@ import { NOMBRES_TIPO } from '../tipos'
 import {
   explicarPolitica,
   fechaCorta,
+  fotoRespaldo,
   NOMBRES_POLITICA,
   pesos,
 } from '../formato'
@@ -93,7 +94,11 @@ function Resumen({ alojamiento, imagen, entrada, salida, huespedes, precio, poli
   return (
     <aside className="tarjeta resumen-lateral">
       {imagen ? (
-        <img src={imagen} alt={`Foto de ${alojamiento.titulo}`} />
+        <img
+          src={imagen}
+          alt={`Foto de ${alojamiento.titulo}`}
+          onError={fotoRespaldo}
+        />
       ) : (
         <div className="sin-foto sin-foto-baja">⌂</div>
       )}
@@ -336,7 +341,7 @@ function Reservar({
 
               <div className="reserva-alojamiento">
                 {imagen ? (
-                  <img src={imagen} alt="" />
+                  <img src={imagen} alt="" onError={fotoRespaldo} />
                 ) : (
                   <div className="sin-foto sin-foto-baja">⌂</div>
                 )}

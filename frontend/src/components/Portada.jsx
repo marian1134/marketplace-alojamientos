@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NOMBRES_TIPO } from '../tipos'
+import { fotoRespaldo } from '../formato'
 import { DESTINOS } from '../destinos'
 import TarjetaDestino from './TarjetaDestino'
 
@@ -75,6 +76,7 @@ function Portada({
     useState('')
 
   const [alojamientos, setAlojamientos] = useState([])
+  const [destacados, setDestacados] = useState([])
   const [cargandoAlojamientos, setCargandoAlojamientos] =
     useState(true)
 
@@ -154,9 +156,25 @@ function Portada({
 
         const datos = await respuesta.json()
 
-        const alojamientosConPortada =
+        // 9 destacados, cada uno de un destino distinto
+        const ciudadesVistas = new Set()
+        const elegidos = []
+
+        for (const alojamiento of datos) {
+          if (elegidos.length === 9) {
+            break
+          }
+
+          if (!ciudadesVistas.has(alojamiento.ciudad)) {
+            ciudadesVistas.add(alojamiento.ciudad)
+            elegidos.push(alojamiento)
+          }
+        }
+
+        // Solo se piden las fotos de los destacados
+        const destacadosConPortada =
           await Promise.all(
-            datos.map(async (alojamiento) => {
+            elegidos.map(async (alojamiento) => {
               try {
                 const respuestaImagenes = await fetch(
                   `/api/v1/alojamientos/${alojamiento.idAlojamiento}/imagenes`,
@@ -167,38 +185,27 @@ function Portada({
                 )
 
                 if (!respuestaImagenes.ok) {
-                  return {
-                    ...alojamiento,
-                    imagenPortada: null,
-                  }
+                  return { ...alojamiento, imagenPortada: null }
                 }
 
-                const imagenes =
-                  await respuestaImagenes.json()
-
+                const imagenes = await respuestaImagenes.json()
                 const portada =
-                  imagenes.find(
-                    (imagen) => imagen.principal
-                  ) ?? imagenes[0]
+                  imagenes.find((imagen) => imagen.principal) ??
+                  imagenes[0]
 
                 return {
                   ...alojamiento,
-                  imagenPortada:
-                    portada?.urlImagen ?? null,
+                  imagenPortada: portada?.urlImagen ?? null,
                 }
               } catch {
-                return {
-                  ...alojamiento,
-                  imagenPortada: null,
-                }
+                return { ...alojamiento, imagenPortada: null }
               }
             })
           )
 
         if (activo) {
-          setAlojamientos(
-            alojamientosConPortada
-          )
+          setAlojamientos(datos)
+          setDestacados(destacadosConPortada)
         }
       } catch {
         if (activo) {
@@ -635,7 +642,7 @@ function Portada({
           </p>
         ) : (
           <div className="portada-tarjetas">
-            {alojamientos.map(
+            {destacados.map(
               (alojamiento) => (
                 <article
                   className="portada-tarjeta tarjeta-clic"
@@ -658,6 +665,7 @@ function Portada({
                           `Portada de ` +
                           alojamiento.titulo
                         }
+                        onError={fotoRespaldo}
                       />
                     ) : (
                       <div className="portada-sin-foto">
@@ -747,6 +755,29 @@ function Portada({
               )
             )}
           </div>
+        )}
+
+        {alojamientos.length > destacados.length && (
+          <button
+            type="button"
+            className="boton-ver-todos boton-ver-todos-grande"
+            onClick={() => {
+              if (!usuario) {
+                pedirSesion()
+                return
+              }
+
+              onBuscar({
+                destino: '',
+                entrada: '',
+                salida: '',
+                huespedes: '',
+              })
+            }}
+          >
+            Ver los {alojamientos.length.toLocaleString('es-CO')}{' '}
+            alojamientos
+          </button>
         )}
       </section>
       )}
