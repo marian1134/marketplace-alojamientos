@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { enviarDatos } from '../api'
+import CampoContrasena from './CampoContrasena'
 
 // Mínimo 8 caracteres, con una letra, un número y un símbolo
 const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u
 
-function RegistroUsuario() {
+function RegistroUsuario({ onSesion }) {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -12,9 +13,12 @@ function RegistroUsuario() {
     evento.preventDefault()
 
     const formulario = evento.currentTarget
-    const { confirmarContrasena, ...datos } = Object.fromEntries(
+    const { confirmarContrasena, celular, ...datos } = Object.fromEntries(
       new FormData(formulario)
     )
+
+    // Celular de Colombia: se guarda con el prefijo +57
+    datos.telefono = celular ? `+57${celular}` : ''
 
     setMensaje('')
 
@@ -32,6 +36,11 @@ function RegistroUsuario() {
 
     if (datos.contrasena !== confirmarContrasena) {
       setMensaje('Las contraseñas no coinciden.')
+      return
+    }
+
+    if (celular && !/^3\d{9}$/.test(celular)) {
+      setMensaje('El celular debe tener 10 dígitos y empezar por 3.')
       return
     }
 
@@ -72,10 +81,28 @@ function RegistroUsuario() {
       const usuario = await respuesta.json()
 
       setMensaje(
-        `¡Registro exitoso! Bienvenido/a, ${usuario.nombre}`
+        `¡Registro exitoso! Bienvenido/a, ${usuario.nombre}. Entrando...`
       )
 
+      // Inicia la sesión de una vez para que pueda buscar su destino
+      const respuestaSesion = await enviarDatos(
+        '/api/usuarios/login',
+        {
+          correo: datos.correo,
+          contrasena: datos.contrasena,
+        }
+      )
+
+      if (!respuestaSesion.ok) {
+        setMensaje(
+          `¡Registro exitoso, ${usuario.nombre}! Ahora inicia sesión con tu correo y contraseña.`
+        )
+        formulario.reset()
+        return
+      }
+
       formulario.reset()
+      onSesion?.(await respuestaSesion.json())
     } catch {
       setMensaje(
         'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
@@ -145,10 +172,9 @@ function RegistroUsuario() {
         <div>
           <label htmlFor="contrasena">Contraseña</label>
 
-          <input
+          <CampoContrasena
             id="contrasena"
             name="contrasena"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
@@ -166,10 +192,9 @@ function RegistroUsuario() {
             Confirmar contraseña
           </label>
 
-          <input
+          <CampoContrasena
             id="confirmarContrasena"
             name="confirmarContrasena"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
@@ -178,17 +203,32 @@ function RegistroUsuario() {
         </div>
 
         <div>
-          <label htmlFor="telefono">Teléfono (opcional)</label>
+          <label htmlFor="celular">Celular (opcional)</label>
 
-          <input
-            id="telefono"
-            name="telefono"
-            type="tel"
-            autoComplete="tel"
-            maxLength={16}
-            pattern="[+]?[0-9]{7,15}"
-            title="Entre 7 y 15 dígitos. Puede empezar con +."
-          />
+          <div className="campo-celular">
+            <span aria-hidden="true">🇨🇴 +57</span>
+            <input
+              id="celular"
+              name="celular"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              placeholder="300 123 4567"
+              maxLength={10}
+              pattern="3[0-9]{9}"
+              title="10 dígitos que empiezan por 3"
+              aria-describedby="ayuda-celular"
+              onInput={(evento) => {
+                evento.currentTarget.value = evento.currentTarget.value
+                  .replace(/\D/g, '')
+                  .slice(0, 10)
+              }}
+            />
+          </div>
+
+          <small id="ayuda-celular">
+            10 dígitos, empieza por 3. Ej.: 300 123 4567
+          </small>
         </div>
 
         <button type="submit" disabled={enviando}>

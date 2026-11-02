@@ -5,6 +5,7 @@ import com.inversioneslr.marketplace.model.TipoAlojamiento;
 import com.inversioneslr.marketplace.model.TipoPolitica;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -49,6 +50,13 @@ public record AlojamientoRequest(
 
         ModoReserva modoReserva,
 
-        TipoPolitica tipoPolitica
+        TipoPolitica tipoPolitica,
+
+        // Opcionales: si no llegan se usa 1
+        @Min(1) @Max(50)
+        Integer habitaciones,
+
+        @Min(1) @Max(50)
+        Integer banos
 ) {
 }

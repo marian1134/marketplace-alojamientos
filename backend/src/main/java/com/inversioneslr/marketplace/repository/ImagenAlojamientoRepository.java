@@ -14,4 +14,9 @@ public interface ImagenAlojamientoRepository
     );
 
     long countByAlojamiento_IdAlojamiento(Long idAlojamiento);
+
+    // Imágenes de varios alojamientos en una sola consulta (búsqueda)
+    List<ImagenAlojamiento> findByAlojamiento_IdAlojamientoInOrderByOrdenImagenAscIdImagenAsc(
+            java.util.Collection<Long> idsAlojamientos
+    );
 }

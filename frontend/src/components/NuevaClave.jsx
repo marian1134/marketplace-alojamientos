@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { enviarDatos } from '../api'
+import CampoContrasena from './CampoContrasena'
 
 function NuevaClave({ token, onVolver }) {
   const [mensaje, setMensaje] = useState('')
@@ -94,10 +95,9 @@ function NuevaClave({ token, onVolver }) {
               Nueva contraseña
             </label>
 
-            <input
+            <CampoContrasena
               id="nueva-contrasena"
               name="contrasena"
-              type="password"
               autoComplete="new-password"
               minLength={8}
               maxLength={72}
@@ -110,10 +110,9 @@ function NuevaClave({ token, onVolver }) {
               Confirmar contraseña
             </label>
 
-            <input
+            <CampoContrasena
               id="confirmar-contrasena"
               name="confirmacion"
-              type="password"
               autoComplete="new-password"
               minLength={8}
               maxLength={72}

@@ -4,45 +4,68 @@ import InicioSesion from './components/InicioSesion'
 import NuevaClave from './components/NuevaClave'
 import Alojamientos from './components/Alojamientos'
 import Portada from './components/Portada'
-import { enviarDatos } from './api'
+import Encabezado from './components/Encabezado'
+import DetalleAlojamiento from './components/DetalleAlojamiento'
+import Reservar from './components/Reservar'
+import MisViajes from './components/MisViajes'
+import PanelAnfitrion from './components/PanelAnfitrion'
+import ResultadosBusqueda from './components/ResultadosBusqueda'
+import MisFavoritos from './components/MisFavoritos'
+import CalendarioAnfitrion from './components/CalendarioAnfitrion'
+import RedDeSeguridad from './components/RedDeSeguridad'
+import { consultar, enviarDatos } from './api'
 import './App.css'
+import './reservas.css'
+
+// Pantallas que solo ve un usuario con sesión, con la barra superior
+const PANTALLAS_INTERNAS = [
+  'resultados',
+  'detalle',
+  'reservar',
+  'viajes',
+  'panel',
+  'alojamientos',
+  'favoritos',
+  'calendario',
+]
 
 function App() {
   const [pantalla, setPantalla] = useState('portada')
-  const [vistaUsuario, setVistaUsuario] =
-    useState('perfil')
   const [usuario, setUsuario] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [cerrando, setCerrando] = useState(false)
-  const [mensajeSesion, setMensajeSesion] =
-    useState('')
+  const [mensajeSesion, setMensajeSesion] = useState('')
+
+  // Alojamiento elegido, búsqueda de la portada y reserva en curso
+  const [idAlojamiento, setIdAlojamiento] = useState(null)
+  const [busqueda, setBusqueda] = useState(null)
+  const [solicitudReserva, setSolicitudReserva] = useState(null)
+
+  // Pantalla a la que vuelve el botón "Volver" del detalle
+  const [origenDetalle, setOrigenDetalle] = useState('portada')
+
+  // Ids de los alojamientos guardados con el corazón
+  const [favoritos, setFavoritos] = useState(() => new Set())
+
+  // Alojamiento que quiso ver antes de iniciar sesión
+  const [pendiente, setPendiente] = useState(null)
 
   const [token, setToken] = useState(() =>
-    new URLSearchParams(window.location.search).get(
-      'token'
-    )
+    new URLSearchParams(window.location.search).get('token')
   )
 
   const esRecuperacion = token !== null
   const esLogin = pantalla === 'login'
-
-  const mostrandoAlojamientos =
-    usuario &&
-    pantalla === 'perfil' &&
-    vistaUsuario === 'alojamientos'
 
   useEffect(() => {
     let activo = true
 
     async function consultarSesion() {
       try {
-        const respuesta = await fetch(
-          '/api/usuarios/perfil',
-          {
-            credentials: 'same-origin',
-            cache: 'no-store',
-          }
-        )
+        const respuesta = await fetch('/api/usuarios/perfil', {
+          credentials: 'same-origin',
+          cache: 'no-store',
+        })
 
         if (respuesta.status === 401) {
           if (activo) {
@@ -52,9 +75,7 @@ function App() {
         }
 
         if (!respuesta.ok) {
-          throw new Error(
-            'No se pudo consultar la sesión'
-          )
+          throw new Error('No se pudo consultar la sesión')
         }
 
         const datos = await respuesta.json()
@@ -82,11 +103,75 @@ function App() {
     }
   }, [])
 
+  // Cuando hay sesión se cargan los favoritos del usuario
+  useEffect(() => {
+    if (!usuario) {
+      return
+    }
+
+    let activo = true
+
+    consultar('/api/v1/favoritos/ids')
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : []))
+      .then((ids) => {
+        if (activo) {
+          setFavoritos(new Set(ids))
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      activo = false
+    }
+  }, [usuario])
+
+  // Agrega o quita un favorito (se pinta de una vez y luego se guarda)
+  async function cambiarFavorito(idAlojamiento) {
+    const yaEsta = favoritos.has(idAlojamiento)
+    const nuevos = new Set(favoritos)
+
+    if (yaEsta) {
+      nuevos.delete(idAlojamiento)
+    } else {
+      nuevos.add(idAlojamiento)
+    }
+
+    setFavoritos(nuevos)
+
+    try {
+      const respuesta = await enviarDatos(
+        `/api/v1/favoritos/${idAlojamiento}`,
+        {},
+        yaEsta ? 'DELETE' : 'POST'
+      )
+
+      if (!respuesta.ok) {
+        throw new Error('No se pudo guardar el favorito')
+      }
+    } catch {
+      setFavoritos(favoritos)
+    }
+  }
+
+  function navegar(destino) {
+    setMensajeSesion('')
+    setPantalla(destino)
+    window.scrollTo({ top: 0 })
+  }
+
+  // Después de iniciar sesión o registrarse: a buscar destino
   function recibirSesion(datos) {
     setUsuario(datos)
-    setVistaUsuario('perfil')
-    setPantalla('perfil')
     setMensajeSesion('')
+
+    if (pendiente) {
+      setIdAlojamiento(pendiente)
+      setPendiente(null)
+      navegar('detalle')
+      return
+    }
+
+    navegar(datos.rol === 'ANFITRION' ? 'panel' : 'portada')
   }
 
   async function cerrarSesion() {
@@ -94,20 +179,16 @@ function App() {
     setMensajeSesion('')
 
     try {
-      const respuesta = await enviarDatos(
-        '/api/usuarios/logout',
-        {}
-      )
+      const respuesta = await enviarDatos('/api/usuarios/logout', {})
 
       if (!respuesta.ok) {
-        throw new Error(
-          'No se pudo cerrar la sesión'
-        )
+        throw new Error('No se pudo cerrar la sesión')
       }
 
       setUsuario(null)
-      setVistaUsuario('perfil')
-      setPantalla('portada')
+      setFavoritos(new Set())
+      setSolicitudReserva(null)
+      navegar('portada')
     } catch {
       setMensajeSesion(
         'No se pudo cerrar la sesión. Intenta nuevamente.'
@@ -124,51 +205,179 @@ function App() {
     window.history.replaceState(
       null,
       '',
-      direccion.pathname +
-        direccion.search +
-        direccion.hash
+      direccion.pathname + direccion.search + direccion.hash
     )
 
     setToken(null)
     setPantalla('login')
   }
 
-  function mostrarPortada() {
-    setPantalla('portada')
-    setVistaUsuario('perfil')
-    setMensajeSesion('')
+  // "Buscar" abre la pantalla de resultados
+  function buscar(datosBusqueda) {
+    setBusqueda(datosBusqueda)
+    navegar('resultados')
   }
 
-  function mostrarLogin() {
-    setPantalla('login')
-    setVistaUsuario('perfil')
-    setMensajeSesion('')
+  function verAlojamiento(id, datosBusqueda) {
+    setIdAlojamiento(id)
+    setOrigenDetalle(
+      ['resultados', 'viajes', 'favoritos'].includes(pantalla)
+        ? pantalla
+        : 'portada'
+    )
+
+    if (datosBusqueda !== undefined) {
+      setBusqueda(datosBusqueda)
+    }
+
+    navegar('detalle')
   }
 
-  function mostrarRegistro() {
-    setPantalla('registro')
-    setVistaUsuario('perfil')
-    setMensajeSesion('')
+  function pedirCuenta(destino, idDeseado) {
+    setPendiente(idDeseado ?? null)
+    navegar(destino)
   }
 
-  function mostrarPerfil() {
-    setPantalla('perfil')
-    setVistaUsuario('perfil')
-    setMensajeSesion('')
+  if (!esRecuperacion && cargando) {
+    return (
+      <p className="cargando" role="status">
+        Comprobando sesión...
+      </p>
+    )
   }
 
-  if (
-    !esRecuperacion &&
-    !cargando &&
-    pantalla === 'portada'
-  ) {
+  if (!esRecuperacion && pantalla === 'portada') {
     return (
       <Portada
         usuario={usuario}
-        onIniciarSesion={mostrarLogin}
-        onRegistrarse={mostrarRegistro}
-        onPerfil={mostrarPerfil}
+        onIniciarSesion={(id) => pedirCuenta('login', id)}
+        onRegistrarse={(id) => pedirCuenta('registro', id)}
+        onNavegar={navegar}
+        onCerrarSesion={cerrarSesion}
+        onVerAlojamiento={verAlojamiento}
+        onBuscar={buscar}
+        favoritos={favoritos}
+        onFavorito={cambiarFavorito}
       />
+    )
+  }
+
+  if (!esRecuperacion && PANTALLAS_INTERNAS.includes(pantalla)) {
+    if (!usuario) {
+      return (
+        <Portada
+          usuario={null}
+          onIniciarSesion={(id) => pedirCuenta('login', id)}
+          onRegistrarse={(id) => pedirCuenta('registro', id)}
+          onNavegar={navegar}
+          onCerrarSesion={cerrarSesion}
+          onVerAlojamiento={verAlojamiento}
+          onBuscar={buscar}
+          favoritos={favoritos}
+          onFavorito={cambiarFavorito}
+        />
+      )
+    }
+
+    return (
+      <div className="pagina-interna">
+        <Encabezado
+          usuario={usuario}
+          pantalla={pantalla}
+          onNavegar={navegar}
+          onCerrarSesion={cerrarSesion}
+        />
+
+        <main>
+          <RedDeSeguridad
+            key={pantalla}
+            onVolver={() => navegar('portada')}
+          >
+          {pantalla === 'resultados' && busqueda && (
+            <ResultadosBusqueda
+              key={JSON.stringify(busqueda)}
+              busqueda={busqueda}
+              onBuscar={buscar}
+              onVerAlojamiento={(id) => verAlojamiento(id)}
+              favoritos={favoritos}
+              onFavorito={cambiarFavorito}
+            />
+          )}
+
+          {pantalla === 'detalle' && (
+            <DetalleAlojamiento
+              key={idAlojamiento}
+              idAlojamiento={idAlojamiento}
+              busqueda={busqueda}
+              favoritos={favoritos}
+              onFavorito={cambiarFavorito}
+              onVolver={() => navegar(origenDetalle)}
+              onReservar={(datos) => {
+                setSolicitudReserva(datos)
+                setBusqueda({
+                  entrada: datos.entrada,
+                  salida: datos.salida,
+                  huespedes: datos.huespedes,
+                })
+                navegar('reservar')
+              }}
+            />
+          )}
+
+          {pantalla === 'reservar' && solicitudReserva && (
+            <Reservar
+              reserva={solicitudReserva}
+              onVolver={() => navegar('detalle')}
+              onVerViajes={() => {
+                setSolicitudReserva(null)
+                navegar('viajes')
+              }}
+              onExplorar={() => {
+                setSolicitudReserva(null)
+                setBusqueda(null)
+                navegar('portada')
+              }}
+            />
+          )}
+
+          {pantalla === 'viajes' && (
+            <MisViajes
+              onExplorar={() => navegar('portada')}
+              onVerAlojamiento={(id) => verAlojamiento(id, null)}
+            />
+          )}
+
+          {pantalla === 'panel' && (
+            <PanelAnfitrion
+              usuario={usuario}
+              onGestionarAlojamientos={() => navegar('alojamientos')}
+              onCalendario={() => navegar('calendario')}
+            />
+          )}
+
+          {pantalla === 'favoritos' && (
+            <MisFavoritos
+              favoritos={favoritos}
+              onFavorito={cambiarFavorito}
+              onExplorar={() => navegar('portada')}
+              onVerAlojamiento={(id) => verAlojamiento(id, null)}
+            />
+          )}
+
+          {pantalla === 'calendario' && (
+            <CalendarioAnfitrion
+              onGestionarAlojamientos={() => navegar('alojamientos')}
+            />
+          )}
+
+          {pantalla === 'alojamientos' && (
+            <section className="contenedor contenedor-estrecho">
+              <Alojamientos onVolver={() => navegar('panel')} />
+            </section>
+          )}
+          </RedDeSeguridad>
+        </main>
+      </div>
     )
   }
 
@@ -176,8 +385,6 @@ function App() {
 
   if (esRecuperacion) {
     titulo = 'Recupera tu cuenta'
-  } else if (mostrandoAlojamientos) {
-    titulo = 'Comparte tu alojamiento'
   } else if (usuario) {
     titulo = 'Bienvenido a StayHub'
   } else if (esLogin) {
@@ -190,59 +397,32 @@ function App() {
         <button
           type="button"
           className="registro-marca boton-marca"
-          onClick={mostrarPortada}
+          onClick={() => navegar('portada')}
+          aria-label="StayHub, ir a la portada"
         >
-          StayHub
+          ← StayHub
         </button>
 
         <div className="registro-bienvenida">
           <h2>{titulo}</h2>
 
           <p>
-            Encuentra tu próximo destino o comparte tu
-            alojamiento.
+            Encuentra tu próximo destino o comparte tu alojamiento.
           </p>
         </div>
       </aside>
 
       <section>
-        {!esRecuperacion &&
-          !mostrandoAlojamientos && (
-            <button
-              type="button"
-              className="boton-enlace volver-portada"
-              onClick={mostrarPortada}
-            >
-              ← Volver a la portada
-            </button>
-          )}
-
         {esRecuperacion ? (
-          <NuevaClave
-            token={token}
-            onVolver={volverAlInicio}
-          />
-        ) : cargando ? (
-          <p role="status">
-            Comprobando sesión...
-          </p>
-        ) : mostrandoAlojamientos ? (
-          <Alojamientos
-            onVolver={() =>
-              setVistaUsuario('perfil')
-            }
-          />
+          <NuevaClave token={token} onVolver={volverAlInicio} />
         ) : usuario ? (
           <section>
             <h1>Hola, {usuario.nombre}</h1>
 
-            <p>
-              Tu sesión está iniciada en StayHub.
-            </p>
+            <p>Tu sesión está iniciada en StayHub.</p>
 
             <dl className="perfil-datos">
               <dt>Nombre</dt>
-
               <dd>{usuario.nombre}</dd>
 
               <dt>Correo electrónico</dt>
@@ -250,9 +430,7 @@ function App() {
 
               <dt>Tipo de cuenta</dt>
               <dd>
-                {usuario.rol === 'ANFITRION'
-                  ? 'Anfitrión'
-                  : 'Huésped'}
+                {usuario.rol === 'ANFITRION' ? 'Anfitrión' : 'Huésped'}
               </dd>
 
               <dt>Teléfono</dt>
@@ -260,15 +438,29 @@ function App() {
             </dl>
 
             <div className="acciones-perfil">
+              <button
+                type="button"
+                className="boton-gestionar"
+                onClick={() => navegar('portada')}
+              >
+                Buscar mi destino
+              </button>
+
+              <button
+                type="button"
+                className="boton-gestionar"
+                onClick={() => navegar('viajes')}
+              >
+                Mis viajes
+              </button>
+
               {usuario.rol === 'ANFITRION' && (
                 <button
                   type="button"
                   className="boton-gestionar"
-                  onClick={() =>
-                    setVistaUsuario('alojamientos')
-                  }
+                  onClick={() => navegar('panel')}
                 >
-                  Gestionar alojamientos
+                  Panel anfitrión
                 </button>
               )}
 
@@ -278,51 +470,34 @@ function App() {
                 onClick={cerrarSesion}
                 disabled={cerrando}
               >
-                {cerrando
-                  ? 'Cerrando sesión...'
-                  : 'Cerrar sesión'}
+                {cerrando ? 'Cerrando sesión...' : 'Cerrar sesión'}
               </button>
             </div>
           </section>
         ) : (
           <>
             {esLogin ? (
-              <InicioSesion
-                onSesion={recibirSesion}
-              />
+              <InicioSesion onSesion={recibirSesion} />
             ) : (
-              <RegistroUsuario />
+              <RegistroUsuario onSesion={recibirSesion} />
             )}
 
             <p className="cambio-pantalla">
-              {esLogin
-                ? '¿No tienes cuenta? '
-                : '¿Ya tienes cuenta? '}
+              {esLogin ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '}
 
               <button
                 type="button"
                 className="boton-enlace"
-                onClick={() => {
-                  if (esLogin) {
-                    mostrarRegistro()
-                  } else {
-                    mostrarLogin()
-                  }
-                }}
+                onClick={() => navegar(esLogin ? 'registro' : 'login')}
               >
-                {esLogin
-                  ? 'Regístrate'
-                  : 'Inicia sesión'}
+                {esLogin ? 'Regístrate' : 'Inicia sesión'}
               </button>
             </p>
           </>
         )}
 
         {mensajeSesion && (
-          <p
-            className="mensaje-sesion"
-            role="status"
-          >
+          <p className="mensaje-sesion" role="status">
             {mensajeSesion}
           </p>
         )}
