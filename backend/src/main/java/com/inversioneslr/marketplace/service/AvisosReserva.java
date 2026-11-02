@@ -2,6 +2,7 @@ package com.inversioneslr.marketplace.service;
 
 import com.inversioneslr.marketplace.model.Alojamiento;
 import com.inversioneslr.marketplace.model.CorreoEnviado;
+import com.inversioneslr.marketplace.model.Cotizacion;
 import com.inversioneslr.marketplace.model.EstadoReserva;
 import com.inversioneslr.marketplace.model.Notificacion;
 import com.inversioneslr.marketplace.model.Pago;
@@ -28,6 +29,9 @@ public class AvisosReserva {
     private static final DateTimeFormatter FECHA =
             DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", COLOMBIA);
 
+    private static final DateTimeFormatter FECHA_HORA =
+            DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy, h:mm a", COLOMBIA);
+
     private static final String FIRMA = "\n\nEquipo StayHub";
 
     private final ApplicationEventPublisher publicador;
@@ -45,22 +49,26 @@ public class AvisosReserva {
     }
 
     // El huésped pagó: reserva confirmada o solicitud enviada al anfitrión
-    public void reservaCreada(Reserva reserva, Pago pago, BigDecimal total) {
+    public void reservaCreada(Reserva reserva, Pago pago, Cotizacion cotizacion) {
 
         Usuario huesped = reserva.getHuesped();
         Usuario anfitrion = reserva.getAlojamiento().getAnfitrion();
         boolean confirmada = reserva.getEstado() == EstadoReserva.CONFIRMADA;
+        BigDecimal total = pago.getMonto();
+        String moneda = pago.getMoneda();
 
         String pagoTexto = "\n\nPago recibido\n"
-                + "Total pagado: " + dinero(total) + "\n"
+                + "Total pagado: " + dinero(total, moneda) + "\n"
                 + "Tarjeta terminada en " + pago.getUltimos4() + "\n"
                 + "Referencia del pago: " + pago.getReferencia();
+
+        comprobantePago(reserva, pago, cotizacion);
 
         if (confirmada) {
             avisar(huesped, "RESERVA_CONFIRMADA", reserva,
                     "Tu reserva " + reserva.getCodigo() + " está confirmada",
                     "Tu reserva en " + titulo(reserva) + " está confirmada. "
-                            + "Pagaste " + dinero(total) + ".",
+                            + "Pagaste " + dinero(total, moneda) + ".",
                     "Hola, " + huesped.getNombre() + ".\n\n"
                             + "¡Tu reserva está confirmada! Estos son los datos:"
                             + datosReserva(reserva)
@@ -75,7 +83,7 @@ public class AvisosReserva {
                     "Hola, " + anfitrion.getNombre() + ".\n\n"
                             + huesped.getNombre() + " reservó y pagó tu alojamiento."
                             + datosReserva(reserva)
-                            + "\nTotal pagado por el huésped: " + dinero(total));
+                            + "\nTotal pagado por el huésped: " + dinero(total, moneda));
         } else {
             avisar(huesped, "SOLICITUD_ENVIADA", reserva,
                     "Recibimos tu solicitud de reserva " + reserva.getCodigo(),
@@ -95,7 +103,7 @@ public class AvisosReserva {
                     "Hola, " + anfitrion.getNombre() + ".\n\n"
                             + huesped.getNombre() + " quiere reservar tu alojamiento y ya pagó."
                             + datosReserva(reserva)
-                            + "\nTotal pagado por el huésped: " + dinero(total)
+                            + "\nTotal pagado por el huésped: " + dinero(total, moneda)
                             + "\n\nEntra a tu panel de anfitrión en StayHub "
                             + "para aprobar o rechazar la solicitud.");
         }
@@ -117,30 +125,34 @@ public class AvisosReserva {
     }
 
     // El anfitrión rechazó la solicitud: se devuelve todo
-    public void reservaRechazada(Reserva reserva, BigDecimal devolucion) {
+    public void reservaRechazada(Reserva reserva, BigDecimal devolucion, String moneda) {
 
         Usuario huesped = reserva.getHuesped();
 
         avisar(huesped, "RESERVA_RECHAZADA", reserva,
                 "Tu solicitud de reserva " + reserva.getCodigo() + " fue rechazada",
                 "El anfitrión rechazó tu solicitud para " + titulo(reserva)
-                        + ". Te devolvemos " + dinero(devolucion) + ".",
+                        + ". Te devolvemos " + dinero(devolucion, moneda) + ".",
                 "Hola, " + huesped.getNombre() + ".\n\n"
                         + "El anfitrión no pudo aceptar tu solicitud."
                         + datosReserva(reserva)
                         + "\nMotivo: " + reserva.getMotivoRechazo()
-                        + "\n\nTe devolveremos " + dinero(devolucion)
+                        + "\n\nTe devolveremos " + dinero(devolucion, moneda)
                         + " a la misma tarjeta con la que pagaste.");
     }
 
     // El huésped canceló su reserva
-    public void reservaCancelada(Reserva reserva, String motivo, BigDecimal devolucion) {
+    public void reservaCancelada(
+            Reserva reserva,
+            String motivo,
+            BigDecimal devolucion,
+            String moneda) {
 
         Usuario huesped = reserva.getHuesped();
         Usuario anfitrion = reserva.getAlojamiento().getAnfitrion();
 
         String devolucionTexto = devolucion.signum() > 0
-                ? "Te devolveremos " + dinero(devolucion)
+                ? "Te devolveremos " + dinero(devolucion, moneda)
                         + " a la misma tarjeta con la que pagaste."
                 : "Según la política de cancelación del alojamiento, "
                         + "esta cancelación no tiene devolución.";
@@ -148,7 +160,7 @@ public class AvisosReserva {
         avisar(huesped, "RESERVA_CANCELADA", reserva,
                 "Cancelaste tu reserva " + reserva.getCodigo(),
                 "Cancelaste tu reserva en " + titulo(reserva)
-                        + ". Devolución: " + dinero(devolucion) + ".",
+                        + ". Devolución: " + dinero(devolucion, moneda) + ".",
                 "Hola, " + huesped.getNombre() + ".\n\n"
                         + "Tu reserva quedó cancelada."
                         + datosReserva(reserva)
@@ -164,6 +176,50 @@ public class AvisosReserva {
                         + "\nMotivo: " + motivo
                         + "\n\nEsas fechas pueden volver a estar disponibles "
                         + "según tu política de cancelación.");
+    }
+
+    // Comprobante de pago: correo aparte con el desglose del cobro
+    private void comprobantePago(Reserva reserva, Pago pago, Cotizacion cotizacion) {
+
+        Usuario huesped = reserva.getHuesped();
+        long noches = java.time.temporal.ChronoUnit.DAYS.between(
+                reserva.getFechaLlegada(),
+                reserva.getFechaSalida()
+        );
+
+        BigDecimal subtotal = cotizacion.getPrecioNoche()
+                .multiply(BigDecimal.valueOf(noches));
+
+        String conversion = "USD".equals(pago.getMoneda())
+                ? "\nTotal en pesos: " + dinero(cotizacion.getTotal(), "COP")
+                        + "\nCobrado en dólares: " + dinero(pago.getMonto(), "USD")
+                : "";
+
+        String texto = "Hola, " + huesped.getNombre() + ".\n\n"
+                + "Este es el comprobante de tu pago en StayHub."
+                + "\n\nCOMPROBANTE DE PAGO"
+                + "\nNúmero de comprobante: " + pago.getReferencia()
+                + "\nFecha del pago: " + java.time.LocalDateTime.now(java.time.ZoneId.of("America/Bogota")).format(FECHA_HORA)
+                + "\nMétodo de pago: tarjeta terminada en " + pago.getUltimos4()
+                + "\nMoneda: " + nombreMoneda(pago.getMoneda())
+                + datosReserva(reserva)
+                + "\nDETALLE DEL COBRO"
+                + "\n" + dinero(cotizacion.getPrecioNoche(), "COP") + " x " + noches
+                + (noches == 1 ? " noche" : " noches") + ": " + dinero(subtotal, "COP")
+                + "\nTarifa de limpieza: " + dinero(cotizacion.getTarifaLimpieza(), "COP")
+                + "\nTarifa de servicio StayHub: " + dinero(cotizacion.getTarifaServicio(), "COP")
+                + (cotizacion.getDescuentos().signum() > 0
+                        ? "\nDescuento: -" + dinero(cotizacion.getDescuentos(), "COP")
+                        : "")
+                + conversion
+                + "\n\nTOTAL PAGADO: " + dinero(pago.getMonto(), pago.getMoneda())
+                + "\n\nGuarda este correo como soporte de tu pago.";
+
+        avisar(huesped, "COMPROBANTE_PAGO", reserva,
+                "Comprobante de pago - reserva " + reserva.getCodigo(),
+                "Pagaste " + dinero(pago.getMonto(), pago.getMoneda())
+                        + " por tu reserva en " + titulo(reserva) + ".",
+                texto);
     }
 
     // ------------------------------------------------------------------
@@ -222,12 +278,24 @@ public class AvisosReserva {
         return reserva.getAlojamiento().getTitulo();
     }
 
-    private String dinero(BigDecimal valor) {
+    // $1.620.000 COP  o  US$405,00 USD
+    private String dinero(BigDecimal valor, String moneda) {
+
+        if ("USD".equals(moneda)) {
+            NumberFormat formato = NumberFormat.getNumberInstance(COLOMBIA);
+            formato.setMinimumFractionDigits(2);
+            formato.setMaximumFractionDigits(2);
+            return "US$" + formato.format(valor) + " USD";
+        }
 
         NumberFormat formato = NumberFormat.getCurrencyInstance(COLOMBIA);
         formato.setMaximumFractionDigits(0);
 
         return formato.format(valor) + " COP";
+    }
+
+    private String nombreMoneda(String moneda) {
+        return "USD".equals(moneda) ? "Dólares (USD)" : "Pesos colombianos (COP)";
     }
 
     private static String recortar(String texto, int maximo) {

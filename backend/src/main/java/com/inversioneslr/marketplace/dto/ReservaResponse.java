@@ -41,6 +41,10 @@ public record ReservaResponse(
         boolean puedeCancelar,
         LocalDateTime creadaEn,
         boolean puedeResenar,
-        Integer calificacionResena
+        Integer calificacionResena,
+
+        // Lo que se cobró de verdad, en la moneda elegida (COP o USD)
+        BigDecimal montoPagado,
+        String monedaPago
 ) {
 }

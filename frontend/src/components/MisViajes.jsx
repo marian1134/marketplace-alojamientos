@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
 import { Estrellas, IconoEstrella } from './Iconos'
 import {
+  dinero,
   fechaCorta,
   fotoRespaldo,
   NOMBRES_ESTADO_RESERVA,
   NOMBRES_POLITICA,
-  pesos,
 } from '../formato'
 
 const PESTANAS = [
@@ -269,14 +269,17 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                 </p>
 
                 <p>
-                  Total pagado: <strong>{pesos(reserva.total)}</strong>
+                  Total pagado:{' '}
+                  <strong>
+                    {dinero(reserva.montoPagado ?? reserva.total, reserva.monedaPago)}
+                  </strong>
                   {reserva.ultimos4 &&
                     ` · Tarjeta terminada en ${reserva.ultimos4}`}
                 </p>
 
                 {reserva.valorDevolucion && (
                   <p className="etiqueta-verde">
-                    Devolución: {pesos(reserva.valorDevolucion)}
+                    Devolución: {dinero(reserva.valorDevolucion, reserva.monedaPago)}
                   </p>
                 )}
 

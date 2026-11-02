@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react'
-import { enviarDatos, leerError } from '../api'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
+import { consultar, enviarDatos, leerError } from '../api'
+import TarjetaStripe from './TarjetaStripe'
 import { NOMBRES_TIPO } from '../tipos'
 import {
+  convertirMoneda,
+  dinero,
   explicarPolitica,
   fechaCorta,
   fotoRespaldo,
@@ -35,6 +40,17 @@ const ETAPAS_PROCESO = [
     texto: 'Te avisaremos cuando todo esté listo.',
   },
 ]
+
+// Stripe se carga una sola vez con la clave pública
+let promesaStripe = null
+
+function obtenerStripe(clavePublica) {
+  if (!promesaStripe) {
+    promesaStripe = loadStripe(clavePublica, { locale: 'es' })
+  }
+
+  return promesaStripe
+}
 
 function esperar(milisegundos) {
   return new Promise((resolver) =>
@@ -248,6 +264,46 @@ function Reservar({
   // Una sola clave por intento: si hay doble clic no se crean dos reservas
   const [clave] = useState(() => crypto.randomUUID())
 
+  // Configuración del pago: si Stripe está activo y la tasa del dólar
+  const [configuracion, setConfiguracion] = useState({
+    stripeActivo: false,
+    tasaUsd: 4000,
+  })
+  const [moneda, setMoneda] = useState('COP')
+  const [pagando, setPagando] = useState(false)
+  const stripeListo = useRef(null)
+
+  const usaStripe = Boolean(
+    configuracion.stripeActivo && configuracion.clavePublica
+  )
+
+  const totalCobrar = convertirMoneda(
+    cotizacion.total,
+    moneda,
+    configuracion.tasaUsd
+  )
+
+  const guardarStripe = useCallback((datos) => {
+    stripeListo.current = datos
+  }, [])
+
+  useEffect(() => {
+    let activo = true
+
+    consultar('/api/v1/pagos/configuracion')
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : null))
+      .then((datos) => {
+        if (activo && datos) {
+          setConfiguracion(datos)
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      activo = false
+    }
+  }, [])
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [paso])
@@ -267,23 +323,30 @@ function Reservar({
   async function pagar(evento) {
     evento.preventDefault()
 
-    const numero = tarjeta.numero.replace(/\D/g, '')
-
-    if (numero.length < 13) {
-      setMensaje('El número de tarjeta debe tener entre 13 y 19 dígitos.')
+    if (!tarjeta.titular.trim()) {
+      setMensaje('Escribe el nombre del titular de la tarjeta.')
       return
     }
 
-    const errorFecha = expiracionInvalida(tarjeta.expiracion)
+    if (!usaStripe) {
+      const numero = tarjeta.numero.replace(/\D/g, '')
 
-    if (errorFecha) {
-      setMensaje(errorFecha)
-      return
-    }
+      if (numero.length < 13) {
+        setMensaje('El número de tarjeta debe tener entre 13 y 19 dígitos.')
+        return
+      }
 
-    if (tarjeta.cvc.length !== 3) {
-      setMensaje('El CVC debe tener 3 dígitos.')
-      return
+      const errorFecha = expiracionInvalida(tarjeta.expiracion)
+
+      if (errorFecha) {
+        setMensaje(errorFecha)
+        return
+      }
+
+      if (tarjeta.cvc.length !== 3) {
+        setMensaje('El CVC debe tener 3 dígitos.')
+        return
+      }
     }
 
     if (!acepta) {
@@ -292,6 +355,67 @@ function Reservar({
     }
 
     setMensaje('')
+
+    const datosReserva = {
+      idAlojamiento: alojamiento.idAlojamiento,
+      fechaLlegada: entrada,
+      fechaSalida: salida,
+      cantidadHuespedes: huespedes,
+      claveIdempotencia: clave,
+      moneda,
+    }
+
+    // Con Stripe: primero se cobra la tarjeta en Stripe
+    let idIntencionPago = null
+
+    if (usaStripe) {
+      if (!stripeListo.current) {
+        setMensaje('El formulario de pago aún está cargando. Intenta de nuevo.')
+        return
+      }
+
+      setPagando(true)
+
+      try {
+        const respuestaIntencion = await enviarDatos(
+          '/api/v1/pagos/intencion',
+          datosReserva
+        )
+
+        if (!respuestaIntencion.ok) {
+          setMensaje(
+            await leerError(respuestaIntencion, 'No se pudo iniciar el pago.')
+          )
+          return
+        }
+
+        const intencion = await respuestaIntencion.json()
+        const { stripe, elements, CardElement } = stripeListo.current
+
+        const resultado = await stripe.confirmCardPayment(
+          intencion.clientSecret,
+          {
+            payment_method: {
+              card: elements.getElement(CardElement),
+              billing_details: { name: tarjeta.titular },
+            },
+          }
+        )
+
+        if (resultado.error) {
+          setMensaje(resultado.error.message)
+          return
+        }
+
+        idIntencionPago = resultado.paymentIntent.id
+      } catch {
+        setMensaje('No se pudo conectar con Stripe. Intenta nuevamente.')
+        return
+      } finally {
+        setPagando(false)
+      }
+    }
+
     setEtapa(0)
     setPaso('procesando')
 
@@ -304,17 +428,18 @@ function Reservar({
     })()
 
     try {
-      const respuesta = await enviarDatos('/api/v1/reservas', {
-        idAlojamiento: alojamiento.idAlojamiento,
-        fechaLlegada: entrada,
-        fechaSalida: salida,
-        cantidadHuespedes: huespedes,
-        claveIdempotencia: clave,
-        numeroTarjeta: tarjeta.numero,
-        titular: tarjeta.titular,
-        expiracion: tarjeta.expiracion,
-        cvc: tarjeta.cvc,
-      })
+      const respuesta = await enviarDatos(
+        '/api/v1/reservas',
+        usaStripe
+          ? { ...datosReserva, idIntencionPago, titular: tarjeta.titular }
+          : {
+              ...datosReserva,
+              numeroTarjeta: tarjeta.numero,
+              titular: tarjeta.titular,
+              expiracion: tarjeta.expiracion,
+              cvc: tarjeta.cvc,
+            }
+      )
 
       if (!respuesta.ok) {
         const error = await leerError(
@@ -497,18 +622,47 @@ function Reservar({
                 </span>
               </div>
 
-              <label>
-                Número de tarjeta
-                <input
-                  name="numero"
-                  inputMode="numeric"
-                  autoComplete="cc-number"
-                  placeholder="1234 5678 9012 3456"
-                  value={tarjeta.numero}
-                  onChange={cambiarTarjeta}
-                  required
-                />
-              </label>
+              <fieldset className="elegir-moneda">
+                <legend>¿En qué moneda quieres pagar?</legend>
+
+                {[
+                  ['COP', 'Pesos colombianos'],
+                  ['USD', 'Dólares estadounidenses'],
+                ].map(([codigo, nombre]) => (
+                  <label
+                    key={codigo}
+                    className={moneda === codigo ? 'activa' : ''}
+                  >
+                    <input
+                      type="radio"
+                      name="moneda"
+                      value={codigo}
+                      checked={moneda === codigo}
+                      onChange={() => {
+                        setMoneda(codigo)
+                        setMensaje('')
+                      }}
+                    />
+                    <span>
+                      <strong>{nombre} ({codigo})</strong>
+                      {dinero(
+                        convertirMoneda(
+                          cotizacion.total,
+                          codigo,
+                          configuracion.tasaUsd
+                        ),
+                        codigo
+                      )}
+                    </span>
+                  </label>
+                ))}
+
+                {moneda === 'USD' && (
+                  <p className="texto-suave">
+                    Tasa usada: 1 USD = {pesos(configuracion.tasaUsd)}
+                  </p>
+                )}
+              </fieldset>
 
               <label>
                 Nombre del titular
@@ -523,35 +677,65 @@ function Reservar({
                 />
               </label>
 
-              <div className="dos-columnas">
-                <label>
-                  Fecha de expiración
-                  <input
-                    name="expiracion"
-                    inputMode="numeric"
-                    autoComplete="cc-exp"
-                    placeholder="MM/AA"
-                    maxLength={5}
-                    value={tarjeta.expiracion}
-                    onChange={cambiarTarjeta}
-                    required
-                  />
-                </label>
+              {usaStripe ? (
+                <div className="campo-bloque-stripe">
+                  <span>Datos de la tarjeta</span>
+                  <Elements
+                    stripe={obtenerStripe(configuracion.clavePublica)}
+                    options={{ locale: 'es' }}
+                  >
+                    <TarjetaStripe
+                      onListo={guardarStripe}
+                      onCambio={(error) => setMensaje(error)}
+                    />
+                  </Elements>
+                </div>
+              ) : (
+                <>
+                  <label>
+                    Número de tarjeta
+                    <input
+                      name="numero"
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      placeholder="1234 5678 9012 3456"
+                      value={tarjeta.numero}
+                      onChange={cambiarTarjeta}
+                      required
+                    />
+                  </label>
 
-                <label>
-                  CVC
-                  <input
-                    name="cvc"
-                    inputMode="numeric"
-                    autoComplete="cc-csc"
-                    placeholder="123"
-                    maxLength={3}
-                    value={tarjeta.cvc}
-                    onChange={cambiarTarjeta}
-                    required
-                  />
-                </label>
-              </div>
+                  <div className="dos-columnas">
+                    <label>
+                      Fecha de expiración
+                      <input
+                        name="expiracion"
+                        inputMode="numeric"
+                        autoComplete="cc-exp"
+                        placeholder="MM/AA"
+                        maxLength={5}
+                        value={tarjeta.expiracion}
+                        onChange={cambiarTarjeta}
+                        required
+                      />
+                    </label>
+
+                    <label>
+                      CVC
+                      <input
+                        name="cvc"
+                        inputMode="numeric"
+                        autoComplete="cc-csc"
+                        placeholder="123"
+                        maxLength={3}
+                        value={tarjeta.cvc}
+                        onChange={cambiarTarjeta}
+                        required
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
 
               <label className="casilla">
                 <input
@@ -575,13 +759,17 @@ function Reservar({
               <button
                 type="submit"
                 className="boton-principal boton-ancho"
+                disabled={pagando}
               >
-                Confirmar y reservar — {pesos(cotizacion.total)} →
+                {pagando
+                  ? 'Procesando el pago...'
+                  : `Confirmar y reservar — ${dinero(totalCobrar, moneda)} →`}
               </button>
 
               <p className="nota-centro">
-                🔒 Tu información de pago está protegida. Solo guardamos
-                los últimos 4 dígitos.
+                {usaStripe
+                  ? '🔒 Pago procesado por Stripe. Los datos de tu tarjeta van directo a Stripe; solo guardamos los últimos 4 dígitos.'
+                  : '🔒 Tu información de pago está protegida. Solo guardamos los últimos 4 dígitos.'}
               </p>
             </article>
           </form>
@@ -700,7 +888,9 @@ function Reservar({
 
               <p className="total-pagado">
                 <span className="texto-suave">Total pagado</span>
-                <strong>{pesos(reserva.total)}</strong>
+                <strong>
+                  {dinero(reserva.montoPagado ?? reserva.total, reserva.monedaPago)}
+                </strong>
               </p>
             </article>
 
