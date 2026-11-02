@@ -251,6 +251,12 @@ function Portada({
       ?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Si no hay alojamientos publicados, la sección no se muestra
+  const hayAlojamientos =
+    cargandoAlojamientos ||
+    mensajeAlojamientos !== '' ||
+    alojamientos.length > 0
+
   const alojamientosFiltrados =
     alojamientos.filter((alojamiento) => {
       const ciudad =
@@ -362,7 +368,13 @@ function Portada({
           </button>
 
           <nav aria-label="Navegación principal">
-            <a href="#alojamientos-destacados">
+            <a
+              href={
+                alojamientos.length > 0
+                  ? '#alojamientos-destacados'
+                  : '#destinos-populares'
+              }
+            >
               Alojamientos
             </a>
 
@@ -637,6 +649,7 @@ function Portada({
         <p className="destinos-credito">Fotos: Pexels</p>
       </section>
 
+      {hayAlojamientos && (
       <section
         className="portada-alojamientos"
         id="alojamientos-destacados"
@@ -662,10 +675,6 @@ function Portada({
             role="status"
           >
             {mensajeAlojamientos}
-          </p>
-        ) : alojamientos.length === 0 ? (
-          <p className="portada-estado">
-            Aún no hay alojamientos publicados.
           </p>
         ) : alojamientosFiltrados.length === 0 ? (
           <div className="portada-estado">
@@ -801,6 +810,7 @@ function Portada({
           </div>
         )}
       </section>
+      )}
 
       <dialog
         ref={ventanaSesion}
