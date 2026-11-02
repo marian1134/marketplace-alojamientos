@@ -5,6 +5,9 @@ import com.inversioneslr.marketplace.dto.CotizacionResponse;
 import com.inversioneslr.marketplace.dto.DetalleAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.ImagenAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.ReservaRequest;
+import com.inversioneslr.marketplace.dto.CalendarioResponse;
+import com.inversioneslr.marketplace.dto.ResenaRequest;
+import com.inversioneslr.marketplace.dto.ResenaResponse;
 import com.inversioneslr.marketplace.dto.ReservaResponse;
 import com.inversioneslr.marketplace.dto.ResultadoBusqueda;
 import com.inversioneslr.marketplace.model.Alojamiento;
@@ -19,6 +22,8 @@ import com.inversioneslr.marketplace.model.ModoReserva;
 import com.inversioneslr.marketplace.model.NocheReservada;
 import com.inversioneslr.marketplace.model.Pago;
 import com.inversioneslr.marketplace.model.PoliticaCancelacion;
+import com.inversioneslr.marketplace.model.PeriodoDisponible;
+import com.inversioneslr.marketplace.model.Resena;
 import com.inversioneslr.marketplace.model.Reserva;
 import com.inversioneslr.marketplace.model.Usuario;
 import com.inversioneslr.marketplace.repository.AlojamientoRepository;
@@ -28,6 +33,9 @@ import com.inversioneslr.marketplace.repository.CotizacionRepository;
 import com.inversioneslr.marketplace.repository.ImagenAlojamientoRepository;
 import com.inversioneslr.marketplace.repository.NocheReservadaRepository;
 import com.inversioneslr.marketplace.repository.PagoRepository;
+import com.inversioneslr.marketplace.repository.FavoritoRepository;
+import com.inversioneslr.marketplace.repository.PeriodoDisponibleRepository;
+import com.inversioneslr.marketplace.repository.ResenaRepository;
 import com.inversioneslr.marketplace.repository.ReservaRepository;
 import com.inversioneslr.marketplace.repository.UsuarioRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -56,9 +64,6 @@ public class ReservaService {
     private static final long MAXIMO_NOCHES = 90;
     private static final BigDecimal CIEN = new BigDecimal("100");
 
-    // Tarjeta de prueba que siempre se rechaza (las demás válidas se aprueban)
-    private static final String TARJETA_RECHAZADA = "4000000000000002";
-
     private static final Set<EstadoReserva> CANCELABLES = Set.of(
             EstadoReserva.CONFIRMADA,
             EstadoReserva.PENDIENTE_APROBACION
@@ -75,6 +80,9 @@ public class ReservaService {
     private final UsuarioRepository usuarioRepository;
     private final AlojamientoService alojamientoService;
     private final ImagenAlojamientoService imagenService;
+    private final ResenaRepository resenaRepository;
+    private final PeriodoDisponibleRepository periodoRepository;
+    private final FavoritoRepository favoritoRepository;
     private final AvisosReserva avisos;
 
     private final SecureRandom aleatorio = new SecureRandom();
@@ -91,6 +99,9 @@ public class ReservaService {
             UsuarioRepository usuarioRepository,
             AlojamientoService alojamientoService,
             ImagenAlojamientoService imagenService,
+            ResenaRepository resenaRepository,
+            PeriodoDisponibleRepository periodoRepository,
+            FavoritoRepository favoritoRepository,
             AvisosReserva avisos) {
 
         this.reservaRepository = reservaRepository;
@@ -104,6 +115,9 @@ public class ReservaService {
         this.usuarioRepository = usuarioRepository;
         this.alojamientoService = alojamientoService;
         this.imagenService = imagenService;
+        this.resenaRepository = resenaRepository;
+        this.periodoRepository = periodoRepository;
+        this.favoritoRepository = favoritoRepository;
         this.avisos = avisos;
     }
 
@@ -143,6 +157,40 @@ public class ReservaService {
         PoliticaCancelacion politica = alojamiento.getPolitica();
         Usuario anfitrion = alojamiento.getAnfitrion();
 
+        // Reseñas: promedio, cuántas hay de cada estrella y las 6 más recientes
+        List<Resena> resenas = resenaRepository
+                .findByReserva_Alojamiento_IdAlojamientoAndVisibleTrueOrderByFechaDesc(
+                        idAlojamiento
+                );
+
+        Long[] porEstrella = {0L, 0L, 0L, 0L, 0L};
+        resenas.forEach(resena -> porEstrella[resena.getCalificacion() - 1]++);
+
+        Double promedio = resenas.isEmpty()
+                ? null
+                : resenas.stream()
+                        .mapToInt(Resena::getCalificacion)
+                        .average()
+                        .orElse(0);
+
+        List<CalendarioResponse.Periodo> periodos = periodoRepository
+                .findByIdAlojamientoOrderByFechaInicio(idAlojamiento)
+                .stream()
+                .filter(periodo -> !periodo.getFechaFin().isBefore(LocalDate.now()))
+                .map(periodo -> new CalendarioResponse.Periodo(
+                        periodo.getIdPeriodo(),
+                        periodo.getFechaInicio(),
+                        periodo.getFechaFin()
+                ))
+                .toList();
+
+        boolean esFavorito = favoritoRepository.existsById(
+                new com.inversioneslr.marketplace.model.Favorito.Llave(
+                        usuario.getIdUsuario(),
+                        idAlojamiento
+                )
+        );
+
         return new DetalleAlojamientoResponse(
                 alojamientoService.obtenerPorId(idAlojamiento),
                 imagenes,
@@ -157,7 +205,70 @@ public class ReservaService {
                         politica.getDiasAnticipacion(),
                         politica.getPorcentajeAntes(),
                         politica.getPorcentajeDespues()
-                )
+                ),
+                promedio,
+                resenas.size(),
+                List.of(porEstrella),
+                resenas.stream().limit(6).map(this::convertirResena).toList(),
+                periodos,
+                esFavorito
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // Reseñas: el huésped califica cuando termina su estadía
+    // ------------------------------------------------------------------
+
+    public ResenaResponse crearResena(Long idReserva, ResenaRequest datos, String correo) {
+
+        Usuario huesped = obtenerUsuario(correo);
+        Reserva reserva = buscarReserva(idReserva);
+
+        if (!reserva.getHuesped().getIdUsuario().equals(huesped.getIdUsuario())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Solo el huésped de la reserva puede dejar la reseña"
+            );
+        }
+
+        completarSiTermino(reserva);
+
+        if (reserva.getEstado() != EstadoReserva.COMPLETADA) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Podrás dejar tu reseña cuando termine la estadía"
+            );
+        }
+
+        if (resenaRepository.existsByReserva_IdReserva(idReserva)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ya dejaste una reseña para esta reserva"
+            );
+        }
+
+        Resena resena = new Resena();
+        resena.setReserva(reserva);
+        resena.setCalificacion(datos.calificacion());
+        resena.setComentario(datos.comentario().trim());
+
+        return convertirResena(resenaRepository.save(resena));
+    }
+
+    private ResenaResponse convertirResena(Resena resena) {
+
+        // Solo el primer nombre y la inicial del apellido: "Valentina R."
+        String[] partes = resena.getReserva().getHuesped().getNombre().trim().split("\\s+");
+        String nombre = partes.length > 1
+                ? partes[0] + " " + partes[1].charAt(0) + "."
+                : partes[0];
+
+        return new ResenaResponse(
+                resena.getIdResena(),
+                nombre,
+                resena.getCalificacion(),
+                resena.getComentario(),
+                resena.getFecha()
         );
     }
 
@@ -234,6 +345,43 @@ public class ReservaService {
                 ))
                 .toList();
 
+        // Si el alojamiento tiene periodos, la estadía debe caber en uno
+        if (conFechas && !encontrados.isEmpty()) {
+            java.util.Map<Long, List<PeriodoDisponible>> periodos = periodoRepository
+                    .findByIdAlojamientoIn(
+                            encontrados.stream()
+                                    .map(Alojamiento::getIdAlojamiento)
+                                    .toList()
+                    )
+                    .stream()
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            PeriodoDisponible::getIdAlojamiento
+                    ));
+
+            encontrados = encontrados.stream()
+                    .filter(alojamiento -> {
+                        List<PeriodoDisponible> lista =
+                                periodos.get(alojamiento.getIdAlojamiento());
+
+                        return lista == null || lista.stream()
+                                .anyMatch(periodo -> periodo.contiene(llegada, salida));
+                    })
+                    .toList();
+        }
+
+        // Promedio de estrellas de cada alojamiento (una consulta)
+        java.util.Map<Long, Object[]> calificaciones = new java.util.HashMap<>();
+
+        if (!encontrados.isEmpty()) {
+            resenaRepository
+                    .resumenPorAlojamiento(
+                            encontrados.stream()
+                                    .map(Alojamiento::getIdAlojamiento)
+                                    .toList()
+                    )
+                    .forEach(fila -> calificaciones.put((Long) fila[0], fila));
+        }
+
         // Foto principal de cada alojamiento (una consulta)
         java.util.Map<Long, String> portadas = new java.util.HashMap<>();
 
@@ -262,7 +410,15 @@ public class ReservaService {
                                 ? alojamiento.getPrecioNoche()
                                         .multiply(BigDecimal.valueOf(noches))
                                         .add(alojamiento.getTarifaLimpieza())
-                                : null
+                                : null,
+                        calificaciones.containsKey(alojamiento.getIdAlojamiento())
+                                ? ((Number) calificaciones.get(alojamiento.getIdAlojamiento())[1])
+                                        .doubleValue()
+                                : null,
+                        calificaciones.containsKey(alojamiento.getIdAlojamiento())
+                                ? ((Number) calificaciones.get(alojamiento.getIdAlojamiento())[2])
+                                        .longValue()
+                                : 0
                 ))
                 .toList();
     }
@@ -341,14 +497,6 @@ public class ReservaService {
         );
 
         String numeroTarjeta = validarTarjeta(datos);
-
-        if (numeroTarjeta.equals(TARJETA_RECHAZADA)) {
-            throw new ResponseStatusException(
-                    HttpStatus.PAYMENT_REQUIRED,
-                    "El pago fue rechazado por el banco (tarjeta de prueba "
-                            + "rechazada). Intenta con otra tarjeta."
-            );
-        }
 
         ConfiguracionTarifas configuracion = obtenerConfiguracion();
         CotizacionResponse precio = calcularPrecio(
@@ -654,6 +802,21 @@ public class ReservaService {
                     "El alojamiento ya está reservado en alguna de esas fechas"
             );
         }
+
+        // Si el anfitrión definió periodos, la estadía debe caber en uno
+        List<PeriodoDisponible> periodos = periodoRepository
+                .findByIdAlojamientoOrderByFechaInicio(alojamiento.getIdAlojamiento());
+
+        boolean fueraDePeriodo = !periodos.isEmpty() && periodos.stream()
+                .noneMatch(periodo -> periodo.contiene(llegada, salida));
+
+        if (fueraDePeriodo) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El anfitrión no recibe huéspedes en esas fechas. "
+                            + "Revisa las fechas disponibles."
+            );
+        }
     }
 
     // subtotal = precio x noches; servicio = % del subtotal;
@@ -709,15 +872,16 @@ public class ReservaService {
                 .divide(CIEN, 0, RoundingMode.HALF_UP);
     }
 
-    // Validación de la tarjeta de prueba: número (Luhn), fecha y CVC
+    // Validación de la tarjeta: número de 13 a 19 dígitos, fecha y CVC.
+    // El pago es simulado: cualquier número con ese formato se aprueba.
     private String validarTarjeta(ReservaRequest datos) {
 
         String numero = datos.numeroTarjeta().replaceAll("[\\s-]", "");
 
-        if (!numero.matches("\\d{13,19}") || !cumpleLuhn(numero)) {
+        if (!numero.matches("\\d{13,19}")) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "El número de tarjeta no es válido"
+                    "El número de tarjeta debe tener entre 13 y 19 dígitos"
             );
         }
 
@@ -746,28 +910,6 @@ public class ReservaService {
         }
 
         return numero;
-    }
-
-    private boolean cumpleLuhn(String numero) {
-
-        int suma = 0;
-        boolean doblar = false;
-
-        for (int i = numero.length() - 1; i >= 0; i--) {
-            int digito = numero.charAt(i) - '0';
-
-            if (doblar) {
-                digito *= 2;
-                if (digito > 9) {
-                    digito -= 9;
-                }
-            }
-
-            suma += digito;
-            doblar = !doblar;
-        }
-
-        return suma % 10 == 0;
     }
 
     private void devolverDinero(Pago pago, BigDecimal valor) {
@@ -910,6 +1052,10 @@ public class ReservaService {
                 .findByReserva_IdReserva(idReserva)
                 .orElse(null);
 
+        Resena resena = resenaRepository
+                .findByReserva_IdReserva(idReserva)
+                .orElse(null);
+
         String imagen = imagenRepository
                 .findByAlojamiento_IdAlojamientoOrderByOrdenImagenAscIdImagenAsc(
                         alojamiento.getIdAlojamiento()
@@ -963,7 +1109,9 @@ public class ReservaService {
                                 : null),
                 motivo,
                 puedeCancelar(reserva),
-                reserva.getCreadaEn()
+                reserva.getCreadaEn(),
+                reserva.getEstado() == EstadoReserva.COMPLETADA && resena == null,
+                resena != null ? resena.getCalificacion() : null
         );
     }
 }

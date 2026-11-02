@@ -10,7 +10,10 @@ import Reservar from './components/Reservar'
 import MisViajes from './components/MisViajes'
 import PanelAnfitrion from './components/PanelAnfitrion'
 import ResultadosBusqueda from './components/ResultadosBusqueda'
-import { enviarDatos } from './api'
+import MisFavoritos from './components/MisFavoritos'
+import CalendarioAnfitrion from './components/CalendarioAnfitrion'
+import RedDeSeguridad from './components/RedDeSeguridad'
+import { consultar, enviarDatos } from './api'
 import './App.css'
 import './reservas.css'
 
@@ -22,6 +25,8 @@ const PANTALLAS_INTERNAS = [
   'viajes',
   'panel',
   'alojamientos',
+  'favoritos',
+  'calendario',
 ]
 
 function App() {
@@ -38,6 +43,9 @@ function App() {
 
   // Pantalla a la que vuelve el botón "Volver" del detalle
   const [origenDetalle, setOrigenDetalle] = useState('portada')
+
+  // Ids de los alojamientos guardados con el corazón
+  const [favoritos, setFavoritos] = useState(() => new Set())
 
   // Alojamiento que quiso ver antes de iniciar sesión
   const [pendiente, setPendiente] = useState(null)
@@ -95,6 +103,56 @@ function App() {
     }
   }, [])
 
+  // Cuando hay sesión se cargan los favoritos del usuario
+  useEffect(() => {
+    if (!usuario) {
+      return
+    }
+
+    let activo = true
+
+    consultar('/api/v1/favoritos/ids')
+      .then((respuesta) => (respuesta.ok ? respuesta.json() : []))
+      .then((ids) => {
+        if (activo) {
+          setFavoritos(new Set(ids))
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      activo = false
+    }
+  }, [usuario])
+
+  // Agrega o quita un favorito (se pinta de una vez y luego se guarda)
+  async function cambiarFavorito(idAlojamiento) {
+    const yaEsta = favoritos.has(idAlojamiento)
+    const nuevos = new Set(favoritos)
+
+    if (yaEsta) {
+      nuevos.delete(idAlojamiento)
+    } else {
+      nuevos.add(idAlojamiento)
+    }
+
+    setFavoritos(nuevos)
+
+    try {
+      const respuesta = await enviarDatos(
+        `/api/v1/favoritos/${idAlojamiento}`,
+        {},
+        yaEsta ? 'DELETE' : 'POST'
+      )
+
+      if (!respuesta.ok) {
+        throw new Error('No se pudo guardar el favorito')
+      }
+    } catch {
+      setFavoritos(favoritos)
+    }
+  }
+
   function navegar(destino) {
     setMensajeSesion('')
     setPantalla(destino)
@@ -128,6 +186,7 @@ function App() {
       }
 
       setUsuario(null)
+      setFavoritos(new Set())
       setSolicitudReserva(null)
       navegar('portada')
     } catch {
@@ -162,7 +221,7 @@ function App() {
   function verAlojamiento(id, datosBusqueda) {
     setIdAlojamiento(id)
     setOrigenDetalle(
-      pantalla === 'resultados' || pantalla === 'viajes'
+      ['resultados', 'viajes', 'favoritos'].includes(pantalla)
         ? pantalla
         : 'portada'
     )
@@ -197,6 +256,8 @@ function App() {
         onCerrarSesion={cerrarSesion}
         onVerAlojamiento={verAlojamiento}
         onBuscar={buscar}
+        favoritos={favoritos}
+        onFavorito={cambiarFavorito}
       />
     )
   }
@@ -212,6 +273,8 @@ function App() {
           onCerrarSesion={cerrarSesion}
           onVerAlojamiento={verAlojamiento}
           onBuscar={buscar}
+          favoritos={favoritos}
+          onFavorito={cambiarFavorito}
         />
       )
     }
@@ -226,12 +289,18 @@ function App() {
         />
 
         <main>
+          <RedDeSeguridad
+            key={pantalla}
+            onVolver={() => navegar('portada')}
+          >
           {pantalla === 'resultados' && busqueda && (
             <ResultadosBusqueda
               key={JSON.stringify(busqueda)}
               busqueda={busqueda}
               onBuscar={buscar}
               onVerAlojamiento={(id) => verAlojamiento(id)}
+              favoritos={favoritos}
+              onFavorito={cambiarFavorito}
             />
           )}
 
@@ -240,6 +309,8 @@ function App() {
               key={idAlojamiento}
               idAlojamiento={idAlojamiento}
               busqueda={busqueda}
+              favoritos={favoritos}
+              onFavorito={cambiarFavorito}
               onVolver={() => navegar(origenDetalle)}
               onReservar={(datos) => {
                 setSolicitudReserva(datos)
@@ -280,6 +351,22 @@ function App() {
             <PanelAnfitrion
               usuario={usuario}
               onGestionarAlojamientos={() => navegar('alojamientos')}
+              onCalendario={() => navegar('calendario')}
+            />
+          )}
+
+          {pantalla === 'favoritos' && (
+            <MisFavoritos
+              favoritos={favoritos}
+              onFavorito={cambiarFavorito}
+              onExplorar={() => navegar('portada')}
+              onVerAlojamiento={(id) => verAlojamiento(id, null)}
+            />
+          )}
+
+          {pantalla === 'calendario' && (
+            <CalendarioAnfitrion
+              onGestionarAlojamientos={() => navegar('alojamientos')}
             />
           )}
 
@@ -288,6 +375,7 @@ function App() {
               <Alojamientos onVolver={() => navegar('panel')} />
             </section>
           )}
+          </RedDeSeguridad>
         </main>
       </div>
     )

@@ -39,6 +39,8 @@ public record ReservaResponse(
         BigDecimal valorDevolucion,
         String motivo,
         boolean puedeCancelar,
-        LocalDateTime creadaEn
+        LocalDateTime creadaEn,
+        boolean puedeResenar,
+        Integer calificacionResena
 ) {
 }
