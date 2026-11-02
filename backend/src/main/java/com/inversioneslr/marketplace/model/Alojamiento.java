@@ -18,6 +18,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 // Tabla marketplace.publicacion (01_crear_marketplace.sql)
 @Entity
@@ -59,6 +60,10 @@ public class Alojamiento {
 
     @Column(name = "banos", nullable = false, columnDefinition = "SMALLINT")
     private Integer banos = 1;
+
+    // Columna agregada en 08_check_in.sql: desde qué hora llega el huésped
+    @Column(name = "hora_check_in", nullable = false)
+    private LocalTime horaCheckIn = LocalTime.of(15, 0);
 
     @Column(name = "precio_noche", nullable = false, precision = 12, scale = 2)
     private BigDecimal precioNoche;
@@ -184,6 +189,14 @@ public class Alojamiento {
 
     public void setBanos(Integer banos) {
         this.banos = banos;
+    }
+
+    public LocalTime getHoraCheckIn() {
+        return horaCheckIn;
+    }
+
+    public void setHoraCheckIn(LocalTime horaCheckIn) {
+        this.horaCheckIn = horaCheckIn;
     }
 
     public BigDecimal getPrecioNoche() {

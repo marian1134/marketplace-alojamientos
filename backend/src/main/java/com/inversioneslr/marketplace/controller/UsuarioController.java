@@ -5,9 +5,11 @@ import com.inversioneslr.marketplace.dto.DatosRecuperacion;
 import com.inversioneslr.marketplace.dto.InicioSesionRequest;
 import com.inversioneslr.marketplace.dto.RegistroUsuarioRequest;
 import com.inversioneslr.marketplace.dto.UsuarioResponse;
+import com.inversioneslr.marketplace.dto.VerificarCodigoRequest;
 import com.inversioneslr.marketplace.service.RecuperacionService;
 import com.inversioneslr.marketplace.service.SesionService;
 import com.inversioneslr.marketplace.service.UsuarioService;
+import com.inversioneslr.marketplace.service.VerificacionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -26,15 +28,18 @@ public class UsuarioController {
     private final UsuarioService usuarioService;
     private final RecuperacionService recuperacionService;
     private final SesionService sesionService;
+    private final VerificacionService verificacionService;
 
     public UsuarioController(
             UsuarioService usuarioService,
             RecuperacionService recuperacionService,
-            SesionService sesionService) {
+            SesionService sesionService,
+            VerificacionService verificacionService) {
 
         this.usuarioService = usuarioService;
         this.recuperacionService = recuperacionService;
         this.sesionService = sesionService;
+        this.verificacionService = verificacionService;
     }
 
     @PostMapping("/registro")
@@ -48,19 +53,37 @@ public class UsuarioController {
                 .body(usuario);
     }
 
+    // Paso 1: correo y contraseña. Si están bien, se envía un código al
+    // correo y todavía NO se abre la sesión.
     @PostMapping("/login")
-    public ResponseEntity<UsuarioResponse> iniciarSesion(
-            @Valid @RequestBody InicioSesionRequest datos,
+    public ResponseEntity<Map<String, Object>> iniciarSesion(
+            @Valid @RequestBody InicioSesionRequest datos) {
+
+        UsuarioResponse usuario = usuarioService.iniciarSesion(datos);
+
+        verificacionService.enviarCodigo(usuario.correo());
+
+        return ResponseEntity
+                .status(HttpStatus.ACCEPTED)
+                .body(Map.of(
+                        "verificacionRequerida", true,
+                        "correoOculto", VerificacionService.ocultarCorreo(usuario.correo()),
+                        "minutos", VerificacionService.MINUTOS_VIGENCIA
+                ));
+    }
+
+    // Paso 2: el código que llegó al correo. Si está bien, se abre la sesión.
+    @PostMapping("/verificar-codigo")
+    public ResponseEntity<UsuarioResponse> verificarCodigo(
+            @Valid @RequestBody VerificarCodigoRequest datos,
             HttpServletRequest solicitud,
             HttpServletResponse respuesta) {
 
-        UsuarioResponse usuario = sesionService.iniciarSesion(
-                datos,
-                solicitud,
-                respuesta
-        );
+        UsuarioResponse usuario = verificacionService.verificar(datos);
 
-        return ResponseEntity.ok(usuario);
+        return ResponseEntity.ok(
+                sesionService.crearSesion(usuario, solicitud, respuesta)
+        );
     }
 
     @GetMapping("/csrf")

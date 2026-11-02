@@ -51,6 +51,13 @@ public class Reserva {
     @Column(name = "motivo_rechazo", length = 500)
     private String motivoRechazo;
 
+    // Columnas agregadas en 08_check_in.sql
+    @Column(name = "check_in_en")
+    private LocalDateTime checkInEn;
+
+    @Column(name = "recordatorio_enviado", nullable = false)
+    private boolean recordatorioEnviado;
+
     @Column(name = "creada_en", nullable = false, updatable = false)
     private LocalDateTime creadaEn;
 
@@ -70,6 +77,11 @@ public class Reserva {
     public void antesDeActualizar() {
         actualizadaEn = LocalDateTime.now();
     }
+
+    public LocalDateTime getCheckInEn() { return checkInEn; }
+    public void setCheckInEn(LocalDateTime checkInEn) { this.checkInEn = checkInEn; }
+    public boolean isRecordatorioEnviado() { return recordatorioEnviado; }
+    public void setRecordatorioEnviado(boolean recordatorioEnviado) { this.recordatorioEnviado = recordatorioEnviado; }
 
     public Long getIdReserva() { return idReserva; }
     public String getCodigo() { return codigo; }
