@@ -73,7 +73,22 @@ function DetalleAlojamiento({
           )
         }
 
-        const datos = await respuesta.json()
+        const recibidos = await respuesta.json()
+
+        // Valores por defecto: así la pantalla funciona aunque el
+        // backend todavía no envíe reseñas, periodos o favoritos
+        const datos = {
+          ...recibidos,
+          imagenes: recibidos.imagenes ?? [],
+          nochesOcupadas: recibidos.nochesOcupadas ?? [],
+          periodosDisponibles: recibidos.periodosDisponibles ?? [],
+          resenas: recibidos.resenas ?? [],
+          distribucionEstrellas:
+            recibidos.distribucionEstrellas ?? [0, 0, 0, 0, 0],
+          cantidadResenas: recibidos.cantidadResenas ?? 0,
+          backendDesactualizado:
+            recibidos.periodosDisponibles === undefined,
+        }
 
         if (activo) {
           setDetalle(datos)
@@ -268,6 +283,14 @@ function DetalleAlojamiento({
         ← Volver
       </button>
 
+      {detalle.backendDesactualizado && (
+        <p className="aviso aviso-error" role="alert">
+          El backend está desactualizado: las reseñas y los periodos no se
+          ven. Ejecuta 06_resenas_favoritos.sql y reinicia el backend
+          (Ctrl + C y mvnw.cmd spring-boot:run).
+        </p>
+      )}
+
       <div className="detalle-galeria">
         <div className="detalle-imagen-principal">
           {portada ? (
@@ -329,7 +352,7 @@ function DetalleAlojamiento({
                   ? 'boton-corazon en-linea activo'
                   : 'boton-corazon en-linea'
               }
-              onClick={() => onFavorito(alojamiento.idAlojamiento)}
+              onClick={() => onFavorito?.(alojamiento.idAlojamiento)}
               aria-pressed={favoritos.has(alojamiento.idAlojamiento)}
               aria-label="Guardar en favoritos"
             >
