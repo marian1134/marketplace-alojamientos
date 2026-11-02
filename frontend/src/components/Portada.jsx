@@ -1,8 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { NOMBRES_TIPO } from '../tipos'
-import { fotoRespaldo } from '../formato'
+import {
+  fechaMaximaLlegada,
+  fotoRespaldo,
+  MAXIMO_NOCHES,
+  plural,
+  sumarDias,
+} from '../formato'
+
+// El alojamiento más grande recibe 16 personas
+const MAXIMO_HUESPEDES = 16
 import { DESTINOS } from '../destinos'
 import TarjetaDestino from './TarjetaDestino'
+import CampoCiudad from './CampoCiudad'
+import CampoFecha from './CampoFecha'
 import {
   IconoBuscar,
   IconoCalendario,
@@ -445,96 +456,114 @@ function Portada({
             onClick={revisarSesion}
             noValidate
           >
-            <label>
+            <div className="buscador-item">
               <span className="buscador-icono"><IconoUbicacion tamano={24} /></span>
 
               <span className="buscador-campo">
-                <strong>¿A dónde vas?</strong>
+                <label htmlFor="buscar-destino">
+                  <strong>¿A dónde vas?</strong>
+                </label>
 
-                <input
-                  type="text"
+                <CampoCiudad
+                  id="buscar-destino"
                   value={destino}
-                  onChange={(evento) => {
-                    setDestino(evento.target.value)
+                  onChange={(valor) => {
+                    setDestino(valor)
                     setMensajeBusqueda('')
                   }}
-                  placeholder="Ciudad o destino"
-                  readOnly={!usuario}
-                  required
+                  bloqueado={!usuario}
                 />
               </span>
-            </label>
+            </div>
 
-            <label>
+            <div className="buscador-item">
               <span className="buscador-icono"><IconoCalendario tamano={24} /></span>
 
               <span className="buscador-campo">
                 <strong>Entrada</strong>
 
-                <input
-                  type="date"
+                <CampoFecha
+                  etiqueta="Fecha de entrada"
                   value={entrada}
                   min={fechaMinima}
-                  onChange={(evento) => {
-                    setEntrada(evento.target.value)
+                  max={fechaMaximaLlegada()}
+                  bloqueado={!usuario}
+                  onChange={(valor) => {
+                    setEntrada(valor)
                     setMensajeBusqueda('')
 
                     if (
                       salida &&
-                      salida <= evento.target.value
+                      (salida <= valor ||
+                        salida > sumarDias(valor, MAXIMO_NOCHES))
                     ) {
                       setSalida('')
                     }
                   }}
-                  readOnly={!usuario}
-                  required
                 />
               </span>
-            </label>
+            </div>
 
-            <label>
+            <div className="buscador-item">
               <span className="buscador-icono"><IconoSalida tamano={24} /></span>
 
               <span className="buscador-campo">
                 <strong>Salida</strong>
 
-                <input
-                  type="date"
+                <CampoFecha
+                  etiqueta="Fecha de salida"
                   value={salida}
-                  min={entrada || fechaMinima}
-                  onChange={(evento) => {
-                    setSalida(evento.target.value)
+                  min={
+                    entrada
+                      ? sumarDias(entrada, 1)
+                      : sumarDias(fechaMinima, 1)
+                  }
+                  max={
+                    entrada
+                      ? sumarDias(entrada, MAXIMO_NOCHES)
+                      : sumarDias(fechaMaximaLlegada(), MAXIMO_NOCHES)
+                  }
+                  bloqueado={!usuario}
+                  onChange={(valor) => {
+                    setSalida(valor)
                     setMensajeBusqueda('')
                   }}
-                  readOnly={!usuario}
-                  required
                 />
               </span>
-            </label>
+            </div>
 
-            <label>
+            <div className="buscador-item">
               <span className="buscador-icono"><IconoPersonas tamano={24} /></span>
 
               <span className="buscador-campo">
-                <strong>Huéspedes</strong>
+                <label htmlFor="buscar-huespedes">
+                  <strong>Huéspedes</strong>
+                </label>
 
-                <input
-                  type="number"
+                <select
+                  id="buscar-huespedes"
                   value={huespedes}
-                  min="1"
-                  step="1"
+                  onMouseDown={(evento) => {
+                    // Sin sesión no se abre: el clic muestra el aviso
+                    if (!usuario) {
+                      evento.preventDefault()
+                    }
+                  }}
                   onChange={(evento) => {
-                    setHuespedes(
-                      evento.target.value
-                    )
+                    setHuespedes(evento.target.value)
                     setMensajeBusqueda('')
                   }}
-                  placeholder="Cantidad"
-                  readOnly={!usuario}
-                  required
-                />
+                >
+                  {Array.from({ length: MAXIMO_HUESPEDES }, (_, indice) => indice + 1).map(
+                    (cantidad) => (
+                      <option key={cantidad} value={cantidad}>
+                        {plural(cantidad, 'huésped', 'huéspedes')}
+                      </option>
+                    )
+                  )}
+                </select>
               </span>
-            </label>
+            </div>
 
             <button
               type="submit"
