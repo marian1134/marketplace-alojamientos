@@ -71,7 +71,9 @@ export const NOMBRES_POLITICA = {
   ESTRICTA: 'Cancelación estricta',
 }
 
-export function explicarPolitica(politica) {
+// Explica la política con palabras sencillas. Si se conoce la fecha de
+// llegada, dice hasta qué día exacto se puede cancelar.
+export function explicarPolitica(politica, fechaLlegada) {
   if (!politica) {
     return ''
   }
@@ -80,13 +82,48 @@ export function explicarPolitica(politica) {
   const despues = Number(politica.porcentajeDespues)
   const dias = politica.diasAnticipacion
 
-  return (
-    `Si cancelas hasta ${dias} ${dias === 1 ? 'día' : 'días'} antes de la llegada, ` +
-    `te devolvemos el ${antes} %. Después, ` +
-    (despues > 0
-      ? `te devolvemos el ${despues} %.`
-      : 'no hay devolución.')
-  )
+  let plazo = `hasta ${dias} ${dias === 1 ? 'día' : 'días'} antes de la llegada`
+
+  if (fechaLlegada) {
+    const limite = aFecha(fechaLlegada)
+    limite.setDate(limite.getDate() - dias)
+    plazo = `hasta el ${fechaCorta(aTexto(limite))}`
+  }
+
+  const primera =
+    antes === 100
+      ? `Cancelación gratis ${plazo}: te devolvemos el 100 % del pago.`
+      : `Si cancelas ${plazo}, te devolvemos el ${antes} % del pago.`
+
+  const segunda =
+    despues > 0
+      ? `Si cancelas después, te devolvemos el ${despues} %.`
+      : 'Si cancelas después, no hay devolución.'
+
+  return `${primera} ${segunda}`
+}
+
+// Nombre corto con mayúscula: 'Flexible', 'Moderada', 'Estricta'
+export function nombreCortoPolitica(tipo) {
+  const texto = (tipo ?? '').toLowerCase()
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+export function sumarDias(texto, dias) {
+  const fecha = aFecha(texto)
+  fecha.setDate(fecha.getDate() + dias)
+  return aTexto(fecha)
+}
+
+// Límites de las fechas de la reserva
+export const MAXIMO_NOCHES = 90
+
+export function fechaMaximaLlegada() {
+  return sumarDias(hoyTexto(), 365)
+}
+
+export function plural(cantidad, uno, varios) {
+  return `${cantidad} ${cantidad === 1 ? uno : varios}`
 }
 
 // Si una foto de internet no carga, se muestra la foto de la cabaña

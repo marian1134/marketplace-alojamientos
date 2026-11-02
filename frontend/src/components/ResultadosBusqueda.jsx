@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react'
 import { consultar, leerError } from '../api'
 import { NOMBRES_TIPO } from '../tipos'
 import { DESTINOS } from '../destinos'
-import { fechaCorta, hoyTexto } from '../formato'
+import {
+  fechaCorta,
+  fechaMaximaLlegada,
+  hoyTexto,
+  MAXIMO_NOCHES,
+  plural,
+  sumarDias,
+} from '../formato'
+import CampoCiudad from './CampoCiudad'
+import CampoFecha from './CampoFecha'
 import TarjetaResultado from './TarjetaResultado'
 import {
   IconoBuscar,
@@ -157,58 +166,70 @@ function ResultadosBusqueda({
   return (
     <section className="contenedor resultados">
       <form className="barra-busqueda tarjeta" onSubmit={buscarDeNuevo}>
-        <label>
-          <span className="etiqueta-icono">
+        <div className="campo-barra">
+          <label htmlFor="barra-destino" className="etiqueta-icono">
             <IconoUbicacion tamano={16} /> ¿A dónde vas?
-          </span>
-          <input
+          </label>
+          <CampoCiudad
+            id="barra-destino"
             value={destino}
-            onChange={(evento) => setDestino(evento.target.value)}
-            placeholder="Ciudad o destino"
+            onChange={setDestino}
           />
-        </label>
+        </div>
 
-        <label>
+        <div className="campo-barra">
           <span className="etiqueta-icono">
             <IconoCalendario tamano={16} /> Entrada
           </span>
-          <input
-            type="date"
+          <CampoFecha
+            etiqueta="Fecha de entrada"
             value={entrada}
             min={hoyTexto()}
-            onChange={(evento) => {
-              setEntrada(evento.target.value)
-              if (salida && salida <= evento.target.value) {
+            max={fechaMaximaLlegada()}
+            onChange={(valor) => {
+              setEntrada(valor)
+              if (
+                salida &&
+                (salida <= valor || salida > sumarDias(valor, MAXIMO_NOCHES))
+              ) {
                 setSalida('')
               }
             }}
           />
-        </label>
+        </div>
 
-        <label>
+        <div className="campo-barra">
           <span className="etiqueta-icono">
             <IconoSalida tamano={16} /> Salida
           </span>
-          <input
-            type="date"
+          <CampoFecha
+            etiqueta="Fecha de salida"
             value={salida}
-            min={entrada || hoyTexto()}
-            onChange={(evento) => setSalida(evento.target.value)}
+            min={sumarDias(entrada || hoyTexto(), 1)}
+            max={sumarDias(entrada || fechaMaximaLlegada(), MAXIMO_NOCHES)}
+            onChange={setSalida}
           />
-        </label>
+        </div>
 
-        <label>
-          <span className="etiqueta-icono">
+        <div className="campo-barra">
+          <label htmlFor="barra-huespedes" className="etiqueta-icono">
             <IconoPersonas tamano={16} /> Huéspedes
-          </span>
-          <input
-            type="number"
-            min="1"
+          </label>
+          <select
+            id="barra-huespedes"
             value={huespedes}
-            placeholder="Cualquiera"
             onChange={(evento) => setHuespedes(evento.target.value)}
-          />
-        </label>
+          >
+            <option value="">Cualquiera</option>
+            {Array.from({ length: 16 }, (_, indice) => indice + 1).map(
+              (cantidad) => (
+                <option key={cantidad} value={cantidad}>
+                  {plural(cantidad, 'huésped', 'huéspedes')}
+                </option>
+              )
+            )}
+          </select>
+        </div>
 
         <button type="submit" className="boton-principal">
           <IconoBuscar tamano={18} /> Buscar
