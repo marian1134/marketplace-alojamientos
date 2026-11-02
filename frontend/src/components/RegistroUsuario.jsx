@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { enviarDatos } from '../api'
 import CampoContrasena from './CampoContrasena'
 import { CANTIDAD_PRIMEROS, PAISES, validarCelular } from '../telefonos'
+import CodigoVerificacion from './CodigoVerificacion'
 
 // Mínimo 8 caracteres, con una letra, un número y un símbolo
 const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u
@@ -9,6 +10,9 @@ const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u
 function RegistroUsuario({ onSesion }) {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
+
+  // Después de registrarse se pide el código que llega al correo
+  const [verificacion, setVerificacion] = useState(null)
 
   async function registrar(evento) {
     evento.preventDefault()
@@ -99,7 +103,7 @@ function RegistroUsuario({ onSesion }) {
         }
       )
 
-      if (!respuestaSesion.ok) {
+      if (respuestaSesion.status !== 202) {
         setMensaje(
           `¡Registro exitoso, ${usuario.nombre}! Ahora inicia sesión con tu correo y contraseña.`
         )
@@ -107,8 +111,15 @@ function RegistroUsuario({ onSesion }) {
         return
       }
 
+      const resultado = await respuestaSesion.json()
+
       formulario.reset()
-      onSesion?.(await respuestaSesion.json())
+      setVerificacion({
+        correo: datos.correo,
+        contrasena: datos.contrasena,
+        correoOculto: resultado.correoOculto,
+        minutos: resultado.minutos,
+      })
     } catch {
       setMensaje(
         'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
@@ -116,6 +127,16 @@ function RegistroUsuario({ onSesion }) {
     } finally {
       setEnviando(false)
     }
+  }
+
+  if (verificacion) {
+    return (
+      <CodigoVerificacion
+        {...verificacion}
+        onSesion={onSesion}
+        onVolver={() => setVerificacion(null)}
+      />
+    )
   }
 
   return (

@@ -7,6 +7,7 @@ import com.inversioneslr.marketplace.model.TipoPolitica;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public record ReservaResponse(
         Long idReserva,
@@ -45,6 +46,12 @@ public record ReservaResponse(
 
         // Lo que se cobró de verdad, en la moneda elegida (COP o USD)
         BigDecimal montoPagado,
-        String monedaPago
+        String monedaPago,
+
+        // Check-in
+        LocalTime horaCheckIn,
+        LocalDateTime checkInEn,
+        boolean puedeHacerCheckIn,
+        boolean puedeCancelarNoShow
 ) {
 }
