@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
 import { NOMBRES_TIPO } from '../tipos'
+import { Estrellas, IconoCorazon, IconoEstrella, IconoUbicacion } from './Iconos'
 import {
   aFecha,
   aTexto,
@@ -38,6 +39,8 @@ function agruparNoches(noches) {
 function DetalleAlojamiento({
   idAlojamiento,
   busqueda,
+  favoritos,
+  onFavorito,
   onVolver,
   onReservar,
 }) {
@@ -115,12 +118,26 @@ function DetalleAlojamiento({
     return false
   }, [entrada, salida, ocupadas])
 
+  // Si el anfitrión definió periodos, la estadía debe caber en uno
+  const fueraDePeriodo = useMemo(() => {
+    const periodos = detalle?.periodosDisponibles ?? []
+
+    if (!entrada || !salida || periodos.length === 0) {
+      return false
+    }
+
+    return !periodos.some(
+      (periodo) =>
+        entrada >= periodo.fechaInicio && salida <= periodo.fechaFin
+    )
+  }, [detalle, entrada, salida])
+
   const fechasValidas =
     entrada && salida && entrada >= hoyTexto() && salida > entrada
 
   // Pide el precio al backend cada vez que cambian fechas o huéspedes
   useEffect(() => {
-    if (!detalle || !fechasValidas || choca) {
+    if (!detalle || !fechasValidas || choca || fueraDePeriodo) {
       return
     }
 
@@ -176,6 +193,7 @@ function DetalleAlojamiento({
     huespedes,
     fechasValidas,
     choca,
+    fueraDePeriodo,
   ])
 
   if (error) {
@@ -222,10 +240,13 @@ function DetalleAlojamiento({
   } else if (choca) {
     aviso =
       'Alguna de esas noches ya está reservada. Elige otras fechas.'
+  } else if (fueraDePeriodo) {
+    aviso =
+      'El anfitrión no recibe huéspedes en esas fechas. Mira las fechas disponibles.'
   }
 
   const puedeReservar =
-    fechasValidas && !choca && cotizacion && !aviso
+    fechasValidas && !choca && !fueraDePeriodo && cotizacion && !aviso
 
   function reservar() {
     onReservar({
@@ -298,10 +319,44 @@ function DetalleAlojamiento({
             Alojamientos › {tipo} › {alojamiento.ciudad}
           </p>
 
-          <h1>{alojamiento.titulo}</h1>
+          <div className="detalle-titulo">
+            <h1>{alojamiento.titulo}</h1>
 
-          <p className="detalle-ubicacion">
-            ⌖ {alojamiento.ciudad} · {alojamiento.direccion}
+            <button
+              type="button"
+              className={
+                favoritos.has(alojamiento.idAlojamiento)
+                  ? 'boton-corazon en-linea activo'
+                  : 'boton-corazon en-linea'
+              }
+              onClick={() => onFavorito(alojamiento.idAlojamiento)}
+              aria-pressed={favoritos.has(alojamiento.idAlojamiento)}
+              aria-label="Guardar en favoritos"
+            >
+              <IconoCorazon
+                tamano={20}
+                activo={favoritos.has(alojamiento.idAlojamiento)}
+              />
+              {favoritos.has(alojamiento.idAlojamiento)
+                ? 'Guardado'
+                : 'Guardar'}
+            </button>
+          </div>
+
+          <p className="detalle-ubicacion con-icono">
+            {detalle.promedioCalificacion && (
+              <span className="calificacion">
+                <IconoEstrella tamano={16} />
+                {detalle.promedioCalificacion.toFixed(1)}
+                <a href="#resenas">
+                  ({detalle.cantidadResenas}{' '}
+                  {detalle.cantidadResenas === 1 ? 'reseña' : 'reseñas'})
+                </a>
+                ·
+              </span>
+            )}
+            <IconoUbicacion tamano={16} />
+            {alojamiento.ciudad} · {alojamiento.direccion}
           </p>
 
           <ul className="detalle-datos">
@@ -368,6 +423,94 @@ function DetalleAlojamiento({
               </p>
             </article>
           </div>
+
+          {detalle.periodosDisponibles.length > 0 && (
+            <article className="tarjeta">
+              <h2>Fechas en que recibe huéspedes</h2>
+              <ul className="fechas-ocupadas">
+                {detalle.periodosDisponibles.map((periodo) => (
+                  <li key={periodo.idPeriodo}>
+                    Del {fechaCorta(periodo.fechaInicio)} al{' '}
+                    {fechaCorta(periodo.fechaFin)}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          )}
+
+          <article className="tarjeta resenas" id="resenas">
+            <h2>Reseñas</h2>
+
+            {detalle.cantidadResenas === 0 ? (
+              <p className="texto-suave">
+                Este alojamiento aún no tiene reseñas. ¡Sé el primero en
+                hospedarte y contar tu experiencia!
+              </p>
+            ) : (
+              <>
+                <div className="resenas-resumen">
+                  <div className="resenas-promedio">
+                    <strong>
+                      {detalle.promedioCalificacion.toFixed(1)}
+                    </strong>
+                    <Estrellas
+                      valor={detalle.promedioCalificacion}
+                      tamano={18}
+                    />
+                    <span className="texto-suave">
+                      {detalle.cantidadResenas}{' '}
+                      {detalle.cantidadResenas === 1 ? 'reseña' : 'reseñas'}
+                    </span>
+                  </div>
+
+                  <ul className="resenas-barras">
+                    {[5, 4, 3, 2, 1].map((estrella) => {
+                      const cantidad =
+                        detalle.distribucionEstrellas[estrella - 1]
+                      const porcentaje =
+                        (cantidad / detalle.cantidadResenas) * 100
+
+                      return (
+                        <li key={estrella}>
+                          <span>
+                            {estrella}{' '}
+                            {estrella === 1 ? 'estrella' : 'estrellas'}
+                          </span>
+                          <span className="barra">
+                            <span style={{ width: `${porcentaje}%` }} />
+                          </span>
+                          <span>{cantidad}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+
+                <ul className="lista-resenas">
+                  {detalle.resenas.map((resena) => (
+                    <li key={resena.idResena}>
+                      <div className="resena-cabecera">
+                        <span className="avatar" aria-hidden="true">
+                          {resena.nombreHuesped.charAt(0)}
+                        </span>
+                        <div>
+                          <strong>{resena.nombreHuesped}</strong>
+                          <span className="texto-suave">
+                            {new Date(resena.fecha).toLocaleDateString(
+                              'es-CO',
+                              { day: 'numeric', month: 'long', year: 'numeric' }
+                            )}
+                          </span>
+                        </div>
+                        <Estrellas valor={resena.calificacion} />
+                      </div>
+                      <p>{resena.comentario}</p>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </article>
 
           <article className="tarjeta">
             <h2>Ubicación</h2>

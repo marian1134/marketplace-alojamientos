@@ -1393,3 +1393,355 @@ p.etiqueta-verde {
   margin-top: 24px;
   text-align: center;
 }
+
+/* ---------- Íconos, estrellas y corazones ---------- */
+.icono {
+  flex: none;
+  vertical-align: middle;
+}
+
+.con-icono {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.etiqueta-icono {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.etiqueta-icono .icono {
+  color: var(--verde);
+}
+
+.barra-busqueda .boton-principal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.estrellas {
+  display: inline-flex;
+  gap: 1px;
+  color: #f5a524;
+  vertical-align: middle;
+}
+
+.calificacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--texto);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.calificacion .icono {
+  color: #f5a524;
+}
+
+.calificacion a {
+  color: var(--texto);
+  font-weight: 400;
+}
+
+.resultado-item {
+  position: relative;
+}
+
+.resultado-titulo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resultado-titulo strong {
+  font-size: 18px;
+}
+
+.boton-corazon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #16423c;
+  background: rgb(255 255 255 / 94%);
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 15%);
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.boton-corazon:hover {
+  transform: scale(1.08);
+}
+
+.boton-corazon.activo {
+  color: #e0245e;
+}
+
+.boton-corazon.en-linea {
+  position: static;
+  display: inline-flex;
+  gap: 6px;
+  width: auto;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  box-shadow: none;
+  font: inherit;
+  font-weight: 600;
+}
+
+.detalle-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ---------- Reseñas ---------- */
+.resenas-resumen {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.resenas-promedio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.resenas-promedio strong {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.resenas-barras {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resenas-barras li {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 36px;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 14px;
+}
+
+.barra {
+  height: 8px;
+  overflow: hidden;
+  background: #eef0ed;
+  border-radius: 999px;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  background: var(--verde-oscuro);
+  border-radius: 999px;
+}
+
+.lista-resenas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-resenas li {
+  padding: 16px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.lista-resenas p {
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+
+.resena-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resena-cabecera > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.tu-resena {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.elegir-estrellas {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 8px 0 4px;
+}
+
+.elegir-estrellas button {
+  padding: 2px;
+  color: #c9d3cf;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.elegir-estrellas button.llena {
+  color: #f5a524;
+}
+
+/* ---------- Calendario del anfitrión ---------- */
+.pagina-interna .campo-alojamiento {
+  max-width: 520px;
+}
+
+.calendario-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.meses {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.mes h3 {
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.mes h3::first-letter {
+  text-transform: uppercase;
+}
+
+.calendario-columnas aside .dos-columnas {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.mes-grilla {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.mes-dia-nombre {
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mes-dia {
+  padding: 8px 0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.mes-dia.disponible,
+.leyenda i.disponible {
+  background: var(--verde-claro);
+}
+
+.mes-dia.reservado,
+.leyenda i.reservado {
+  color: white;
+  background: #c2410c;
+  font-weight: 700;
+  cursor: help;
+}
+
+.mes-dia.cerrado,
+.leyenda i.cerrado {
+  color: var(--texto-suave);
+  background: #eceeec;
+  text-decoration: line-through;
+}
+
+.mes-dia.pasado {
+  color: #b8c0bd;
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  font-size: 13px;
+}
+
+.leyenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leyenda i {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.lista-periodos {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-periodos li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+@media (max-width: 960px) {
+  .calendario-columnas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .meses,
+  .lista-resenas,
+  .resenas-resumen {
+    grid-template-columns: 1fr;
+  }
+}

@@ -7,6 +7,8 @@ public record ResultadoBusqueda(
         AlojamientoResponse alojamiento,
         String imagenPortada,
         long noches,
-        BigDecimal totalEstimado
+        BigDecimal totalEstimado,
+        Double promedioCalificacion,
+        long cantidadResenas
 ) {
 }
