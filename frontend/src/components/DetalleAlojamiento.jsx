@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
 import { NOMBRES_TIPO } from '../tipos'
+import { enlaceGoogleMaps, urlMapa } from '../mapa'
 import { Estrellas, IconoCorazon, IconoEstrella, IconoUbicacion } from './Iconos'
 import {
   aFecha,
@@ -536,9 +537,37 @@ function DetalleAlojamiento({
           </article>
 
           <article className="tarjeta">
-            <h2>Ubicación</h2>
-            <p>
-              ⌖ {alojamiento.ciudad} — {alojamiento.direccion}
+            <div className="tarjeta-titulo">
+              <h2>Ubicación</h2>
+              <a
+                className="boton-enlace"
+                href={enlaceGoogleMaps(
+                  alojamiento.ciudad,
+                  alojamiento.direccion
+                )}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Abrir en Google Maps ↗
+              </a>
+            </div>
+
+            <p className="con-icono">
+              <IconoUbicacion tamano={16} />
+              {alojamiento.direccion}
+            </p>
+
+            <iframe
+              className="mapa"
+              title={`Mapa de ${alojamiento.ciudad}`}
+              src={urlMapa(alojamiento.ciudad, alojamiento.direccion)}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+
+            <p className="texto-suave nota-mapa">
+              El punto muestra la zona aproximada. El anfitrión te enviará la
+              dirección exacta cuando confirmes tu reserva.
             </p>
           </article>
 
