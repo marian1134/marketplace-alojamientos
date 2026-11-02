@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.LocalTime;
 
 @Service
 @Transactional
@@ -256,6 +257,20 @@ public class AlojamientoService {
 
         alojamiento.setCapacidad(request.capacidad());
 
+        alojamiento.setHabitaciones(
+                request.habitaciones() != null ? request.habitaciones() : 1
+        );
+
+        alojamiento.setBanos(
+                request.banos() != null ? request.banos() : 1
+        );
+
+        alojamiento.setHoraCheckIn(
+                request.horaCheckIn() != null
+                        ? request.horaCheckIn().withSecond(0).withNano(0)
+                        : LocalTime.of(15, 0)
+        );
+
         alojamiento.setPrecioNoche(
                 request.precioNoche()
         );
@@ -317,7 +332,10 @@ public class AlojamientoService {
                 alojamiento.getEstado(),
                 alojamiento.getMotivoEstado(),
                 alojamiento.getFechaCreacion(),
-                alojamiento.getFechaActualizacion()
+                alojamiento.getFechaActualizacion(),
+                alojamiento.getHabitaciones(),
+                alojamiento.getBanos(),
+                alojamiento.getHoraCheckIn()
         );
     }
 }
