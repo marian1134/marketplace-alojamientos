@@ -73,6 +73,7 @@ public class Pago {
     public BigDecimal getMontoReembolsado() { return montoReembolsado; }
     public void setMontoReembolsado(BigDecimal montoReembolsado) { this.montoReembolsado = montoReembolsado; }
     public String getMoneda() { return moneda; }
+    public void setMoneda(String moneda) { this.moneda = moneda; }
     public EstadoPago getEstado() { return estado; }
     public void setEstado(EstadoPago estado) { this.estado = estado; }
     public String getReferencia() { return referencia; }

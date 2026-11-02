@@ -2,6 +2,9 @@ package com.inversioneslr.marketplace.service;
 
 import com.inversioneslr.marketplace.dto.CotizacionRequest;
 import com.inversioneslr.marketplace.dto.CotizacionResponse;
+import com.inversioneslr.marketplace.dto.IntencionPagoRequest;
+import com.inversioneslr.marketplace.dto.IntencionPagoResponse;
+import com.stripe.model.PaymentIntent;
 import com.inversioneslr.marketplace.dto.DetalleAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.ImagenAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.ReservaRequest;
@@ -84,6 +87,8 @@ public class ReservaService {
     private final PeriodoDisponibleRepository periodoRepository;
     private final FavoritoRepository favoritoRepository;
     private final AvisosReserva avisos;
+    private final StripeService stripe;
+    private final MonedaService monedas;
 
     private final SecureRandom aleatorio = new SecureRandom();
 
@@ -102,7 +107,9 @@ public class ReservaService {
             ResenaRepository resenaRepository,
             PeriodoDisponibleRepository periodoRepository,
             FavoritoRepository favoritoRepository,
-            AvisosReserva avisos) {
+            AvisosReserva avisos,
+            StripeService stripe,
+            MonedaService monedas) {
 
         this.reservaRepository = reservaRepository;
         this.nocheRepository = nocheRepository;
@@ -119,6 +126,8 @@ public class ReservaService {
         this.periodoRepository = periodoRepository;
         this.favoritoRepository = favoritoRepository;
         this.avisos = avisos;
+        this.stripe = stripe;
+        this.monedas = monedas;
     }
 
     // ------------------------------------------------------------------
@@ -487,6 +496,39 @@ public class ReservaService {
         }
 
         Alojamiento alojamiento = buscarAlojamiento(datos.idAlojamiento());
+        String moneda = monedas.validar(datos.moneda());
+
+        // Con Stripe el pago ya se hizo en el navegador: se verifica aquí
+        PaymentIntent intencion = stripe.activo()
+                ? verificarPagoStripe(datos, huesped, alojamiento, moneda)
+                : null;
+
+        try {
+            return crearReservaPagada(datos, huesped, alojamiento, moneda, intencion);
+        } catch (ResponseStatusException excepcion) {
+
+            // Si la reserva no se pudo crear (por ejemplo, alguien tomó las
+            // fechas), se devuelve el dinero que ya se cobró en Stripe
+            if (intencion != null) {
+                stripe.reembolsar(intencion.getId(), null);
+
+                throw new ResponseStatusException(
+                        excepcion.getStatusCode(),
+                        excepcion.getReason()
+                                + " Como ya habías pagado, te devolvimos el dinero."
+                );
+            }
+
+            throw excepcion;
+        }
+    }
+
+    private ReservaResponse crearReservaPagada(
+            ReservaRequest datos,
+            Usuario huesped,
+            Alojamiento alojamiento,
+            String moneda,
+            PaymentIntent intencion) {
 
         validarSolicitud(
                 alojamiento,
@@ -496,7 +538,8 @@ public class ReservaService {
                 datos.cantidadHuespedes()
         );
 
-        String numeroTarjeta = validarTarjeta(datos);
+        // Pago simulado: se validan los datos de la tarjeta
+        String numeroTarjeta = intencion == null ? validarTarjeta(datos) : null;
 
         ConfiguracionTarifas configuracion = obtenerConfiguracion();
         CotizacionResponse precio = calcularPrecio(
@@ -559,16 +602,136 @@ public class ReservaService {
 
         Pago pago = new Pago();
         pago.setReserva(reserva);
-        pago.setMonto(precio.total());
+        pago.setMoneda(moneda);
+        pago.setMonto(monedas.convertir(precio.total(), moneda));
         pago.setEstado(EstadoPago.APROBADO);
-        pago.setReferencia("PRUEBA-" + UUID.randomUUID());
-        pago.setUltimos4(numeroTarjeta.substring(numeroTarjeta.length() - 4));
         pago.setClaveIdempotencia(UUID.randomUUID().toString());
+
+        if (intencion != null) {
+            pago.setReferencia(intencion.getId());
+            pago.setUltimos4(stripe.ultimos4(intencion));
+        } else {
+            pago.setReferencia("PRUEBA-" + UUID.randomUUID());
+            pago.setUltimos4(numeroTarjeta.substring(numeroTarjeta.length() - 4));
+        }
+
         pagoRepository.save(pago);
 
-        avisos.reservaCreada(reserva, pago, precio.total());
+        avisos.reservaCreada(reserva, pago, cotizacion);
 
         return convertir(reserva);
+    }
+
+    // ------------------------------------------------------------------
+    // Pago con Stripe
+    // ------------------------------------------------------------------
+
+    // Paso 1: antes de pagar, se crea la intención de pago con el total
+    @Transactional(readOnly = true)
+    public IntencionPagoResponse crearIntencionPago(IntencionPagoRequest datos, String correo) {
+
+        if (!stripe.activo()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Stripe no está configurado"
+            );
+        }
+
+        Usuario huesped = obtenerUsuario(correo);
+        Alojamiento alojamiento = buscarAlojamiento(datos.idAlojamiento());
+        String moneda = monedas.validar(datos.moneda());
+
+        validarSolicitud(
+                alojamiento,
+                huesped,
+                datos.fechaLlegada(),
+                datos.fechaSalida(),
+                datos.cantidadHuespedes()
+        );
+
+        CotizacionResponse precio = calcularPrecio(
+                alojamiento,
+                datos.fechaLlegada(),
+                datos.fechaSalida(),
+                obtenerConfiguracion()
+        );
+
+        BigDecimal monto = monedas.convertir(precio.total(), moneda);
+
+        // Estos datos se comparan después para que nadie cambie la reserva
+        java.util.Map<String, String> datosReserva = java.util.Map.of(
+                "idAlojamiento", String.valueOf(alojamiento.getIdAlojamiento()),
+                "idHuesped", String.valueOf(huesped.getIdUsuario()),
+                "llegada", datos.fechaLlegada().toString(),
+                "salida", datos.fechaSalida().toString(),
+                "huespedes", String.valueOf(datos.cantidadHuespedes()),
+                "claveIdempotencia", datos.claveIdempotencia()
+        );
+
+        PaymentIntent intencion = stripe.crearIntencion(
+                monedas.enCentavos(monto),
+                moneda,
+                "StayHub - " + alojamiento.getTitulo() + " ("
+                        + datos.fechaLlegada() + " a " + datos.fechaSalida() + ")",
+                datosReserva,
+                "intencion-" + datos.claveIdempotencia() + "-" + moneda
+        );
+
+        return new IntencionPagoResponse(
+                intencion.getId(),
+                intencion.getClientSecret(),
+                monto,
+                moneda
+        );
+    }
+
+    // Paso 2: al crear la reserva se confirma que Stripe sí cobró lo correcto
+    private PaymentIntent verificarPagoStripe(
+            ReservaRequest datos,
+            Usuario huesped,
+            Alojamiento alojamiento,
+            String moneda) {
+
+        if (datos.idIntencionPago() == null || datos.idIntencionPago().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Falta el pago con Stripe"
+            );
+        }
+
+        if (pagoRepository.existsByReferencia(datos.idIntencionPago())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ese pago ya se usó en otra reserva"
+            );
+        }
+
+        PaymentIntent intencion = stripe.obtener(datos.idIntencionPago());
+        java.util.Map<String, String> guardados = intencion.getMetadata();
+
+        boolean mismaReserva =
+                String.valueOf(alojamiento.getIdAlojamiento()).equals(guardados.get("idAlojamiento"))
+                && String.valueOf(huesped.getIdUsuario()).equals(guardados.get("idHuesped"))
+                && datos.fechaLlegada().toString().equals(guardados.get("llegada"))
+                && datos.fechaSalida().toString().equals(guardados.get("salida"))
+                && String.valueOf(datos.cantidadHuespedes()).equals(guardados.get("huespedes"))
+                && moneda.equalsIgnoreCase(intencion.getCurrency());
+
+        if (!mismaReserva) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El pago no corresponde a esta reserva"
+            );
+        }
+
+        if (!"succeeded".equals(intencion.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.PAYMENT_REQUIRED,
+                    "El pago no fue aprobado. Intenta con otra tarjeta."
+            );
+        }
+
+        return intencion;
     }
 
     // ------------------------------------------------------------------
@@ -666,9 +829,11 @@ public class ReservaService {
 
         BigDecimal pagado = pago != null ? pago.getMonto() : BigDecimal.ZERO;
 
+        String monedaPago = pago != null ? pago.getMoneda() : MonedaService.COP;
+
         BigDecimal devolucion = pagado
                 .multiply(porcentaje)
-                .divide(CIEN, 0, RoundingMode.HALF_UP);
+                .divide(CIEN, monedas.decimales(monedaPago), RoundingMode.HALF_UP);
 
         devolverDinero(pago, devolucion);
 
@@ -689,7 +854,7 @@ public class ReservaService {
         cancelacion.setEstadoFinal(EstadoReserva.CANCELADA.name());
         cancelacionRepository.save(cancelacion);
 
-        avisos.reservaCancelada(reserva, motivo.trim(), devolucion);
+        avisos.reservaCancelada(reserva, motivo.trim(), devolucion, monedaPago);
 
         return convertir(reserva);
     }
@@ -730,7 +895,8 @@ public class ReservaService {
 
         avisos.reservaRechazada(
                 reserva,
-                pago != null ? pago.getMonto() : BigDecimal.ZERO
+                pago != null ? pago.getMonto() : BigDecimal.ZERO,
+                pago != null ? pago.getMoneda() : MonedaService.COP
         );
 
         return convertir(reserva);
@@ -883,6 +1049,15 @@ public class ReservaService {
     // El pago es simulado: cualquier número con ese formato se aprueba.
     private String validarTarjeta(ReservaRequest datos) {
 
+        if (datos.numeroTarjeta() == null || datos.titular() == null
+                || datos.expiracion() == null || datos.cvc() == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Completa los datos de la tarjeta"
+            );
+        }
+
         String numero = datos.numeroTarjeta().replaceAll("[\\s-]", "");
 
         if (!numero.matches("\\d{13,19}")) {
@@ -930,6 +1105,11 @@ public class ReservaService {
 
         if (pago == null || valor.signum() <= 0) {
             return;
+        }
+
+        // Si se pagó con Stripe, la devolución se hace en Stripe
+        if (pago.getReferencia() != null && pago.getReferencia().startsWith("pi_")) {
+            stripe.reembolsar(pago.getReferencia(), monedas.enCentavos(valor));
         }
 
         pago.setMontoReembolsado(valor);
@@ -1125,7 +1305,9 @@ public class ReservaService {
                 puedeCancelar(reserva),
                 reserva.getCreadaEn(),
                 reserva.getEstado() == EstadoReserva.COMPLETADA && resena == null,
-                resena != null ? resena.getCalificacion() : null
+                resena != null ? resena.getCalificacion() : null,
+                pago != null ? pago.getMonto() : null,
+                pago != null ? pago.getMoneda() : MonedaService.COP
         );
     }
 }

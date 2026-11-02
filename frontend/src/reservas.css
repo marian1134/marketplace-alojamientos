@@ -1780,3 +1780,78 @@ p.etiqueta-verde {
   flex-direction: row;
   margin: 0;
 }
+
+/* Elegir moneda y tarjeta de Stripe */
+.elegir-moneda {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+
+.elegir-moneda legend {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pagina-interna .elegir-moneda label {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d8e0dc;
+  border-radius: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.pagina-interna .elegir-moneda label.activa {
+  background: var(--verde-claro);
+  border-color: var(--verde);
+}
+
+.elegir-moneda input {
+  accent-color: var(--verde);
+}
+
+.elegir-moneda span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.elegir-moneda strong {
+  font-size: 14px;
+}
+
+.elegir-moneda p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+}
+
+.campo-bloque-stripe {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tarjeta-stripe {
+  padding: 13px 12px;
+  background: #fbfcfb;
+  border: 1px solid #d8e0dc;
+  border-radius: 10px;
+}
+
+@media (max-width: 600px) {
+  .elegir-moneda {
+    grid-template-columns: 1fr;
+  }
+}

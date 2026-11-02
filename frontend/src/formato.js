@@ -149,3 +149,32 @@ export function fotoRespaldo(evento) {
     imagen.src = '/imagenes/registro-fondo.png'
   }
 }
+
+// $1.620.000 COP  o  US$405,00 USD
+export function dinero(valor, moneda = 'COP') {
+  if (valor === null || valor === undefined) {
+    return '—'
+  }
+
+  if (moneda === 'USD') {
+    return (
+      'US$' +
+      Number(valor).toLocaleString('es-CO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) +
+      ' USD'
+    )
+  }
+
+  return pesos(valor)
+}
+
+// Total en pesos -> total en la moneda elegida (USD con 2 decimales)
+export function convertirMoneda(valorCop, moneda, tasaUsd) {
+  if (moneda === 'USD' && tasaUsd) {
+    return Math.round((Number(valorCop) / Number(tasaUsd)) * 100) / 100
+  }
+
+  return Number(valorCop)
+}
