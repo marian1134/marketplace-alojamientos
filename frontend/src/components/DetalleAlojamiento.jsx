@@ -2,11 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
 import { NOMBRES_TIPO } from '../tipos'
 import { enlaceGoogleMaps, urlMapa } from '../mapa'
+import CampoFecha from './CampoFecha'
 import { Estrellas, IconoCorazon, IconoEstrella, IconoUbicacion } from './Iconos'
 import {
   aFecha,
   aTexto,
   explicarPolitica,
+  fechaMaximaLlegada,
+  MAXIMO_NOCHES,
+  nombreCortoPolitica,
+  sumarDias,
   fechaCorta,
   fotoRespaldo,
   hoyTexto,
@@ -247,6 +252,38 @@ function DetalleAlojamiento({
   const miniaturas = imagenes.slice(0, 5)
   const gruposOcupados = agruparNoches(detalle.nochesOcupadas)
 
+  const periodos = detalle.periodosDisponibles
+
+  // Noche que no se puede reservar: ocupada o fuera de los periodos
+  function nocheNoDisponible(fecha) {
+    if (ocupadas.has(fecha)) {
+      return true
+    }
+
+    return (
+      periodos.length > 0 &&
+      !periodos.some(
+        (periodo) => fecha >= periodo.fechaInicio && fecha < periodo.fechaFin
+      )
+    )
+  }
+
+  // Última salida posible: antes de la siguiente noche no disponible
+  // y máximo 90 noches
+  function maximaSalida(llegada) {
+    let fecha = llegada
+
+    for (let noche = 1; noche <= MAXIMO_NOCHES; noche++) {
+      fecha = sumarDias(llegada, noche)
+
+      if (nocheNoDisponible(fecha)) {
+        return fecha
+      }
+    }
+
+    return fecha
+  }
+
   let aviso = mensajePrecio
 
   if (entrada && entrada < hoyTexto()) {
@@ -386,7 +423,15 @@ function DetalleAlojamiento({
           <ul className="detalle-datos">
             <li>
               <strong>{alojamiento.capacidad}</strong>
-              huéspedes máx.
+              {alojamiento.capacidad === 1 ? 'huésped máx.' : 'huéspedes máx.'}
+            </li>
+            <li>
+              <strong>{alojamiento.habitaciones ?? 1}</strong>
+              {(alojamiento.habitaciones ?? 1) === 1 ? 'habitación' : 'habitaciones'}
+            </li>
+            <li>
+              <strong>{alojamiento.banos ?? 1}</strong>
+              {(alojamiento.banos ?? 1) === 1 ? 'baño' : 'baños'}
             </li>
             <li>
               <strong>{tipo}</strong>
@@ -401,12 +446,7 @@ function DetalleAlojamiento({
               reserva
             </li>
             <li>
-              <strong>
-                {NOMBRES_POLITICA[politica.tipo]?.replace(
-                  'Cancelación ',
-                  ''
-                )}
-              </strong>
+              <strong>{nombreCortoPolitica(politica.tipo)}</strong>
               cancelación
             </li>
           </ul>
@@ -443,7 +483,7 @@ function DetalleAlojamiento({
               </ul>
               <p>
                 <strong>{NOMBRES_POLITICA[politica.tipo]}.</strong>{' '}
-                {explicarPolitica(politica)}
+                {explicarPolitica(politica, fechasValidas ? entrada : null)}
               </p>
             </article>
           </div>
@@ -594,34 +634,37 @@ function DetalleAlojamiento({
           </p>
 
           <div className="campos-fecha">
-            <label>
-              Entrada
-              <input
-                type="date"
+            <div className="campo-barra">
+              <span>Entrada</span>
+              <CampoFecha
+                etiqueta="Fecha de entrada"
                 value={entrada}
                 min={hoyTexto()}
-                onChange={(evento) => {
-                  setEntrada(evento.target.value)
+                max={fechaMaximaLlegada()}
+                deshabilitada={nocheNoDisponible}
+                onChange={(valor) => {
+                  setEntrada(valor)
                   setCotizacion(null)
-                  if (salida && salida <= evento.target.value) {
+                  if (salida && (salida <= valor || salida > maximaSalida(valor))) {
                     setSalida('')
                   }
                 }}
               />
-            </label>
+            </div>
 
-            <label>
-              Salida
-              <input
-                type="date"
+            <div className="campo-barra">
+              <span>Salida</span>
+              <CampoFecha
+                etiqueta="Fecha de salida"
                 value={salida}
-                min={entrada || hoyTexto()}
-                onChange={(evento) => {
-                  setSalida(evento.target.value)
+                min={sumarDias(entrada || hoyTexto(), 1)}
+                max={entrada ? maximaSalida(entrada) : undefined}
+                onChange={(valor) => {
+                  setSalida(valor)
                   setCotizacion(null)
                 }}
               />
-            </label>
+            </div>
           </div>
 
           <label className="campo-huespedes">

@@ -768,6 +768,13 @@ public class ReservaService {
             );
         }
 
+        if (llegada.isAfter(LocalDate.now().plusYears(1))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Solo puedes reservar con máximo un año de anticipación"
+            );
+        }
+
         if (!salida.isAfter(llegada)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -902,10 +909,17 @@ public class ReservaService {
             );
         }
 
-        if (!datos.cvc().matches("\\d{3,4}")) {
+        if (YearMonth.of(anio, mes).isAfter(YearMonth.now().plusYears(20))) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "El CVC debe tener 3 o 4 dígitos"
+                    "La fecha de expiración no es válida"
+            );
+        }
+
+        if (!datos.cvc().matches("\\d{3}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El CVC debe tener 3 dígitos"
             );
         }
 
