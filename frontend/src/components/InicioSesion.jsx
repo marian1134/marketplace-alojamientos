@@ -1,12 +1,16 @@
 import { useRef, useState } from 'react'
-import { enviarDatos } from '../api'
+import { enviarDatos, leerError } from '../api'
 import CampoContrasena from './CampoContrasena'
+import CodigoVerificacion from './CodigoVerificacion'
 
 function InicioSesion({ onSesion }) {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [mensajeRecuperacion, setMensajeRecuperacion] = useState('')
   const [enviandoCorreo, setEnviandoCorreo] = useState(false)
+
+  // Cuando la contraseña es correcta, se pide el código del correo
+  const [verificacion, setVerificacion] = useState(null)
 
   const ventanaRecuperacion = useRef(null)
 
@@ -42,18 +46,29 @@ function InicioSesion({ onSesion }) {
         return
       }
 
-      if (!respuesta.ok) {
+      if (respuesta.status === 429 || respuesta.status === 503) {
+        setMensaje(
+          await leerError(respuesta, 'No se pudo iniciar sesión. Intenta más tarde.')
+        )
+        return
+      }
+
+      if (respuesta.status !== 202) {
         setMensaje(
           'No se pudo iniciar sesión. Intenta nuevamente.'
         )
         return
       }
 
-      const usuario = await respuesta.json()
+      const resultado = await respuesta.json()
 
       formulario.reset()
-      setMensaje(`¡Bienvenido/a, ${usuario.nombre}!`)
-      onSesion?.(usuario)
+      setVerificacion({
+        correo: datos.correo,
+        contrasena: datos.contrasena,
+        correoOculto: resultado.correoOculto,
+        minutos: resultado.minutos,
+      })
     } catch {
       setMensaje(
         'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
@@ -111,6 +126,16 @@ function InicioSesion({ onSesion }) {
     } finally {
       setEnviandoCorreo(false)
     }
+  }
+
+  if (verificacion) {
+    return (
+      <CodigoVerificacion
+        {...verificacion}
+        onSesion={onSesion}
+        onVolver={() => setVerificacion(null)}
+      />
+    )
   }
 
   return (

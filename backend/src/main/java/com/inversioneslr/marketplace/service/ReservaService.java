@@ -49,6 +49,7 @@ import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.text.Normalizer;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -63,6 +64,12 @@ public class ReservaService {
 
     private static final long MAXIMO_NOCHES = 90;
     private static final BigDecimal CIEN = new BigDecimal("100");
+    private static final long DIAS_PARA_REPORTAR_NO_SHOW = 2;
+
+    private static final java.time.format.DateTimeFormatter HORA =
+            java.time.format.DateTimeFormatter.ofPattern("h:mm a", Locale.forLanguageTag("es-CO"));
+    private static final java.time.format.DateTimeFormatter FECHA_LARGA =
+            java.time.format.DateTimeFormatter.ofPattern("d 'de' MMMM", Locale.forLanguageTag("es-CO"));
 
     private static final Set<EstadoReserva> CANCELABLES = Set.of(
             EstadoReserva.CONFIRMADA,
@@ -520,6 +527,8 @@ public class ReservaService {
                         : EstadoReserva.CONFIRMADA
         );
 
+        marcarRecordatorioSiLlegaPronto(reserva);
+
         reserva = reservaRepository.save(reserva);
 
         // Bloquea cada noche. Si otra persona reservó al mismo tiempo,
@@ -695,6 +704,154 @@ public class ReservaService {
     }
 
     // ------------------------------------------------------------------
+    // Check-in
+    // ------------------------------------------------------------------
+
+    public ReservaResponse hacerCheckIn(Long idReserva, String correo) {
+
+        Usuario huesped = obtenerUsuario(correo);
+        Reserva reserva = buscarReserva(idReserva);
+
+        if (!reserva.getHuesped().getIdUsuario().equals(huesped.getIdUsuario())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Solo el huésped puede hacer el check-in de su reserva"
+            );
+        }
+
+        if (reserva.getCheckInEn() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ya hiciste el check-in de esta reserva"
+            );
+        }
+
+        if (reserva.getEstado() != EstadoReserva.CONFIRMADA) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Solo puedes hacer check-in de una reserva confirmada"
+            );
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime inicio = reserva.getFechaLlegada()
+                .atTime(reserva.getAlojamiento().getHoraCheckIn());
+
+        if (ahora.isBefore(inicio)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El check-in se habilita el "
+                            + reserva.getFechaLlegada().format(FECHA_LARGA)
+                            + " desde las " + inicio.toLocalTime().format(HORA)
+            );
+        }
+
+        if (ahora.toLocalDate().isAfter(reserva.getFechaLlegada())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El plazo para hacer check-in terminó el "
+                            + reserva.getFechaLlegada().format(FECHA_LARGA)
+                            + " a las 11:59 p. m."
+            );
+        }
+
+        reserva.setCheckInEn(ahora);
+        reservaRepository.save(reserva);
+
+        avisos.checkInRealizado(reserva);
+
+        return convertir(reserva);
+    }
+
+    // El anfitrión cancela porque el huésped no hizo check-in el día de
+    // llegada. La devolución sigue la política del alojamiento.
+    public ReservaResponse cancelarPorNoPresentarse(Long idReserva, String correo) {
+
+        Usuario anfitrion = obtenerUsuario(correo);
+        Reserva reserva = buscarReserva(idReserva);
+
+        if (!reserva.getAlojamiento().getAnfitrion().getIdUsuario()
+                .equals(anfitrion.getIdUsuario())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Solo el anfitrión del alojamiento puede hacer esto"
+            );
+        }
+
+        if (!noSePresento(reserva)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Solo puedes cancelar por no presentarse cuando pasó el "
+                            + "día de llegada y el huésped no hizo check-in"
+            );
+        }
+
+        PoliticaCancelacion politica = reserva.getAlojamiento().getPolitica();
+        BigDecimal porcentaje = politica.getPorcentajeDespues();
+
+        Pago pago = pagoRepository
+                .findByReserva_IdReserva(idReserva)
+                .orElse(null);
+
+        BigDecimal pagado = pago != null ? pago.getMonto() : BigDecimal.ZERO;
+
+        BigDecimal devolucion = pagado
+                .multiply(porcentaje)
+                .divide(CIEN, 0, RoundingMode.HALF_UP);
+
+        devolverDinero(pago, devolucion);
+
+        // El alojamiento vuelve a quedar libre para esas fechas
+        nocheRepository.liberarNoches(idReserva);
+
+        reserva.setEstado(EstadoReserva.CANCELADA);
+        reservaRepository.save(reserva);
+
+        String motivo = "El huésped no se presentó ni hizo check-in";
+
+        Cancelacion cancelacion = new Cancelacion();
+        cancelacion.setReserva(reserva);
+        cancelacion.setCanceladoPor(anfitrion.getIdUsuario());
+        cancelacion.setMotivo(motivo);
+        cancelacion.setPorcentajeDevolucion(porcentaje);
+        cancelacion.setValorDevolucion(devolucion);
+        cancelacion.setFechasLiberadas(true);
+        cancelacion.setEstadoFinal(EstadoReserva.CANCELADA.name());
+        cancelacionRepository.save(cancelacion);
+
+        avisos.noSePresento(reserva, devolucion);
+
+        return convertir(reserva);
+    }
+
+    // Correo de "mañana llegas" para las reservas confirmadas de mañana.
+    // Lo llama RecordatoriosCheckIn cada hora.
+    public int enviarRecordatoriosCheckIn() {
+
+        List<Reserva> deManana = reservaRepository
+                .findByEstadoAndFechaLlegadaAndRecordatorioEnviadoFalse(
+                        EstadoReserva.CONFIRMADA,
+                        LocalDate.now().plusDays(1)
+                );
+
+        for (Reserva reserva : deManana) {
+            avisos.recordatorioCheckIn(reserva);
+            reserva.setRecordatorioEnviado(true);
+            reservaRepository.save(reserva);
+        }
+
+        return deManana.size();
+    }
+
+    // Si la llegada es hoy o mañana, el correo de confirmación ya trae los
+    // datos del check-in y no hace falta el recordatorio.
+    private void marcarRecordatorioSiLlegaPronto(Reserva reserva) {
+        if (!reserva.getFechaLlegada().isAfter(LocalDate.now().plusDays(1))) {
+            reserva.setRecordatorioEnviado(true);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Aprobación o rechazo por el anfitrión (modo CON_APROBACION)
     // ------------------------------------------------------------------
 
@@ -703,6 +860,7 @@ public class ReservaService {
         Reserva reserva = buscarReservaPendienteDelAnfitrion(idReserva, correo);
 
         reserva.setEstado(EstadoReserva.CONFIRMADA);
+        marcarRecordatorioSiLlegaPronto(reserva);
         reservaRepository.save(reserva);
 
         avisos.reservaAprobada(reserva);
@@ -943,14 +1101,41 @@ public class ReservaService {
 
     private boolean puedeCancelar(Reserva reserva) {
         return CANCELABLES.contains(reserva.getEstado())
+                && reserva.getCheckInEn() == null
                 && reserva.getFechaLlegada().isAfter(LocalDate.now().minusDays(1));
     }
 
-    // Una reserva confirmada cuya fecha de salida ya pasó queda COMPLETADA
+    // El check-in se hace el día de llegada, desde la hora de check-in
+    // del alojamiento hasta las 11:59 p. m.
+    private boolean puedeHacerCheckIn(Reserva reserva) {
+
+        LocalDateTime ahora = LocalDateTime.now();
+
+        return reserva.getEstado() == EstadoReserva.CONFIRMADA
+                && reserva.getCheckInEn() == null
+                && ahora.toLocalDate().equals(reserva.getFechaLlegada())
+                && !ahora.toLocalTime().isBefore(
+                        reserva.getAlojamiento().getHoraCheckIn());
+    }
+
+    // Pasó el día de llegada y el huésped no hizo check-in
+    private boolean noSePresento(Reserva reserva) {
+        return reserva.getEstado() == EstadoReserva.CONFIRMADA
+                && reserva.getCheckInEn() == null
+                && LocalDate.now().isAfter(reserva.getFechaLlegada());
+    }
+
+    // Una reserva confirmada cuya fecha de salida ya pasó queda COMPLETADA.
+    // Si el huésped no hizo check-in, el anfitrión tiene 2 días más para
+    // reportar que no se presentó.
     private void completarSiTermino(Reserva reserva) {
 
+        LocalDate limite = reserva.getCheckInEn() != null
+                ? reserva.getFechaSalida()
+                : reserva.getFechaSalida().plusDays(DIAS_PARA_REPORTAR_NO_SHOW);
+
         if (reserva.getEstado() == EstadoReserva.CONFIRMADA
-                && !reserva.getFechaSalida().isAfter(LocalDate.now())) {
+                && !limite.isAfter(LocalDate.now())) {
 
             reserva.setEstado(EstadoReserva.COMPLETADA);
             reservaRepository.save(reserva);
@@ -1125,7 +1310,11 @@ public class ReservaService {
                 puedeCancelar(reserva),
                 reserva.getCreadaEn(),
                 reserva.getEstado() == EstadoReserva.COMPLETADA && resena == null,
-                resena != null ? resena.getCalificacion() : null
+                resena != null ? resena.getCalificacion() : null,
+                alojamiento.getHoraCheckIn(),
+                reserva.getCheckInEn(),
+                puedeHacerCheckIn(reserva),
+                noSePresento(reserva)
         );
     }
 }

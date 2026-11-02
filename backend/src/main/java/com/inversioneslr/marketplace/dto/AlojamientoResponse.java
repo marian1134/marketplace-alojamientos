@@ -7,6 +7,7 @@ import com.inversioneslr.marketplace.model.TipoPolitica;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public record AlojamientoResponse(
         Long idAlojamiento,
@@ -26,6 +27,7 @@ public record AlojamientoResponse(
         LocalDateTime fechaCreacion,
         LocalDateTime fechaActualizacion,
         Integer habitaciones,
-        Integer banos
+        Integer banos,
+        LocalTime horaCheckIn
 ) {
 }

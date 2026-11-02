@@ -1,6 +1,5 @@
 package com.inversioneslr.marketplace.service;
 
-import com.inversioneslr.marketplace.dto.InicioSesionRequest;
 import com.inversioneslr.marketplace.dto.UsuarioResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,18 +18,12 @@ import java.util.List;
 @Service
 public class SesionService {
 
-    private final UsuarioService usuarioService;
-
-    public SesionService(UsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
-    }
-
-    public UsuarioResponse iniciarSesion(
-            InicioSesionRequest datos,
+    // Abre la sesión del usuario. Se llama cuando ya pasó la contraseña
+    // y el código de verificación.
+    public UsuarioResponse crearSesion(
+            UsuarioResponse usuario,
             HttpServletRequest solicitud,
             HttpServletResponse respuesta) {
-
-        UsuarioResponse usuario = usuarioService.iniciarSesion(datos);
 
         var permisos = List.of(
                 new SimpleGrantedAuthority("ROLE_" + usuario.rol().name())

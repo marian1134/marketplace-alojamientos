@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 
 public record AlojamientoRequest(
 
@@ -57,6 +58,9 @@ public record AlojamientoRequest(
         Integer habitaciones,
 
         @Min(1) @Max(50)
-        Integer banos
+        Integer banos,
+
+        // Opcional: si no llega se usa 3:00 p. m.
+        LocalTime horaCheckIn
 ) {
 }

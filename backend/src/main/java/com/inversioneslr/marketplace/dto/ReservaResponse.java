@@ -7,6 +7,7 @@ import com.inversioneslr.marketplace.model.TipoPolitica;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public record ReservaResponse(
         Long idReserva,
@@ -41,6 +42,12 @@ public record ReservaResponse(
         boolean puedeCancelar,
         LocalDateTime creadaEn,
         boolean puedeResenar,
-        Integer calificacionResena
+        Integer calificacionResena,
+
+        // Check-in
+        LocalTime horaCheckIn,
+        LocalDateTime checkInEn,
+        boolean puedeHacerCheckIn,
+        boolean puedeCancelarNoShow
 ) {
 }

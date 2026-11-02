@@ -115,6 +115,24 @@ public class ReservaController {
         return reservaService.crearResena(id, datos, autenticacion.getName());
     }
 
+    // El huésped hace su check-in el día de llegada
+    @PostMapping("/api/v1/reservas/{id}/check-in")
+    public ReservaResponse hacerCheckIn(
+            @PathVariable Long id,
+            Authentication autenticacion) {
+
+        return reservaService.hacerCheckIn(id, autenticacion.getName());
+    }
+
+    // El anfitrión cancela porque el huésped no se presentó
+    @PatchMapping("/api/v1/reservas/{id}/no-se-presento")
+    public ReservaResponse cancelarPorNoPresentarse(
+            @PathVariable Long id,
+            Authentication autenticacion) {
+
+        return reservaService.cancelarPorNoPresentarse(id, autenticacion.getName());
+    }
+
     @PatchMapping("/api/v1/reservas/{id}/aprobar")
     public ReservaResponse aprobar(
             @PathVariable Long id,

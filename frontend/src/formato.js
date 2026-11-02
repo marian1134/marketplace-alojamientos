@@ -135,3 +135,16 @@ export function fotoRespaldo(evento) {
     imagen.src = '/imagenes/registro-fondo.png'
   }
 }
+
+// "15:00" o "15:00:00" → "3:00 p. m."
+export function horaBonita(texto) {
+  if (!texto) {
+    return ''
+  }
+
+  const [horas, minutos] = texto.split(':').map(Number)
+  const sufijo = horas < 12 ? 'a. m.' : 'p. m.'
+  const hora12 = horas % 12 === 0 ? 12 : horas % 12
+
+  return `${hora12}:${String(minutos).padStart(2, '0')} ${sufijo}`
+}

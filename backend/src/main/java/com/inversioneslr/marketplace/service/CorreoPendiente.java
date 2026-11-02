@@ -3,9 +3,13 @@ package com.inversioneslr.marketplace.service;
 // Un correo listo para enviar. Se envía solo si la operación
 // (reserva, cancelación, etc.) quedó guardada en la base.
 // idCorreo es la fila de correo_enviado donde se anota el resultado.
+// botonTexto y botonEnlace son opcionales: si llegan, el correo
+// muestra un botón (por ejemplo "Hacer check-in").
 public record CorreoPendiente(
         Long idCorreo,
         String destinatario,
         String asunto,
-        String texto) {
+        String texto,
+        String botonTexto,
+        String botonEnlace) {
 }
