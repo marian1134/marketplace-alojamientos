@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NOMBRES_TIPO } from '../tipos'
+import { DESTINOS } from '../destinos'
+import TarjetaDestino from './TarjetaDestino'
 
 function IconoCasa() {
   return (
@@ -222,6 +224,33 @@ function Portada({
     }
   }, [])
 
+  function contarEnDestino(destino) {
+    return alojamientos.filter((alojamiento) =>
+      destino.ciudades.includes(
+        alojamiento.ciudad?.toLocaleLowerCase('es')
+      )
+    ).length
+  }
+
+  // Al tocar un destino se muestran sus alojamientos
+  function elegirDestino(destino) {
+    if (!usuario) {
+      pedirSesion()
+      return
+    }
+
+    setDestino(destino.nombre)
+    setFiltros({
+      destino: destino.nombre,
+      ciudades: destino.ciudades,
+      huespedes: 0,
+    })
+
+    document
+      .querySelector('#alojamientos-destacados')
+      ?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   const alojamientosFiltrados =
     alojamientos.filter((alojamiento) => {
       const ciudad =
@@ -241,6 +270,7 @@ function Portada({
 
       const coincideDestino =
         destinoBuscado === '' ||
+        filtros.ciudades?.includes(ciudad) ||
         ciudad.includes(destinoBuscado) ||
         titulo.includes(destinoBuscado)
 
@@ -580,6 +610,34 @@ function Portada({
       </section>
 
       <section
+        className="portada-destinos"
+        id="destinos-populares"
+      >
+        <p className="portada-etiqueta">
+          Lo mejor de Colombia
+        </p>
+
+        <h2>Destinos populares</h2>
+
+        <p className="portada-descripcion-seccion">
+          Elige un destino y descubre dónde quedarte.
+        </p>
+
+        <div className="destinos-grilla">
+          {DESTINOS.map((destino) => (
+            <TarjetaDestino
+              key={destino.id}
+              destino={destino}
+              cantidad={contarEnDestino(destino)}
+              onElegir={elegirDestino}
+            />
+          ))}
+        </div>
+
+        <p className="destinos-credito">Fotos: Pexels</p>
+      </section>
+
+      <section
         className="portada-alojamientos"
         id="alojamientos-destacados"
       >
@@ -610,10 +668,23 @@ function Portada({
             Aún no hay alojamientos publicados.
           </p>
         ) : alojamientosFiltrados.length === 0 ? (
-          <p className="portada-estado">
-            No encontramos alojamientos disponibles
-            con esos criterios.
-          </p>
+          <div className="portada-estado">
+            <p>
+              No encontramos alojamientos disponibles
+              con esos criterios.
+            </p>
+
+            <button
+              type="button"
+              className="boton-ver-todos"
+              onClick={() => {
+                setDestino('')
+                setFiltros({ destino: '', huespedes: 0 })
+              }}
+            >
+              Ver todos los alojamientos
+            </button>
+          </div>
         ) : (
           <div className="portada-tarjetas">
             {alojamientosFiltrados.map(
