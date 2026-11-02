@@ -12,6 +12,7 @@ import PanelAnfitrion from './components/PanelAnfitrion'
 import ResultadosBusqueda from './components/ResultadosBusqueda'
 import MisFavoritos from './components/MisFavoritos'
 import CalendarioAnfitrion from './components/CalendarioAnfitrion'
+import RedDeSeguridad from './components/RedDeSeguridad'
 import { consultar, enviarDatos } from './api'
 import './App.css'
 import './reservas.css'
@@ -288,6 +289,10 @@ function App() {
         />
 
         <main>
+          <RedDeSeguridad
+            key={pantalla}
+            onVolver={() => navegar('portada')}
+          >
           {pantalla === 'resultados' && busqueda && (
             <ResultadosBusqueda
               key={JSON.stringify(busqueda)}
@@ -370,6 +375,7 @@ function App() {
               <Alojamientos onVolver={() => navegar('panel')} />
             </section>
           )}
+          </RedDeSeguridad>
         </main>
       </div>
     )
