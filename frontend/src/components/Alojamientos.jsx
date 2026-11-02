@@ -13,6 +13,7 @@ const formularioInicial = {
   capacidad: '1',
   habitaciones: '1',
   banos: '1',
+  horaCheckIn: '15:00',
   precioNoche: '',
   tarifaLimpieza: '0',
   tipoPolitica: 'MODERADA',
@@ -115,6 +116,7 @@ function Alojamientos({ onVolver }) {
       capacidad: Number(formulario.capacidad),
       habitaciones: Number(formulario.habitaciones || 1),
       banos: Number(formulario.banos || 1),
+      horaCheckIn: formulario.horaCheckIn || '15:00',
       precioNoche: Number(formulario.precioNoche),
       tarifaLimpieza: Number(formulario.tarifaLimpieza || 0),
     }
@@ -190,6 +192,7 @@ function Alojamientos({ onVolver }) {
       capacidad: String(alojamiento.capacidad),
       habitaciones: String(alojamiento.habitaciones ?? 1),
       banos: String(alojamiento.banos ?? 1),
+      horaCheckIn: (alojamiento.horaCheckIn ?? '15:00').slice(0, 5),
       precioNoche: String(alojamiento.precioNoche),
       tarifaLimpieza: String(alojamiento.tarifaLimpieza ?? 0),
       tipoPolitica: alojamiento.tipoPolitica ?? 'MODERADA',
@@ -447,6 +450,27 @@ function Alojamientos({ onVolver }) {
               required
             />
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="alojamiento-check-in">
+            Hora de check-in
+          </label>
+
+          <input
+            id="alojamiento-check-in"
+            name="horaCheckIn"
+            type="time"
+            value={formulario.horaCheckIn}
+            onChange={actualizarCampo}
+            aria-describedby="ayuda-check-in"
+            required
+          />
+
+          <small id="ayuda-check-in">
+            Desde esta hora el huésped puede hacer su check-in el día de
+            llegada (hasta las 11:59 p. m.).
+          </small>
         </div>
 
         <div>

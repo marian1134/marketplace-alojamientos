@@ -3,6 +3,7 @@ import { consultar, enviarDatos, leerError } from '../api'
 import {
   aFecha,
   fechaCorta,
+  horaBonita,
   hoyTexto,
   NOMBRES_ESTADO_RESERVA,
   pesos,
@@ -90,6 +91,38 @@ function PanelAnfitrion({
 
     reemplazar(await respuesta.json())
     setMensaje(`Reserva ${reserva.codigo} aprobada.`)
+  }
+
+  // El huésped no hizo check-in el día de llegada
+  async function cancelarNoShow(reserva) {
+    const seguro = window.confirm(
+      `¿Cancelar la reserva ${reserva.codigo} porque ${reserva.nombreHuesped} no se presentó? ` +
+        'La devolución sigue tu política de cancelación y las fechas quedan libres.'
+    )
+
+    if (!seguro) {
+      return
+    }
+
+    setMensaje('')
+
+    const respuesta = await enviarDatos(
+      `/api/v1/reservas/${reserva.idReserva}/no-se-presento`,
+      {},
+      'PATCH'
+    )
+
+    if (!respuesta.ok) {
+      setMensaje(
+        await leerError(respuesta, 'No se pudo cancelar la reserva.')
+      )
+      return
+    }
+
+    reemplazar(await respuesta.json())
+    setMensaje(
+      `Reserva ${reserva.codigo} cancelada por no presentarse. Le avisamos al huésped por correo.`
+    )
   }
 
   function abrirRechazo(reserva) {
@@ -306,6 +339,7 @@ function PanelAnfitrion({
                       <th>Alojamiento</th>
                       <th>Fechas</th>
                       <th>Estado</th>
+                      <th>Check-in</th>
                       <th>Total</th>
                     </tr>
                   </thead>
@@ -325,6 +359,27 @@ function PanelAnfitrion({
                           >
                             {NOMBRES_ESTADO_RESERVA[reserva.estado]}
                           </span>
+                        </td>
+                        <td>
+                          {reserva.checkInEn ? (
+                            <span className="etiqueta-verde">
+                              ✓ {horaBonita(reserva.checkInEn.slice(11, 16))}
+                            </span>
+                          ) : reserva.puedeCancelarNoShow ? (
+                            <button
+                              type="button"
+                              className="boton-peligro"
+                              onClick={() => cancelarNoShow(reserva)}
+                            >
+                              No se presentó
+                            </button>
+                          ) : reserva.estado === 'CONFIRMADA' ? (
+                            <span className="texto-suave">
+                              Desde {horaBonita(reserva.horaCheckIn)}
+                            </span>
+                          ) : (
+                            <span className="texto-suave">—</span>
+                          )}
                         </td>
                         <td>{pesos(reserva.total)}</td>
                       </tr>

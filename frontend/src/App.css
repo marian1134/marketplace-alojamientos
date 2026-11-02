@@ -2210,3 +2210,11 @@ main.registro-pagina > section {
 .portada-contenido {
   z-index: 3;
 }
+
+/* Código de verificación al iniciar sesión */
+.campo-codigo {
+  font-size: 1.6rem;
+  letter-spacing: 0.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

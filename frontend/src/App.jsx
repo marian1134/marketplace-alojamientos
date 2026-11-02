@@ -54,6 +54,12 @@ function App() {
     new URLSearchParams(window.location.search).get('token')
   )
 
+  // Pantalla pedida desde el botón de un correo (?ir=viajes o ?ir=panel)
+  const [irA, setIrA] = useState(() => {
+    const destino = new URLSearchParams(window.location.search).get('ir')
+    return ['viajes', 'panel'].includes(destino) ? destino : null
+  })
+
   const esRecuperacion = token !== null
   const esLogin = pantalla === 'login'
 
@@ -102,6 +108,32 @@ function App() {
       activo = false
     }
   }, [])
+
+  // Si llegó desde un correo: con sesión va directo a la pantalla;
+  // sin sesión, primero inicia sesión y después se lleva allá.
+  useEffect(() => {
+    if (cargando || !irA) {
+      return
+    }
+
+    const direccion = new URL(window.location.href)
+
+    if (direccion.searchParams.has('ir')) {
+      direccion.searchParams.delete('ir')
+      window.history.replaceState(
+        null,
+        '',
+        direccion.pathname + direccion.search + direccion.hash
+      )
+    }
+
+    if (usuario) {
+      setPantalla(irA)
+      setIrA(null)
+    } else {
+      setPantalla('login')
+    }
+  }, [cargando, usuario, irA])
 
   // Cuando hay sesión se cargan los favoritos del usuario
   useEffect(() => {
