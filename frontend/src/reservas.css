@@ -461,7 +461,7 @@ p.etiqueta-verde {
 
 .detalle-datos {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin: 0 0 20px;
   padding: 0;
@@ -1760,4 +1760,23 @@ p.etiqueta-verde {
 .nota-mapa {
   margin-top: 8px;
   font-size: 13px;
+}
+
+.campo-barra {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.campo-barra .etiqueta-icono {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pagina-interna label.etiqueta-icono {
+  flex-direction: row;
+  margin: 0;
 }
