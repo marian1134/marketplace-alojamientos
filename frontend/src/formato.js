@@ -88,3 +88,13 @@ export function explicarPolitica(politica) {
       : 'no hay devolución.')
   )
 }
+
+// Si una foto de internet no carga, se muestra la foto de la cabaña
+export function fotoRespaldo(evento) {
+  const imagen = evento.currentTarget
+
+  if (!imagen.dataset.respaldo) {
+    imagen.dataset.respaldo = 'si'
+    imagen.src = '/imagenes/registro-fondo.png'
+  }
+}
