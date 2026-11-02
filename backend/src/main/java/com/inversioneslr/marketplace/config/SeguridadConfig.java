@@ -38,6 +38,7 @@ public class SeguridadConfig {
                                 HttpMethod.POST,
                                 "/api/usuarios/registro",
                                 "/api/usuarios/login",
+                                "/api/usuarios/verificar-codigo",
                                 "/api/usuarios/recuperar",
                                 "/api/usuarios/nueva-clave"
                         )

@@ -1,20 +1,32 @@
 import { useState } from 'react'
 import { enviarDatos } from '../api'
+import CampoContrasena from './CampoContrasena'
+import { CANTIDAD_PRIMEROS, PAISES, validarCelular } from '../telefonos'
+import CodigoVerificacion from './CodigoVerificacion'
 
 // Mínimo 8 caracteres, con una letra, un número y un símbolo
 const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u
 
-function RegistroUsuario() {
+function RegistroUsuario({ onSesion }) {
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
+
+  // Después de registrarse se pide el código que llega al correo
+  const [verificacion, setVerificacion] = useState(null)
 
   async function registrar(evento) {
     evento.preventDefault()
 
     const formulario = evento.currentTarget
-    const { confirmarContrasena, ...datos } = Object.fromEntries(
+    const { confirmarContrasena, celular, pais, ...datos } = Object.fromEntries(
       new FormData(formulario)
     )
+
+    // El celular se guarda con el prefijo del país: +573001234567
+    const prefijo =
+      PAISES.find((item) => item.nombre === pais)?.prefijo ?? '+57'
+
+    datos.telefono = celular ? `${prefijo}${celular}` : ''
 
     setMensaje('')
 
@@ -32,6 +44,13 @@ function RegistroUsuario() {
 
     if (datos.contrasena !== confirmarContrasena) {
       setMensaje('Las contraseñas no coinciden.')
+      return
+    }
+
+    const errorCelular = validarCelular(prefijo, celular)
+
+    if (errorCelular) {
+      setMensaje(errorCelular)
       return
     }
 
@@ -72,10 +91,35 @@ function RegistroUsuario() {
       const usuario = await respuesta.json()
 
       setMensaje(
-        `¡Registro exitoso! Bienvenido/a, ${usuario.nombre}`
+        `¡Registro exitoso! Bienvenido/a, ${usuario.nombre}. Entrando...`
       )
 
+      // Inicia la sesión de una vez para que pueda buscar su destino
+      const respuestaSesion = await enviarDatos(
+        '/api/usuarios/login',
+        {
+          correo: datos.correo,
+          contrasena: datos.contrasena,
+        }
+      )
+
+      if (respuestaSesion.status !== 202) {
+        setMensaje(
+          `¡Registro exitoso, ${usuario.nombre}! Ahora inicia sesión con tu correo y contraseña.`
+        )
+        formulario.reset()
+        return
+      }
+
+      const resultado = await respuestaSesion.json()
+
       formulario.reset()
+      setVerificacion({
+        correo: datos.correo,
+        contrasena: datos.contrasena,
+        correoOculto: resultado.correoOculto,
+        minutos: resultado.minutos,
+      })
     } catch {
       setMensaje(
         'No se pudo completar la solicitud. Comprueba que el servidor esté funcionando.'
@@ -83,6 +127,16 @@ function RegistroUsuario() {
     } finally {
       setEnviando(false)
     }
+  }
+
+  if (verificacion) {
+    return (
+      <CodigoVerificacion
+        {...verificacion}
+        onSesion={onSesion}
+        onVolver={() => setVerificacion(null)}
+      />
+    )
   }
 
   return (
@@ -145,10 +199,9 @@ function RegistroUsuario() {
         <div>
           <label htmlFor="contrasena">Contraseña</label>
 
-          <input
+          <CampoContrasena
             id="contrasena"
             name="contrasena"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
@@ -166,10 +219,9 @@ function RegistroUsuario() {
             Confirmar contraseña
           </label>
 
-          <input
+          <CampoContrasena
             id="confirmarContrasena"
             name="confirmarContrasena"
-            type="password"
             autoComplete="new-password"
             minLength={8}
             maxLength={72}
@@ -178,17 +230,44 @@ function RegistroUsuario() {
         </div>
 
         <div>
-          <label htmlFor="telefono">Teléfono (opcional)</label>
+          <label htmlFor="celular">Celular (opcional)</label>
 
-          <input
-            id="telefono"
-            name="telefono"
-            type="tel"
-            autoComplete="tel"
-            maxLength={16}
-            pattern="[+]?[0-9]{7,15}"
-            title="Entre 7 y 15 dígitos. Puede empezar con +."
-          />
+          <div className="campo-celular">
+            <select
+              name="pais"
+              defaultValue="Colombia"
+              aria-label="País del celular"
+            >
+              {PAISES.map((item) => (
+                <option key={item.nombre} value={item.nombre}>
+                  {item.nombre} ({item.prefijo})
+                </option>
+              )).flatMap((opcion, indice) =>
+                indice === CANTIDAD_PRIMEROS
+                  ? [
+                      <option key="separador" disabled>
+                        ──────────
+                      </option>,
+                      opcion,
+                    ]
+                  : [opcion]
+              )}
+            </select>
+
+            <input
+              id="celular"
+              name="celular"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              maxLength={14}
+              onInput={(evento) => {
+                evento.currentTarget.value = evento.currentTarget.value
+                  .replace(/\D/g, '')
+                  .slice(0, 14)
+              }}
+            />
+          </div>
         </div>
 
         <button type="submit" disabled={enviando}>

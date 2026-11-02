@@ -54,6 +54,13 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
+        <!-- Pagos con Stripe (modo de prueba) -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>29.0.0</version>
+        </dependency>
+
         <!-- Conexión con MySQL -->
         <dependency>
             <groupId>com.mysql</groupId>
