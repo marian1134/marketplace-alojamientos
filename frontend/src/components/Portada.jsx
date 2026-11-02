@@ -3,6 +3,14 @@ import { NOMBRES_TIPO } from '../tipos'
 import { fotoRespaldo } from '../formato'
 import { DESTINOS } from '../destinos'
 import TarjetaDestino from './TarjetaDestino'
+import {
+  IconoBuscar,
+  IconoCalendario,
+  IconoCorazon,
+  IconoPersonas,
+  IconoSalida,
+  IconoUbicacion,
+} from './Iconos'
 
 function IconoCasa() {
   return (
@@ -67,6 +75,8 @@ function Portada({
   onCerrarSesion,
   onVerAlojamiento,
   onBuscar,
+  favoritos,
+  onFavorito,
 }) {
   const [destino, setDestino] = useState('')
   const [entrada, setEntrada] = useState('')
@@ -436,7 +446,7 @@ function Portada({
             noValidate
           >
             <label>
-              <span className="buscador-icono">⌖</span>
+              <span className="buscador-icono"><IconoUbicacion tamano={24} /></span>
 
               <span className="buscador-campo">
                 <strong>¿A dónde vas?</strong>
@@ -456,7 +466,7 @@ function Portada({
             </label>
 
             <label>
-              <span className="buscador-icono">□</span>
+              <span className="buscador-icono"><IconoCalendario tamano={24} /></span>
 
               <span className="buscador-campo">
                 <strong>Entrada</strong>
@@ -483,7 +493,7 @@ function Portada({
             </label>
 
             <label>
-              <span className="buscador-icono">□</span>
+              <span className="buscador-icono"><IconoSalida tamano={24} /></span>
 
               <span className="buscador-campo">
                 <strong>Salida</strong>
@@ -503,7 +513,7 @@ function Portada({
             </label>
 
             <label>
-              <span className="buscador-icono">♙</span>
+              <span className="buscador-icono"><IconoPersonas tamano={24} /></span>
 
               <span className="buscador-campo">
                 <strong>Huéspedes</strong>
@@ -530,7 +540,7 @@ function Portada({
               type="submit"
               className="portada-boton-buscar"
             >
-              <span aria-hidden="true">⌕</span>
+              <IconoBuscar tamano={20} />
               Buscar
             </button>
           </form>
@@ -685,15 +695,34 @@ function Portada({
 
                     <button
                       type="button"
-                      className="portada-favorito"
-                      onClick={(evento) =>
-                        evento.stopPropagation()
+                      className={
+                        favoritos?.has(alojamiento.idAlojamiento)
+                          ? 'portada-favorito activo'
+                          : 'portada-favorito'
                       }
+                      onClick={(evento) => {
+                        evento.stopPropagation()
+
+                        if (!usuario) {
+                          pedirSesion()
+                          return
+                        }
+
+                        onFavorito(alojamiento.idAlojamiento)
+                      }}
+                      aria-pressed={favoritos?.has(
+                        alojamiento.idAlojamiento
+                      )}
                       aria-label={
-                        `Agregar ${alojamiento.titulo} a favoritos`
+                        `Guardar ${alojamiento.titulo} en favoritos`
                       }
                     >
-                      ♡
+                      <IconoCorazon
+                        tamano={20}
+                        activo={favoritos?.has(
+                          alojamiento.idAlojamiento
+                        )}
+                      />
                     </button>
                   </div>
 

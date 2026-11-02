@@ -2,16 +2,31 @@ import { useEffect, useState } from 'react'
 import { consultar, leerError } from '../api'
 import { NOMBRES_TIPO } from '../tipos'
 import { DESTINOS } from '../destinos'
-import { fechaCorta, fotoRespaldo, hoyTexto, pesos } from '../formato'
+import { fechaCorta, hoyTexto } from '../formato'
+import TarjetaResultado from './TarjetaResultado'
+import {
+  IconoBuscar,
+  IconoCalendario,
+  IconoPersonas,
+  IconoSalida,
+  IconoUbicacion,
+} from './Iconos'
 
 const ORDENES = {
   recomendados: 'Recomendados',
   menor: 'Menor precio',
   mayor: 'Mayor precio',
+  calificacion: 'Mejor calificados',
 }
 
 // Pantalla de resultados que se abre al darle "Buscar"
-function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
+function ResultadosBusqueda({
+  busqueda,
+  onBuscar,
+  onVerAlojamiento,
+  favoritos,
+  onFavorito,
+}) {
   const [destino, setDestino] = useState(busqueda.destino ?? '')
   const [entrada, setEntrada] = useState(busqueda.entrada ?? '')
   const [salida, setSalida] = useState(busqueda.salida ?? '')
@@ -127,6 +142,12 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
 
       if (orden === 'menor') return precioA - precioB
       if (orden === 'mayor') return precioB - precioA
+      if (orden === 'calificacion') {
+        return (
+          (b.promedioCalificacion ?? 0) - (a.promedioCalificacion ?? 0) ||
+          b.cantidadResenas - a.cantidadResenas
+        )
+      }
       return 0
     })
 
@@ -137,7 +158,9 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
     <section className="contenedor resultados">
       <form className="barra-busqueda tarjeta" onSubmit={buscarDeNuevo}>
         <label>
-          ¿A dónde vas?
+          <span className="etiqueta-icono">
+            <IconoUbicacion tamano={16} /> ¿A dónde vas?
+          </span>
           <input
             value={destino}
             onChange={(evento) => setDestino(evento.target.value)}
@@ -146,7 +169,9 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
         </label>
 
         <label>
-          Entrada
+          <span className="etiqueta-icono">
+            <IconoCalendario tamano={16} /> Entrada
+          </span>
           <input
             type="date"
             value={entrada}
@@ -161,7 +186,9 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
         </label>
 
         <label>
-          Salida
+          <span className="etiqueta-icono">
+            <IconoSalida tamano={16} /> Salida
+          </span>
           <input
             type="date"
             value={salida}
@@ -171,7 +198,9 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
         </label>
 
         <label>
-          Huéspedes
+          <span className="etiqueta-icono">
+            <IconoPersonas tamano={16} /> Huéspedes
+          </span>
           <input
             type="number"
             min="1"
@@ -182,7 +211,7 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
         </label>
 
         <button type="submit" className="boton-principal">
-          ⌕ Buscar
+          <IconoBuscar tamano={18} /> Buscar
         </button>
       </form>
 
@@ -298,48 +327,17 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento }) {
         <ul className="grilla-resultados">
           {visibles
             .slice(0, cantidadVisible)
-            .map(({ alojamiento, imagenPortada, noches, totalEstimado }) => (
-            <li key={alojamiento.idAlojamiento}>
-              <button
-                type="button"
-                className="tarjeta resultado"
-                onClick={() => onVerAlojamiento(alojamiento.idAlojamiento)}
-              >
-                <span className="resultado-foto">
-                  {imagenPortada ? (
-                    <img
-                      src={imagenPortada}
-                      alt=""
-                      loading="lazy"
-                      onError={fotoRespaldo}
-                    />
-                  ) : (
-                    <span className="sin-foto sin-foto-baja">⌂</span>
-                  )}
-                  <span className="resultado-tipo">
-                    {NOMBRES_TIPO[alojamiento.tipoAlojamiento]}
-                  </span>
-                </span>
-
-                <span className="resultado-info">
-                  <strong>{alojamiento.titulo}</strong>
-                  <span className="texto-suave">
-                    ⌖ {alojamiento.ciudad} · hasta {alojamiento.capacidad}{' '}
-                    huéspedes
-                  </span>
-                  <span className="resultado-precio">
-                    <strong>{pesos(alojamiento.precioNoche)}</strong> noche
-                  </span>
-                  {totalEstimado && (
-                    <span className="texto-suave">
-                      {pesos(totalEstimado)} por {noches}{' '}
-                      {noches === 1 ? 'noche' : 'noches'} (con limpieza)
-                    </span>
-                  )}
-                </span>
-              </button>
-            </li>
-          ))}
+            .map((resultado) => (
+              <TarjetaResultado
+                key={resultado.alojamiento.idAlojamiento}
+                resultado={resultado}
+                esFavorito={favoritos.has(
+                  resultado.alojamiento.idAlojamiento
+                )}
+                onFavorito={onFavorito}
+                onAbrir={onVerAlojamiento}
+              />
+            ))}
         </ul>
       )}
 

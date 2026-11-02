@@ -8,10 +8,12 @@ function Encabezado({
   const enlaces = [
     { id: 'portada', texto: 'Explorar' },
     { id: 'viajes', texto: 'Mis viajes' },
+    { id: 'favoritos', texto: 'Favoritos' },
   ]
 
   if (usuario?.rol === 'ANFITRION') {
     enlaces.push({ id: 'panel', texto: 'Panel anfitrión' })
+    enlaces.push({ id: 'calendario', texto: 'Calendario' })
   }
 
   return (

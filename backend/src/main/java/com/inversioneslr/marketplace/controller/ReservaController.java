@@ -4,6 +4,8 @@ import com.inversioneslr.marketplace.dto.CotizacionRequest;
 import com.inversioneslr.marketplace.dto.CotizacionResponse;
 import com.inversioneslr.marketplace.dto.DetalleAlojamientoResponse;
 import com.inversioneslr.marketplace.dto.MotivoRequest;
+import com.inversioneslr.marketplace.dto.ResenaRequest;
+import com.inversioneslr.marketplace.dto.ResenaResponse;
 import com.inversioneslr.marketplace.dto.ReservaRequest;
 import com.inversioneslr.marketplace.dto.ReservaResponse;
 import com.inversioneslr.marketplace.dto.ResultadoBusqueda;
@@ -101,6 +103,16 @@ public class ReservaController {
             Authentication autenticacion) {
 
         return reservaService.cancelar(id, datos.motivo(), autenticacion.getName());
+    }
+
+    @PostMapping("/api/v1/reservas/{id}/resena")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResenaResponse crearResena(
+            @PathVariable Long id,
+            @Valid @RequestBody ResenaRequest datos,
+            Authentication autenticacion) {
+
+        return reservaService.crearResena(id, datos, autenticacion.getName());
     }
 
     @PatchMapping("/api/v1/reservas/{id}/aprobar")
