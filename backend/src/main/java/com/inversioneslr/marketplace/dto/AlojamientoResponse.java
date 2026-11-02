@@ -24,6 +24,8 @@ public record AlojamientoResponse(
         EstadoPublicacion estado,
         String motivoEstado,
         LocalDateTime fechaCreacion,
-        LocalDateTime fechaActualizacion
+        LocalDateTime fechaActualizacion,
+        Integer habitaciones,
+        Integer banos
 ) {
 }

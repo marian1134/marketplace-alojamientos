@@ -29,9 +29,10 @@ public record RegistroUsuarioRequest(
         String contrasena,
 
         // Opcional
+        // Celular de Colombia: +57 y 10 dígitos que empiezan por 3
         @Pattern(
-                regexp = "^$|^\\+?[0-9]{7,15}$",
-                message = "El teléfono debe tener entre 7 y 15 dígitos y puede empezar con +"
+                regexp = "^$|^\\+573[0-9]{9}$",
+                message = "El celular debe tener 10 dígitos y empezar por 3 (ej.: +57 3001234567)"
         )
         String telefono,
 

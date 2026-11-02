@@ -20,6 +20,6 @@ public record ReservaRequest(
         @NotBlank @Size(max = 23) String numeroTarjeta,
         @NotBlank @Size(max = 100) String titular,
         @NotBlank @Size(max = 5) String expiracion,
-        @NotBlank @Size(min = 3, max = 4) String cvc
+        @NotBlank @Size(min = 3, max = 3) String cvc
 ) {
 }

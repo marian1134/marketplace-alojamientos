@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { enviarDatos } from '../api'
 import ImagenesAlojamiento from './ImagenesAlojamiento'
 import { NOMBRES_TIPO } from '../tipos'
+import { CIUDADES } from '../ciudades'
 
 const formularioInicial = {
   titulo: '',
@@ -10,6 +11,8 @@ const formularioInicial = {
   direccion: '',
   tipoAlojamiento: 'APARTAMENTO',
   capacidad: '1',
+  habitaciones: '1',
+  banos: '1',
   precioNoche: '',
   tarifaLimpieza: '0',
   tipoPolitica: 'MODERADA',
@@ -110,6 +113,8 @@ function Alojamientos({ onVolver }) {
     const datos = {
       ...formulario,
       capacidad: Number(formulario.capacidad),
+      habitaciones: Number(formulario.habitaciones || 1),
+      banos: Number(formulario.banos || 1),
       precioNoche: Number(formulario.precioNoche),
       tarifaLimpieza: Number(formulario.tarifaLimpieza || 0),
     }
@@ -183,6 +188,8 @@ function Alojamientos({ onVolver }) {
       tipoAlojamiento:
         alojamiento.tipoAlojamiento,
       capacidad: String(alojamiento.capacidad),
+      habitaciones: String(alojamiento.habitaciones ?? 1),
+      banos: String(alojamiento.banos ?? 1),
       precioNoche: String(alojamiento.precioNoche),
       tarifaLimpieza: String(alojamiento.tarifaLimpieza ?? 0),
       tipoPolitica: alojamiento.tipoPolitica ?? 'MODERADA',
@@ -319,14 +326,30 @@ function Alojamientos({ onVolver }) {
               Ciudad
             </label>
 
-            <input
+            <select
               id="alojamiento-ciudad"
               name="ciudad"
               value={formulario.ciudad}
               onChange={actualizarCampo}
-              maxLength={80}
               required
-            />
+            >
+              <option value="">Elige la ciudad</option>
+
+              {formulario.ciudad &&
+                !CIUDADES.some(
+                  (item) => item.ciudad === formulario.ciudad
+                ) && (
+                  <option value={formulario.ciudad}>
+                    {formulario.ciudad}
+                  </option>
+                )}
+
+              {CIUDADES.map((item) => (
+                <option key={item.ciudad} value={item.ciudad}>
+                  {item.ciudad} ({item.departamento})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -381,6 +404,45 @@ function Alojamientos({ onVolver }) {
               value={formulario.capacidad}
               onChange={actualizarCampo}
               min="1"
+              max="16"
+              step="1"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="formulario-dos-columnas">
+          <div>
+            <label htmlFor="alojamiento-habitaciones">
+              Habitaciones
+            </label>
+
+            <input
+              id="alojamiento-habitaciones"
+              name="habitaciones"
+              type="number"
+              value={formulario.habitaciones}
+              onChange={actualizarCampo}
+              min="1"
+              max="20"
+              step="1"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="alojamiento-banos">
+              Baños
+            </label>
+
+            <input
+              id="alojamiento-banos"
+              name="banos"
+              type="number"
+              value={formulario.banos}
+              onChange={actualizarCampo}
+              min="1"
+              max="20"
               step="1"
               required
             />
