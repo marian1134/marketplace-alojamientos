@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
+import { Estrellas, IconoEstrella } from './Iconos'
 import {
   fechaCorta,
   fotoRespaldo,
@@ -36,6 +37,14 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
   const [cancelando, setCancelando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const ventana = useRef(null)
+
+  // Ventana para dejar reseña
+  const ventanaResena = useRef(null)
+  const [aResenar, setAResenar] = useState(null)
+  const [estrellas, setEstrellas] = useState(5)
+  const [comentario, setComentario] = useState('')
+  const [enviandoResena, setEnviandoResena] = useState(false)
+  const [mensajeResena, setMensajeResena] = useState('')
 
   async function cargar() {
     try {
@@ -103,6 +112,56 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
       setMensaje('No se pudo conectar con el servidor.')
     } finally {
       setCancelando(false)
+    }
+  }
+
+  function abrirResena(reserva) {
+    setAResenar(reserva)
+    setEstrellas(5)
+    setComentario('')
+    setMensajeResena('')
+    ventanaResena.current?.showModal()
+  }
+
+  async function enviarResena(evento) {
+    evento.preventDefault()
+
+    if (comentario.trim().length < 10) {
+      setMensajeResena('Cuéntanos un poco más (mínimo 10 caracteres).')
+      return
+    }
+
+    setEnviandoResena(true)
+
+    try {
+      const respuesta = await enviarDatos(
+        `/api/v1/reservas/${aResenar.idReserva}/resena`,
+        { calificacion: estrellas, comentario }
+      )
+
+      if (!respuesta.ok) {
+        setMensajeResena(
+          await leerError(respuesta, 'No se pudo guardar tu reseña.')
+        )
+        return
+      }
+
+      ventanaResena.current?.close()
+      setReservas((actuales) =>
+        actuales.map((reserva) =>
+          reserva.idReserva === aResenar.idReserva
+            ? {
+                ...reserva,
+                puedeResenar: false,
+                calificacionResena: estrellas,
+              }
+            : reserva
+        )
+      )
+    } catch {
+      setMensajeResena('No se pudo conectar con el servidor.')
+    } finally {
+      setEnviandoResena(false)
     }
   }
 
@@ -227,7 +286,24 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                   </p>
                 )}
 
+                {reserva.calificacionResena && (
+                  <p className="tu-resena">
+                    Tu reseña:{' '}
+                    <Estrellas valor={reserva.calificacionResena} />
+                  </p>
+                )}
+
                 <div className="viaje-acciones">
+                  {reserva.puedeResenar && (
+                    <button
+                      type="button"
+                      className="boton-principal"
+                      onClick={() => abrirResena(reserva)}
+                    >
+                      ★ Dejar reseña
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     className="boton-secundario"
@@ -253,6 +329,79 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
           ))}
         </ul>
       )}
+
+      <dialog
+        ref={ventanaResena}
+        className="modal-sesion modal-izquierda"
+        aria-labelledby="resena-titulo"
+      >
+        <button
+          type="button"
+          className="modal-cerrar"
+          onClick={() => ventanaResena.current?.close()}
+          aria-label="Cerrar"
+        >
+          ×
+        </button>
+
+        {aResenar && (
+          <form onSubmit={enviarResena}>
+            <h2 id="resena-titulo">¿Cómo te fue?</h2>
+            <p>
+              {aResenar.tituloAlojamiento} · {aResenar.ciudad}
+            </p>
+
+            <div
+              className="elegir-estrellas"
+              role="radiogroup"
+              aria-label="Calificación"
+            >
+              {[1, 2, 3, 4, 5].map((numero) => (
+                <button
+                  key={numero}
+                  type="button"
+                  role="radio"
+                  aria-checked={estrellas === numero}
+                  aria-label={`${numero} ${numero === 1 ? 'estrella' : 'estrellas'}`}
+                  className={numero <= estrellas ? 'llena' : ''}
+                  onClick={() => setEstrellas(numero)}
+                >
+                  <IconoEstrella tamano={34} activo={numero <= estrellas} />
+                </button>
+              ))}
+            </div>
+
+            <label className="campo-bloque">
+              Cuéntales a otros viajeros tu experiencia
+              <textarea
+                value={comentario}
+                maxLength={1000}
+                rows={4}
+                placeholder="¿Qué fue lo que más te gustó?"
+                onChange={(evento) => {
+                  setComentario(evento.target.value)
+                  setMensajeResena('')
+                }}
+                required
+              />
+            </label>
+
+            {mensajeResena && (
+              <p className="aviso aviso-error" role="alert">
+                {mensajeResena}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="boton-principal boton-ancho"
+              disabled={enviandoResena}
+            >
+              {enviandoResena ? 'Enviando...' : 'Publicar reseña'}
+            </button>
+          </form>
+        )}
+      </dialog>
 
       <dialog
         ref={ventana}
