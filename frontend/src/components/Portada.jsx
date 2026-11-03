@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NOMBRES_TIPO } from '../tipos'
+import AvatarUsuario from './AvatarUsuario'
 import {
   fechaMaximaLlegada,
   fotoRespaldo,
@@ -400,13 +401,17 @@ function Portada({
                 )}
 
                 <button
-                  type="button"
-                  className="portada-boton-principal"
-                  onClick={() => onNavegar('perfil')}
-                  title="Mi perfil"
-                >
-                  {usuario.nombre.split(' ')[0]}
-                </button>
+  type="button"
+  className="portada-boton-principal portada-boton-perfil"
+  onClick={() => onNavegar('perfil')}
+  title="Mi perfil"
+>
+  <AvatarUsuario
+    usuario={usuario}
+    className="avatar-portada"
+    mostrarNombre
+  />
+</button>
 
                 <button
                   type="button"

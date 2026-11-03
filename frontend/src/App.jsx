@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import RegistroUsuario from './components/RegistroUsuario'
 import InicioSesion from './components/InicioSesion'
 import NuevaClave from './components/NuevaClave'
@@ -9,6 +9,7 @@ import DetalleAlojamiento from './components/DetalleAlojamiento'
 import Reservar from './components/Reservar'
 import MisViajes from './components/MisViajes'
 import PanelAnfitrion from './components/PanelAnfitrion'
+import PanelHuesped from './components/PanelHuesped'
 import ResultadosBusqueda from './components/ResultadosBusqueda'
 import MisFavoritos from './components/MisFavoritos'
 import CalendarioAnfitrion from './components/CalendarioAnfitrion'
@@ -19,6 +20,7 @@ import './reservas.css'
 
 // Pantallas que solo ve un usuario con sesión, con la barra superior
 const PANTALLAS_INTERNAS = [
+  'perfil',
   'resultados',
   'detalle',
   'reservar',
@@ -35,6 +37,7 @@ function App() {
   const [cargando, setCargando] = useState(true)
   const [cerrando, setCerrando] = useState(false)
   const [mensajeSesion, setMensajeSesion] = useState('')
+  const historialPantallas = useRef([])
 
   // Alojamiento elegido, búsqueda de la portada y reserva en curso
   const [idAlojamiento, setIdAlojamiento] = useState(null)
@@ -187,7 +190,20 @@ function App() {
 
   function navegar(destino) {
     setMensajeSesion('')
+
+    if (destino !== pantalla) {
+      historialPantallas.current.push(pantalla)
+    }
+
     setPantalla(destino)
+    window.scrollTo({ top: 0 })
+  }
+
+  function volverPantallaAnterior() {
+    const anterior = historialPantallas.current.pop() || 'portada'
+
+    setMensajeSesion('')
+    setPantalla(anterior)
     window.scrollTo({ top: 0 })
   }
 
@@ -321,10 +337,41 @@ function App() {
         />
 
         <main>
+          <div className="navegacion-interna">
+            <button
+              type="button"
+              className="boton-volver-pantalla"
+              onClick={volverPantallaAnterior}
+              aria-label="Volver a la pantalla anterior"
+            >
+              <span aria-hidden="true">←</span>
+              Volver
+            </button>
+          </div>
+
           <RedDeSeguridad
             key={pantalla}
             onVolver={() => navegar('portada')}
           >
+          {pantalla === 'perfil' && (
+            <PanelHuesped
+              usuario={usuario}
+              cantidadFavoritos={favoritos.size}
+              onExplorar={() => navegar('portada')}
+              onViajes={() => navegar('viajes')}
+              onFavoritos={() => navegar('favoritos')}
+              onPanelAnfitrion={() => navegar('panel')}
+              onConvertirse={() =>
+                window.alert(
+                  'En el siguiente paso conectaremos esta opción para activar el perfil de anfitrión con la misma cuenta.'
+                )
+              }
+              onCerrarSesion={cerrarSesion}
+              onUsuarioActualizado={setUsuario}
+              cerrando={cerrando}
+            />
+          )}
+
           {pantalla === 'resultados' && busqueda && (
             <ResultadosBusqueda
               key={JSON.stringify(busqueda)}
