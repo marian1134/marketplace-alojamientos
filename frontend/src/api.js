@@ -46,3 +46,28 @@ export async function enviarArchivo(ruta, archivo) {
     body: formulario,
   })
 }
+// Lee el mensaje de error que envía el backend
+export async function leerError(respuesta, porDefecto) {
+  try {
+    const datos = await respuesta.json()
+
+    if (datos?.message) {
+      return datos.message
+    }
+  } catch {
+    // La respuesta no traía JSON
+  }
+
+  if (respuesta.status === 401) {
+    return 'Tu sesión terminó. Inicia sesión de nuevo.'
+  }
+
+  return porDefecto
+}
+
+export async function consultar(ruta) {
+  return fetch(ruta, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+  })
+}

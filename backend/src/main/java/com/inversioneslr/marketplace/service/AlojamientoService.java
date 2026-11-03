@@ -5,17 +5,23 @@ import com.inversioneslr.marketplace.dto.AlojamientoResponse;
 import com.inversioneslr.marketplace.model.Alojamiento;
 import com.inversioneslr.marketplace.model.EstadoPublicacion;
 import com.inversioneslr.marketplace.model.EstadoUsuario;
+import com.inversioneslr.marketplace.model.ModoReserva;
+import com.inversioneslr.marketplace.model.PoliticaCancelacion;
+import com.inversioneslr.marketplace.model.Rol;
+import com.inversioneslr.marketplace.model.TipoPolitica;
 import com.inversioneslr.marketplace.model.Usuario;
 import com.inversioneslr.marketplace.repository.AlojamientoRepository;
 import com.inversioneslr.marketplace.repository.ImagenAlojamientoRepository;
+import com.inversioneslr.marketplace.repository.PoliticaCancelacionRepository;
 import com.inversioneslr.marketplace.repository.UsuarioRepository;
-import com.inversioneslr.marketplace.repository.UsuarioRolRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.time.LocalTime;
 
 @Service
 @Transactional
@@ -24,25 +30,25 @@ public class AlojamientoService {
     private final AlojamientoRepository alojamientoRepository;
     private final ImagenAlojamientoRepository imagenRepository;
     private final UsuarioRepository usuarioRepository;
-    private final UsuarioRolRepository usuarioRolRepository;
+    private final PoliticaCancelacionRepository politicaRepository;
 
     public AlojamientoService(
             AlojamientoRepository alojamientoRepository,
             ImagenAlojamientoRepository imagenRepository,
             UsuarioRepository usuarioRepository,
-            UsuarioRolRepository usuarioRolRepository) {
+            PoliticaCancelacionRepository politicaRepository) {
 
         this.alojamientoRepository = alojamientoRepository;
         this.imagenRepository = imagenRepository;
         this.usuarioRepository = usuarioRepository;
-        this.usuarioRolRepository = usuarioRolRepository;
+        this.politicaRepository = politicaRepository;
     }
 
     @Transactional(readOnly = true)
     public List<AlojamientoResponse> listarActivos() {
 
         return alojamientoRepository
-                .findByEstado(EstadoPublicacion.ACTIVO)
+                .findByEstado(EstadoPublicacion.ACTIVA)
                 .stream()
                 .map(this::convertirAResponse)
                 .toList();
@@ -62,7 +68,7 @@ public class AlojamientoService {
         return alojamientoRepository
                 .findByCiudadIgnoreCaseAndEstado(
                         ciudad.trim(),
-                        EstadoPublicacion.ACTIVO
+                        EstadoPublicacion.ACTIVA
                 )
                 .stream()
                 .map(this::convertirAResponse)
@@ -148,7 +154,7 @@ public class AlojamientoService {
 
         boolean necesitaImagen =
                 estado == EstadoPublicacion.PENDIENTE_REVISION
-                || estado == EstadoPublicacion.ACTIVO;
+                || estado == EstadoPublicacion.ACTIVA;
 
         long cantidadImagenes = imagenRepository
                 .countByAlojamiento_IdAlojamiento(id);
@@ -185,18 +191,14 @@ public class AlojamientoService {
                         "No se encontró el usuario de la sesión"
                 ));
 
-        if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
+        if (usuario.getEstado() != EstadoUsuario.ACTIVA) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "La cuenta no se encuentra activa"
             );
         }
 
-        boolean esAnfitrion = usuarioRolRepository
-                .existsByUsuario_IdUsuarioAndRol_NombreIgnoreCaseAndEstadoTrue(
-                        usuario.getIdUsuario(),
-                        "ANFITRION"
-                );
+        boolean esAnfitrion = usuario.getRol() == Rol.ANFITRION;
 
         if (!esAnfitrion) {
             throw new ResponseStatusException(
@@ -255,9 +257,49 @@ public class AlojamientoService {
 
         alojamiento.setCapacidad(request.capacidad());
 
+        alojamiento.setHabitaciones(
+                request.habitaciones() != null ? request.habitaciones() : 1
+        );
+
+        alojamiento.setBanos(
+                request.banos() != null ? request.banos() : 1
+        );
+
+        alojamiento.setHoraCheckIn(
+                request.horaCheckIn() != null
+                        ? request.horaCheckIn().withSecond(0).withNano(0)
+                        : LocalTime.of(15, 0)
+        );
+
         alojamiento.setPrecioNoche(
                 request.precioNoche()
         );
+
+        alojamiento.setTarifaLimpieza(
+                request.tarifaLimpieza() != null
+                        ? request.tarifaLimpieza()
+                        : BigDecimal.ZERO
+        );
+
+        alojamiento.setModoReserva(
+                request.modoReserva() != null
+                        ? request.modoReserva()
+                        : ModoReserva.INMEDIATA
+        );
+
+        TipoPolitica tipoPolitica = request.tipoPolitica() != null
+                ? request.tipoPolitica()
+                : TipoPolitica.MODERADA;
+
+        PoliticaCancelacion politica = politicaRepository
+                .findByTipo(tipoPolitica)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "La política de cancelación no está configurada. "
+                                + "Ejecuta 02_datos_iniciales.sql"
+                ));
+
+        alojamiento.setPolitica(politica);
     }
 
     private void validarRequest(
@@ -284,9 +326,16 @@ public class AlojamientoService {
                 alojamiento.getTipoAlojamiento(),
                 alojamiento.getCapacidad(),
                 alojamiento.getPrecioNoche(),
+                alojamiento.getTarifaLimpieza(),
+                alojamiento.getModoReserva(),
+                alojamiento.getPolitica().getTipo(),
                 alojamiento.getEstado(),
+                alojamiento.getMotivoEstado(),
                 alojamiento.getFechaCreacion(),
-                alojamiento.getFechaActualizacion()
+                alojamiento.getFechaActualizacion(),
+                alojamiento.getHabitaciones(),
+                alojamiento.getBanos(),
+                alojamiento.getHoraCheckIn()
         );
     }
 }

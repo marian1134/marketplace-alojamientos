@@ -11,12 +11,19 @@ import java.nio.file.Path;
 public class ConfiguracionArchivos implements WebMvcConfigurer {
 
     private final Path carpetaImagenes;
+    private final Path carpetaFotosPerfil;
 
     public ConfiguracionArchivos(
             @Value("${app.ruta-imagenes:uploads/alojamientos}")
-            String rutaImagenes) {
+            String rutaImagenes,
+            @Value("${app.ruta-fotos-perfil:uploads/perfiles}")
+            String rutaFotosPerfil) {
 
         this.carpetaImagenes = Path.of(rutaImagenes)
+                .toAbsolutePath()
+                .normalize();
+
+        this.carpetaFotosPerfil = Path.of(rutaFotosPerfil)
                 .toAbsolutePath()
                 .normalize();
     }
@@ -29,6 +36,12 @@ public class ConfiguracionArchivos implements WebMvcConfigurer {
                 .addResourceHandler("/uploads/alojamientos/**")
                 .addResourceLocations(
                         carpetaImagenes.toUri().toString()
+                );
+
+        registry
+                .addResourceHandler("/uploads/perfiles/**")
+                .addResourceLocations(
+                        carpetaFotosPerfil.toUri().toString()
                 );
     }
 }
