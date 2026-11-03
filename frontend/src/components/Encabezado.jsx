@@ -1,4 +1,6 @@
-// Barra superior de las pantallas internas (usuario con sesión)
+import AvatarUsuario from './AvatarUsuario'
+
+// Barra superior de las pantallas internas
 function Encabezado({
   usuario,
   pantalla,
@@ -12,8 +14,15 @@ function Encabezado({
   ]
 
   if (usuario?.rol === 'ANFITRION') {
-    enlaces.push({ id: 'panel', texto: 'Panel anfitrión' })
-    enlaces.push({ id: 'calendario', texto: 'Calendario' })
+    enlaces.push({
+      id: 'panel',
+      texto: 'Panel anfitrión',
+    })
+
+    enlaces.push({
+      id: 'calendario',
+      texto: 'Calendario',
+    })
   }
 
   return (
@@ -33,6 +42,7 @@ function Encabezado({
             strokeLinejoin="round"
           />
         </svg>
+
         StayHub
       </button>
 
@@ -45,7 +55,9 @@ function Encabezado({
               pantalla === enlace.id ? 'activo' : ''
             }
             aria-current={
-              pantalla === enlace.id ? 'page' : undefined
+              pantalla === enlace.id
+                ? 'page'
+                : undefined
             }
             onClick={() => onNavegar(enlace.id)}
           >
@@ -61,11 +73,13 @@ function Encabezado({
           onClick={() => onNavegar('perfil')}
           title="Mi perfil"
         >
-          <span className="avatar" aria-hidden="true">
-            {usuario?.nombre?.charAt(0).toUpperCase()}
-          </span>
+          <AvatarUsuario
+            usuario={usuario}
+            className="avatar-pequeno"
+          />
+
           <span className="encabezado-nombre">
-            {usuario?.nombre?.split(' ')[0]}
+            {usuario?.nombre?.split(/\s+/)[0]}
           </span>
         </button>
 

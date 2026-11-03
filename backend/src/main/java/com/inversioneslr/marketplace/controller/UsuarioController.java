@@ -6,6 +6,7 @@ import com.inversioneslr.marketplace.dto.InicioSesionRequest;
 import com.inversioneslr.marketplace.dto.RegistroUsuarioRequest;
 import com.inversioneslr.marketplace.dto.UsuarioResponse;
 import com.inversioneslr.marketplace.dto.VerificarCodigoRequest;
+import com.inversioneslr.marketplace.service.FotoPerfilService;
 import com.inversioneslr.marketplace.service.RecuperacionService;
 import com.inversioneslr.marketplace.service.SesionService;
 import com.inversioneslr.marketplace.service.UsuarioService;
@@ -14,10 +15,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -29,17 +32,20 @@ public class UsuarioController {
     private final RecuperacionService recuperacionService;
     private final SesionService sesionService;
     private final VerificacionService verificacionService;
+    private final FotoPerfilService fotoPerfilService;
 
     public UsuarioController(
             UsuarioService usuarioService,
             RecuperacionService recuperacionService,
             SesionService sesionService,
-            VerificacionService verificacionService) {
+            VerificacionService verificacionService,
+            FotoPerfilService fotoPerfilService) {
 
         this.usuarioService = usuarioService;
         this.recuperacionService = recuperacionService;
         this.sesionService = sesionService;
         this.verificacionService = verificacionService;
+        this.fotoPerfilService = fotoPerfilService;
     }
 
     @PostMapping("/registro")
@@ -67,7 +73,8 @@ public class UsuarioController {
                 .status(HttpStatus.ACCEPTED)
                 .body(Map.of(
                         "verificacionRequerida", true,
-                        "correoOculto", VerificacionService.ocultarCorreo(usuario.correo()),
+                        "correoOculto",
+                        VerificacionService.ocultarCorreo(usuario.correo()),
                         "minutos", VerificacionService.MINUTOS_VIGENCIA
                 ));
     }
@@ -108,7 +115,7 @@ public class UsuarioController {
                 Map.of(
                         "mensaje",
                         "Si existe una cuenta activa con ese correo, "
-                        + "recibirás un enlace para cambiar tu contraseña."
+                                + "recibirás un enlace para cambiar tu contraseña."
                 )
         );
     }
@@ -127,15 +134,44 @@ public class UsuarioController {
         );
     }
 
+    // Devuelve los datos del usuario que tiene la sesión iniciada.
     @GetMapping("/perfil")
-public ResponseEntity<UsuarioResponse> obtenerPerfil(
-        Authentication autenticacion) {
+    public ResponseEntity<UsuarioResponse> obtenerPerfil(
+            Authentication autenticacion) {
 
-    UsuarioResponse usuario = usuarioService.obtenerPerfil(
-            autenticacion.getName()
-    );
+        UsuarioResponse usuario = usuarioService.obtenerPerfil(
+                autenticacion.getName()
+        );
 
-    return ResponseEntity.ok(usuario);
-}
+        return ResponseEntity.ok(usuario);
+    }
 
+    // Guarda o reemplaza la foto del usuario de la sesión.
+    // El archivo llega como multipart con el nombre "archivo".
+    @PostMapping( value = "/perfil/foto",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<UsuarioResponse> actualizarFoto(
+            @RequestParam("imagen") MultipartFile archivo,
+            Authentication autenticacion) {
+
+        UsuarioResponse usuario = fotoPerfilService.guardar(
+                archivo,
+                autenticacion.getName()
+        );
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    // Elimina la foto guardada y vuelve a mostrar las iniciales del usuario.
+    @DeleteMapping("/perfil/foto")
+    public ResponseEntity<UsuarioResponse> eliminarFoto(
+            Authentication autenticacion) {
+
+        UsuarioResponse usuario = fotoPerfilService.eliminar(
+                autenticacion.getName()
+        );
+
+        return ResponseEntity.ok(usuario);
+    }
 }
