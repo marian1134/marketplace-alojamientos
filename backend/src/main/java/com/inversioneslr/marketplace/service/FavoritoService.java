@@ -46,7 +46,7 @@ public class FavoritoService {
         return favoritoRepository
                 .findByIdUsuarioOrderByCreadoEnDesc(obtenerUsuario(correo).getIdUsuario())
                 .stream()
-                .map(Favorito::getIdAlojamiento)
+                .map(favorito -> favorito.getIdAlojamiento())
                 .toList();
     }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NOMBRES_TIPO } from '../tipos'
 import AvatarUsuario from './AvatarUsuario'
+import CampanaNotificaciones from './CampanaNotificaciones'
 import {
   fechaMaximaLlegada,
   fotoRespaldo,
@@ -382,6 +383,7 @@ function Portada({
 
             {usuario ? (
               <>
+                <CampanaNotificaciones usuario={usuario} />
                 <button
                   type="button"
                   className="portada-boton-claro"

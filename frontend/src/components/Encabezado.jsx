@@ -1,4 +1,5 @@
 import AvatarUsuario from './AvatarUsuario'
+import CampanaNotificaciones from './CampanaNotificaciones'
 
 // Barra superior de las pantallas internas
 function Encabezado({
@@ -67,6 +68,7 @@ function Encabezado({
       </nav>
 
       <div className="encabezado-usuario">
+        <CampanaNotificaciones usuario={usuario} />
         <button
           type="button"
           className="encabezado-perfil"
