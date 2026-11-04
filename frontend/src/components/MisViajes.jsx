@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
+import ChatReserva from './ChatReserva'
 import { Estrellas, IconoEstrella } from './Iconos'
 import {
   dinero,
@@ -30,6 +31,7 @@ const PESTANAS = [
 
 function MisViajes({ onExplorar, onVerAlojamiento }) {
   const [reservas, setReservas] = useState([])
+  const [chatAbierto, setChatAbierto] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [pestana, setPestana] = useState('proximos')
@@ -386,6 +388,11 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                 )}
 
                 <div className="viaje-acciones">
+                  <button type="button" className="boton-secundario"
+                    onClick={() => setChatAbierto(reserva)}>
+                    Chat con el anfitrión
+                  </button>
+
                   {reserva.puedeHacerCheckIn && (
                     <button
                       type="button"
@@ -576,6 +583,10 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
           </form>
         )}
       </dialog>
+      {chatAbierto && (
+        <ChatReserva key={chatAbierto.idReserva} reserva={chatAbierto}
+          onCerrar={() => setChatAbierto(null)} />
+      )}
     </section>
   )
 }
