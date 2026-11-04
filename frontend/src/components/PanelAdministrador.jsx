@@ -24,8 +24,9 @@ function moneda(valor) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(valor))
 }
 
-export default function PanelAdministrador({ usuario, onVerAlojamiento }) {
-  const [seccion, setSeccion] = useState('resumen')
+export default function PanelAdministrador({ usuario, onVerAlojamiento, reporteSolicitado }) {
+  const [seccion, setSeccion] = useState(reporteSolicitado ? 'reportes' : 'resumen')
+  const [idReporteAviso, setIdReporteAviso] = useState(reporteSolicitado?.id || null)
   const [busqueda, setBusqueda] = useState('')
   const [q, setQ] = useState('')
   const [estado, setEstado] = useState('')
@@ -50,7 +51,11 @@ export default function PanelAdministrador({ usuario, onVerAlojamiento }) {
         const opciones = { credentials: 'same-origin', cache: 'no-store', signal: controlador.signal }
         const consulta = new URLSearchParams({ q, estado, pagina: String(pagina) })
         const rutas = ['/api/v1/admin/resumen']
-        if (seccion !== 'resumen') rutas.push(`/api/v1/admin/${seccion}?${consulta}`)
+        if (seccion !== 'resumen') rutas.push(
+          seccion === 'reportes' && idReporteAviso
+            ? `/api/v1/admin/avisos/reportes/${idReporteAviso}`
+            : `/api/v1/admin/${seccion}?${consulta}`
+        )
         const respuestas = await Promise.all(rutas.map((ruta) => fetch(ruta, opciones)))
         const fallida = respuestas.find((respuesta) => !respuesta.ok)
         if (fallida) throw new Error(await leerError(fallida, 'No se pudo cargar el panel de administración.'))
@@ -66,14 +71,14 @@ export default function PanelAdministrador({ usuario, onVerAlojamiento }) {
     }
     cargar()
     return () => { vigente = false; controlador.abort() }
-  }, [usuario?.rol, seccion, q, estado, pagina, revision])
+  }, [usuario?.rol, seccion, q, estado, pagina, revision, idReporteAviso])
 
   if (usuario?.rol !== 'ADMINISTRADOR') {
     return <section className="contenedor"><p role="alert">No tienes acceso al panel de administrador.</p></section>
   }
 
   function abrirSeccion(id) {
-    setSeccion(id); setPagina(0); setBusqueda(''); setQ(''); setEstado(''); setMensaje('')
+    setIdReporteAviso(null); setSeccion(id); setPagina(0); setBusqueda(''); setQ(''); setEstado(''); setMensaje('')
   }
   function proponer(tipo, registro, destino, titulo) {
     setMensaje('')
@@ -108,6 +113,15 @@ export default function PanelAdministrador({ usuario, onVerAlojamiento }) {
           onClick={() => setRevision((n) => n + 1)}>Reintentar</button>
       </div>}
 
+      {seccion === 'reportes' && idReporteAviso && (
+        <div className="aviso" role="status">
+          Mostrando el reporte #{idReporteAviso} de tu notificación.{' '}
+          <button type="button" className="boton-enlace" onClick={() => abrirSeccion('reportes')}>
+            Ver todos los reportes
+          </button>
+        </div>
+      )}
+
       {seccion === 'usuarios' && (
         <div className="admin-panel-acciones">
           <button type="button" className="boton-principal"
@@ -117,14 +131,14 @@ export default function PanelAdministrador({ usuario, onVerAlojamiento }) {
 
       {seccion !== 'resumen' && (
         <form className="admin-panel-filtros" onSubmit={(evento) => {
-          evento.preventDefault(); setPagina(0); setQ(busqueda.trim())
+          evento.preventDefault(); setIdReporteAviso(null); setPagina(0); setQ(busqueda.trim())
         }}>
           <label>Buscar
             <input value={busqueda} maxLength={100} onChange={(evento) => setBusqueda(evento.target.value)}
               placeholder={seccion === 'usuarios' ? 'Nombre o correo' : seccion === 'alojamientos' ? 'Título, ciudad o correo del anfitrión' : 'Texto del reporte o acción'} />
           </label>
           {FILTROS[seccion] && <label>Estado
-            <select value={estado} onChange={(evento) => { setEstado(evento.target.value); setPagina(0) }}>
+            <select value={estado} onChange={(evento) => { setIdReporteAviso(null); setEstado(evento.target.value); setPagina(0) }}>
               <option value="">Todos</option>
               {FILTROS[seccion].map((valor) => <option key={valor} value={valor}>{etiqueta(valor)}</option>)}
             </select>

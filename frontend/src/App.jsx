@@ -35,6 +35,7 @@ const PANTALLAS_INTERNAS = [
 
 function App() {
   const [pantalla, setPantalla] = useState('portada')
+  const [reporteSolicitado, setReporteSolicitado] = useState(null)
   const [usuario, setUsuario] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [cerrando, setCerrando] = useState(false)
@@ -191,6 +192,7 @@ function App() {
   }
 
   function navegar(destino) {
+    setReporteSolicitado(null)
     setMensajeSesion('')
 
     if (destino !== pantalla) {
@@ -200,6 +202,20 @@ function App() {
     setPantalla(destino)
     window.scrollTo({ top: 0 })
   }
+
+  useEffect(() => {
+    function abrirReporteDesdeAviso(evento) {
+      const id = Number(evento.detail?.idReporte)
+      if (usuario?.rol !== 'ADMINISTRADOR' || !Number.isSafeInteger(id) || id <= 0) return
+      setReporteSolicitado((anterior) => ({ id, revision: (anterior?.revision || 0) + 1 }))
+      setMensajeSesion('')
+      if (pantalla !== 'administracion') historialPantallas.current.push(pantalla)
+      setPantalla('administracion')
+      window.scrollTo({ top: 0 })
+    }
+    window.addEventListener('stayhub:abrir-reporte', abrirReporteDesdeAviso)
+    return () => window.removeEventListener('stayhub:abrir-reporte', abrirReporteDesdeAviso)
+  }, [usuario?.rol, pantalla])
 
   function volverPantallaAnterior() {
     const anterior = historialPantallas.current.pop() || 'portada'
@@ -356,7 +372,7 @@ function App() {
             onVolver={() => navegar('portada')}
           >
           {pantalla === 'administracion' && (
-            <PanelAdministrador usuario={usuario} onVerAlojamiento={(id) => verAlojamiento(id, null)} />
+            <PanelAdministrador key={reporteSolicitado?.revision || 0} reporteSolicitado={reporteSolicitado} usuario={usuario} onVerAlojamiento={(id) => verAlojamiento(id, null)} />
           )}
 
           {pantalla === 'perfil' && (
