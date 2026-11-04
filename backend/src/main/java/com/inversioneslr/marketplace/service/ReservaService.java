@@ -21,7 +21,6 @@ import com.inversioneslr.marketplace.model.EstadoPago;
 import com.inversioneslr.marketplace.model.EstadoPublicacion;
 import com.inversioneslr.marketplace.model.EstadoReserva;
 import com.inversioneslr.marketplace.model.EstadoUsuario;
-import com.inversioneslr.marketplace.model.ModoReserva;
 import com.inversioneslr.marketplace.model.NocheReservada;
 import com.inversioneslr.marketplace.model.Pago;
 import com.inversioneslr.marketplace.model.PoliticaCancelacion;
@@ -94,6 +93,7 @@ public class ReservaService {
     private final PeriodoDisponibleRepository periodoRepository;
     private final FavoritoRepository favoritoRepository;
     private final AvisosReserva avisos;
+    private final NormalizadorReservaInmediata reservasInmediatas;
     private final StripeService stripe;
     private final MonedaService monedas;
 
@@ -115,6 +115,7 @@ public class ReservaService {
             PeriodoDisponibleRepository periodoRepository,
             FavoritoRepository favoritoRepository,
             AvisosReserva avisos,
+            NormalizadorReservaInmediata reservasInmediatas,
             StripeService stripe,
             MonedaService monedas) {
 
@@ -133,6 +134,7 @@ public class ReservaService {
         this.periodoRepository = periodoRepository;
         this.favoritoRepository = favoritoRepository;
         this.avisos = avisos;
+        this.reservasInmediatas = reservasInmediatas;
         this.stripe = stripe;
         this.monedas = monedas;
     }
@@ -564,11 +566,8 @@ public class ReservaService {
         reserva.setFechaSalida(datos.fechaSalida());
         reserva.setCantidadHuespedes(datos.cantidadHuespedes());
         reserva.setClaveIdempotencia(datos.claveIdempotencia());
-        reserva.setEstado(
-                alojamiento.getModoReserva() == ModoReserva.CON_APROBACION
-                        ? EstadoReserva.PENDIENTE_APROBACION
-                        : EstadoReserva.CONFIRMADA
-        );
+        // La validación del pago y la disponibilidad ya se ejecutaron arriba.
+        reserva.setEstado(EstadoReserva.CONFIRMADA);
 
         marcarRecordatorioSiLlegaPronto(reserva);
 
@@ -779,7 +778,6 @@ public class ReservaService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public ReservaResponse obtener(Long idReserva, String correo) {
 
         Usuario usuario = obtenerUsuario(correo);
@@ -890,6 +888,8 @@ public class ReservaService {
             );
         }
 
+        reservasInmediatas.confirmarSiPendiente(reserva);
+
         if (reserva.getCheckInEn() != null) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -948,6 +948,8 @@ public class ReservaService {
                     "Solo el anfitrión del alojamiento puede hacer esto"
             );
         }
+
+        reservasInmediatas.confirmarSiPendiente(reserva);
 
         if (!noSePresento(reserva)) {
             throw new ResponseStatusException(
@@ -1021,50 +1023,6 @@ public class ReservaService {
         if (!reserva.getFechaLlegada().isAfter(LocalDate.now().plusDays(1))) {
             reserva.setRecordatorioEnviado(true);
         }
-    }
-
-    // ------------------------------------------------------------------
-    // Aprobación o rechazo por el anfitrión (modo CON_APROBACION)
-    // ------------------------------------------------------------------
-
-    public ReservaResponse aprobar(Long idReserva, String correo) {
-
-        Reserva reserva = buscarReservaPendienteDelAnfitrion(idReserva, correo);
-
-        reserva.setEstado(EstadoReserva.CONFIRMADA);
-        marcarRecordatorioSiLlegaPronto(reserva);
-        reservaRepository.save(reserva);
-
-        avisos.reservaAprobada(reserva);
-
-        return convertir(reserva);
-    }
-
-    public ReservaResponse rechazar(Long idReserva, String motivo, String correo) {
-
-        Reserva reserva = buscarReservaPendienteDelAnfitrion(idReserva, correo);
-
-        Pago pago = pagoRepository
-                .findByReserva_IdReserva(idReserva)
-                .orElse(null);
-
-        if (pago != null) {
-            devolverDinero(pago, pago.getMonto());
-        }
-
-        nocheRepository.liberarNoches(idReserva);
-
-        reserva.setEstado(EstadoReserva.RECHAZADA);
-        reserva.setMotivoRechazo(motivo.trim());
-        reservaRepository.save(reserva);
-
-        avisos.reservaRechazada(
-                reserva,
-                pago != null ? pago.getMonto() : BigDecimal.ZERO,
-                pago != null ? pago.getMoneda() : MonedaService.COP
-        );
-
-        return convertir(reserva);
     }
 
     // ------------------------------------------------------------------
@@ -1317,6 +1275,8 @@ public class ReservaService {
     // reportar que no se presentó.
     private void completarSiTermino(Reserva reserva) {
 
+        reservasInmediatas.confirmarSiPendiente(reserva);
+
         LocalDate limite = reserva.getCheckInEn() != null
                 ? reserva.getFechaSalida()
                 : reserva.getFechaSalida().plusDays(DIAS_PARA_REPORTAR_NO_SHOW);
@@ -1397,31 +1357,9 @@ public class ReservaService {
                 ));
     }
 
-    private Reserva buscarReservaPendienteDelAnfitrion(Long idReserva, String correo) {
-
-        Usuario anfitrion = obtenerUsuario(correo);
-        Reserva reserva = buscarReserva(idReserva);
-
-        if (!reserva.getAlojamiento().getAnfitrion().getIdUsuario()
-                .equals(anfitrion.getIdUsuario())) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Esta reserva no es de tu alojamiento"
-            );
-        }
-
-        if (reserva.getEstado() != EstadoReserva.PENDIENTE_APROBACION) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Esta reserva no está esperando aprobación"
-            );
-        }
-
-        return reserva;
-    }
-
     private ReservaResponse convertir(Reserva reserva) {
+
+        reservasInmediatas.confirmarSiPendiente(reserva);
 
         Alojamiento alojamiento = reserva.getAlojamiento();
         Long idReserva = reserva.getIdReserva();

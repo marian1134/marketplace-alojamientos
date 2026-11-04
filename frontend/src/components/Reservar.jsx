@@ -828,14 +828,12 @@ function Reservar({
             <div className="confirmada-cabecera">
               <span className="check-grande" aria-hidden="true">✓</span>
               <h1 className="titulo-serif">
-                {reserva.estado === 'PENDIENTE_APROBACION'
-                  ? '¡Solicitud enviada!'
-                  : '¡Reserva confirmada!'}
+                {reserva.estado === 'CONFIRMADA' ? '¡Reserva confirmada!' : 'Reserva registrada'}
               </h1>
               <p className="texto-suave">
-                {reserva.estado === 'PENDIENTE_APROBACION'
-                  ? `Tu pago quedó registrado. ${reserva.nombreAnfitrion} debe aprobar tu estadía en ${reserva.tituloAlojamiento}.`
-                  : `Tu estadía en ${reserva.tituloAlojamiento} ha sido reservada exitosamente.`}
+                {reserva.estado === 'CONFIRMADA'
+                  ? `Tu estadía en ${reserva.tituloAlojamiento} quedó confirmada automáticamente al completar el pago.`
+                  : 'Consulta el estado actualizado de tu reserva en Mis viajes.'}
               </p>
             </div>
 
@@ -857,9 +855,7 @@ function Reservar({
                   <span
                     className={`estado-reserva estado-${reserva.estado.toLowerCase()}`}
                   >
-                    {reserva.estado === 'PENDIENTE_APROBACION'
-                      ? 'Esperando aprobación'
-                      : '✓ Confirmada'}
+                    {reserva.estado === 'CONFIRMADA' ? '✓ Confirmada' : 'Consulta Mis viajes'}
                   </span>
                 </div>
               </div>
@@ -917,13 +913,12 @@ function Reservar({
             <ol>
               <li>
                 <strong>
-                  {reserva.estado === 'PENDIENTE_APROBACION'
-                    ? 'El anfitrión revisa tu solicitud'
-                    : 'Reserva confirmada'}
+                  {reserva.estado === 'CONFIRMADA' ? 'Reserva confirmada' : 'Revisa tu reserva'}
                 </strong>
                 <p className="texto-suave">
-                  Tu pago fue procesado y las fechas ya están
-                  bloqueadas.
+                  {reserva.estado === 'CONFIRMADA'
+                    ? 'Tu pago fue procesado y las fechas ya están bloqueadas. No necesitas esperar la aprobación del anfitrión.'
+                    : 'Abre Mis viajes para consultar la información de tu reserva.'}
                 </p>
               </li>
               <li>
