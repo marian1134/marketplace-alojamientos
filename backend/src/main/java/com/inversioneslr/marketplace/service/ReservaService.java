@@ -167,7 +167,7 @@ public class ReservaService {
                         LocalDate.now()
                 )
                 .stream()
-                .map(NocheReservada::getFecha)
+                .map(noche -> noche.getFecha())
                 .toList();
 
         PoliticaCancelacion politica = alojamiento.getPolitica();
@@ -185,7 +185,7 @@ public class ReservaService {
         Double promedio = resenas.isEmpty()
                 ? null
                 : resenas.stream()
-                        .mapToInt(Resena::getCalificacion)
+                        .mapToInt(resena -> resena.getCalificacion())
                         .average()
                         .orElse(0);
 
@@ -305,7 +305,7 @@ public class ReservaService {
 
         boolean conFechas = llegada != null && salida != null;
 
-        if (conFechas) {
+        if (llegada != null && salida != null) {
             if (llegada.isBefore(LocalDate.now())) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
@@ -331,7 +331,7 @@ public class ReservaService {
                 : 0;
 
         // Alojamientos con alguna noche ocupada en esas fechas (una consulta)
-        Set<Long> ocupados = conFechas
+        Set<Long> ocupados = llegada != null && salida != null
                 ? new java.util.HashSet<>(nocheRepository.alojamientosOcupados(
                         llegada,
                         salida.minusDays(1)
@@ -362,16 +362,16 @@ public class ReservaService {
                 .toList();
 
         // Si el alojamiento tiene periodos, la estadía debe caber en uno
-        if (conFechas && !encontrados.isEmpty()) {
+        if (llegada != null && salida != null && !encontrados.isEmpty()) {
             java.util.Map<Long, List<PeriodoDisponible>> periodos = periodoRepository
                     .findByIdAlojamientoIn(
                             encontrados.stream()
-                                    .map(Alojamiento::getIdAlojamiento)
+                                    .map(alojamiento -> alojamiento.getIdAlojamiento())
                                     .toList()
                     )
                     .stream()
                     .collect(java.util.stream.Collectors.groupingBy(
-                            PeriodoDisponible::getIdAlojamiento
+                            periodo -> periodo.getIdAlojamiento()
                     ));
 
             encontrados = encontrados.stream()
@@ -392,7 +392,7 @@ public class ReservaService {
             resenaRepository
                     .resumenPorAlojamiento(
                             encontrados.stream()
-                                    .map(Alojamiento::getIdAlojamiento)
+                                    .map(alojamiento -> alojamiento.getIdAlojamiento())
                                     .toList()
                     )
                     .forEach(fila -> calificaciones.put((Long) fila[0], fila));
@@ -405,7 +405,7 @@ public class ReservaService {
             imagenRepository
                     .findByAlojamiento_IdAlojamientoInOrderByOrdenImagenAscIdImagenAsc(
                             encontrados.stream()
-                                    .map(Alojamiento::getIdAlojamiento)
+                                    .map(alojamiento -> alojamiento.getIdAlojamiento())
                                     .toList()
                     )
                     .forEach(imagen -> portadas.putIfAbsent(
@@ -621,7 +621,13 @@ public class ReservaService {
             pago.setUltimos4(stripe.ultimos4(intencion));
         } else {
             pago.setReferencia("PRUEBA-" + UUID.randomUUID());
-            pago.setUltimos4(numeroTarjeta.substring(numeroTarjeta.length() - 4));
+            String tarjetaValidada = java.util.Objects.requireNonNull(
+                    numeroTarjeta,
+                    "El pago simulado requiere una tarjeta validada"
+            );
+            pago.setUltimos4(
+                    tarjetaValidada.substring(tarjetaValidada.length() - 4)
+            );
         }
 
         pagoRepository.save(pago);
