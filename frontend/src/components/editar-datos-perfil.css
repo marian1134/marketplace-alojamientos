@@ -1,0 +1,14 @@
+.editar-datos-perfil fieldset { border: 0; padding: 0; margin: 20px 0 0; min-width: 0; }
+.editar-datos-perfil legend { font-weight: 700; color: #123d38; margin-bottom: 20px; }
+.editar-datos-perfil label { display: block; font-weight: 600; margin: 16px 0 8px; }
+.editar-datos-perfil input { display: block; width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #bdceca; border-radius: 10px; color: #123d38; background: #fff; font: inherit; }
+.editar-datos-perfil input:focus-visible, .editar-datos-perfil button:focus-visible { outline: 3px solid #167e70; outline-offset: 3px; }
+.editar-datos-perfil small { display: block; margin-top: 8px; color: #536c68; }
+.editar-datos-acciones { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.editar-datos-acciones button, .editar-datos-boton { padding: 12px 20px; border: 1px solid #0b695c; border-radius: 10px; font: inherit; font-weight: 600; cursor: pointer; }
+.editar-datos-acciones button[type="button"], .editar-datos-boton { background: #fff; color: #0b695c; }
+.editar-datos-boton { margin-top: 20px; }
+.editar-datos-perfil button:disabled { opacity: .65; cursor: wait; }
+.editar-datos-error { color: #a02727; margin-top: 16px; }
+.editar-datos-exito { color: #086151; margin-top: 16px; }
+@media (max-width: 480px) { .editar-datos-acciones button { width: 100%; } }
