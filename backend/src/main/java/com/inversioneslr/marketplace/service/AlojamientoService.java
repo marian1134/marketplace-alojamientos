@@ -299,11 +299,7 @@ public class AlojamientoService {
                         : BigDecimal.ZERO
         );
 
-        alojamiento.setModoReserva(
-                request.modoReserva() != null
-                        ? request.modoReserva()
-                        : ModoReserva.INMEDIATA
-        );
+        alojamiento.setModoReserva(ModoReserva.INMEDIATA);
 
         TipoPolitica tipoPolitica = request.tipoPolitica() != null
                 ? request.tipoPolitica()
@@ -345,7 +341,7 @@ public class AlojamientoService {
                 alojamiento.getCapacidad(),
                 alojamiento.getPrecioNoche(),
                 alojamiento.getTarifaLimpieza(),
-                alojamiento.getModoReserva(),
+                ModoReserva.INMEDIATA,
                 alojamiento.getPolitica().getTipo(),
                 alojamiento.getEstado(),
                 alojamiento.getMotivoEstado(),

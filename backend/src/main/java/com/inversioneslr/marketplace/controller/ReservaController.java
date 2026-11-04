@@ -133,20 +133,4 @@ public class ReservaController {
         return reservaService.cancelarPorNoPresentarse(id, autenticacion.getName());
     }
 
-    @PatchMapping("/api/v1/reservas/{id}/aprobar")
-    public ReservaResponse aprobar(
-            @PathVariable Long id,
-            Authentication autenticacion) {
-
-        return reservaService.aprobar(id, autenticacion.getName());
-    }
-
-    @PatchMapping("/api/v1/reservas/{id}/rechazar")
-    public ReservaResponse rechazar(
-            @PathVariable Long id,
-            @Valid @RequestBody MotivoRequest datos,
-            Authentication autenticacion) {
-
-        return reservaService.rechazar(id, datos.motivo(), autenticacion.getName());
-    }
 }

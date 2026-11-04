@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
 import ChatReserva from './ChatReserva'
 import CalificarHuesped from './CalificarHuesped'
@@ -24,9 +24,6 @@ function PanelAnfitrion({
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
-  const [aRechazar, setARechazar] = useState(null)
-  const [motivo, setMotivo] = useState('')
-  const ventana = useRef(null)
 
   useEffect(() => {
     let activo = true
@@ -81,26 +78,6 @@ function PanelAnfitrion({
     )
   }
 
-  async function aprobar(reserva) {
-    setMensaje('')
-
-    const respuesta = await enviarDatos(
-      `/api/v1/reservas/${reserva.idReserva}/aprobar`,
-      {},
-      'PATCH'
-    )
-
-    if (!respuesta.ok) {
-      setMensaje(
-        await leerError(respuesta, 'No se pudo aprobar la reserva.')
-      )
-      return
-    }
-
-    reemplazar(await respuesta.json())
-    setMensaje(`Reserva ${reserva.codigo} aprobada.`)
-  }
-
   // El huésped no hizo check-in el día de llegada
   async function cancelarNoShow(reserva) {
     const seguro = window.confirm(
@@ -130,36 +107,6 @@ function PanelAnfitrion({
     reemplazar(await respuesta.json())
     setMensaje(
       `Reserva ${reserva.codigo} cancelada por no presentarse. Le avisamos al huésped por correo.`
-    )
-  }
-
-  function abrirRechazo(reserva) {
-    setARechazar(reserva)
-    setMotivo('')
-    ventana.current?.showModal()
-  }
-
-  async function rechazar(evento) {
-    evento.preventDefault()
-
-    const respuesta = await enviarDatos(
-      `/api/v1/reservas/${aRechazar.idReserva}/rechazar`,
-      { motivo },
-      'PATCH'
-    )
-
-    ventana.current?.close()
-
-    if (!respuesta.ok) {
-      setMensaje(
-        await leerError(respuesta, 'No se pudo rechazar la reserva.')
-      )
-      return
-    }
-
-    reemplazar(await respuesta.json())
-    setMensaje(
-      `Reserva ${aRechazar.codigo} rechazada. Se devolvió el pago al huésped.`
     )
   }
 
@@ -284,41 +231,11 @@ function PanelAnfitrion({
           )}
 
           {pendientes.length > 0 && (
-            <article className="tarjeta">
-              <h2>Solicitudes por aprobar</h2>
-              <ul className="lista-recibidas">
-                {pendientes.map((reserva) => (
-                  <li key={reserva.idReserva}>
-                    <div>
-                      <strong>{reserva.nombreHuesped}</strong> ·{' '}
-                      {reserva.tituloAlojamiento}
-                      <p className="texto-suave">
-                        {fechaCorta(reserva.fechaLlegada)} –{' '}
-                        {fechaCorta(reserva.fechaSalida)} ·{' '}
-                        {reserva.cantidadHuespedes} huéspedes ·{' '}
-                        {reserva.codigo}
-                      </p>
-                    </div>
-                    <div className="viaje-acciones">
-                      <button
-                        type="button"
-                        className="boton-principal"
-                        onClick={() => aprobar(reserva)}
-                      >
-                        Aprobar
-                      </button>
-                      <button
-                        type="button"
-                        className="boton-peligro"
-                        onClick={() => abrirRechazo(reserva)}
-                      >
-                        Rechazar
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </article>
+            <p className="aviso" role="status">
+              Hay reservas anteriores cuyo pago o disponibilidad necesitan revisión.
+              No requieren que aceptes al huésped. El huésped puede consultar
+              su estado o cancelarlas desde Mis viajes.
+            </p>
           )}
 
           <article className="tarjeta">
@@ -400,42 +317,6 @@ function PanelAnfitrion({
         </>
       )}
 
-      <dialog
-        ref={ventana}
-        className="modal-sesion modal-izquierda"
-        aria-labelledby="rechazar-titulo"
-      >
-        <button
-          type="button"
-          className="modal-cerrar"
-          onClick={() => ventana.current?.close()}
-          aria-label="Cerrar"
-        >
-          ×
-        </button>
-
-        {aRechazar && (
-          <form onSubmit={rechazar}>
-            <h2 id="rechazar-titulo">Rechazar solicitud</h2>
-            <p>
-              {aRechazar.nombreHuesped} · {aRechazar.tituloAlojamiento}
-            </p>
-            <label className="campo-bloque">
-              Motivo (lo verá el huésped)
-              <textarea
-                value={motivo}
-                maxLength={500}
-                rows={3}
-                onChange={(evento) => setMotivo(evento.target.value)}
-                required
-              />
-            </label>
-            <button type="submit" className="boton-peligro boton-ancho">
-              Rechazar y devolver el pago
-            </button>
-          </form>
-        )}
-      </dialog>
       {chatAbierto && (
         <ChatReserva key={chatAbierto.idReserva} reserva={chatAbierto}
           onCerrar={() => setChatAbierto(null)} />
