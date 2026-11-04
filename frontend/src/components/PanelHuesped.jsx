@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { enviarArchivo, enviarDatos } from '../api'
+import EditarDatosPerfil from './EditarDatosPerfil'
 
 const MAXIMO_BYTES = 5 * 1024 * 1024
 const TIPOS_PERMITIDOS = [
@@ -15,17 +16,19 @@ function PanelHuesped({
   onViajes,
   onFavoritos,
   onPanelAnfitrion,
+  onPanelAdministrador,
   onConvertirse,
   onCerrarSesion,
   onUsuarioActualizado,
   cerrando,
 }) {
   const entradaFoto = useRef(null)
+  const [editandoDatos, setEditandoDatos] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [eliminandoFoto, setEliminandoFoto] = useState(false)
   const [mensajeFoto, setMensajeFoto] = useState('')
   const [ayudaAbierta, setAyudaAbierta] = useState(false)
-  const [temaAyuda, setTemaAyuda] = useState('busqueda')
+  const [temaAyuda, setTemaAyuda] = useState(usuario.rol === 'ADMINISTRADOR' ? 'cuenta' : 'busqueda')
 
   const nombreCompleto = usuario.nombre?.trim() || 'Usuario'
   const primerNombre = nombreCompleto.split(/\s+/)[0]
@@ -37,6 +40,14 @@ function PanelHuesped({
     .join('')
 
   const esAnfitrion = usuario.rol === 'ANFITRION'
+  const esAdministrador = usuario.rol === 'ADMINISTRADOR'
+  const esHuesped = usuario.rol === 'HUESPED'
+  const etiquetaRol = {
+    HUESPED: 'Huésped',
+    ANFITRION: 'Anfitrión',
+    ADMINISTRADOR: 'Administrador',
+  }[usuario.rol] || 'Usuario'
+
 
   async function seleccionarFoto(evento) {
     const entrada = evento.currentTarget
@@ -121,23 +132,41 @@ function PanelHuesped({
           <h1>¡Hola, {primerNombre}!</h1>
 
           <p>
-            Administra tus viajes, alojamientos favoritos y
-            datos personales desde un solo lugar.
+            {esAdministrador
+              ? 'Consulta tus datos personales y accede a la administración de StayHub.'
+              : 'Administra tus viajes, alojamientos favoritos y datos personales desde un solo lugar.'}
           </p>
         </div>
 
-        <button
-          type="button"
-          className="perfil-boton-principal"
-          onClick={onExplorar}
-        >
-          Buscar alojamiento
-        </button>
+       {!esAdministrador && (
+  <button
+    type="button"
+    className="perfil-boton-principal"
+    onClick={onExplorar}
+  >
+    Buscar alojamiento
+  </button>
+)}
       </div>
 
       <div className="perfil-huesped-contenido">
         <div className="perfil-huesped-principal">
           <section className="perfil-accesos">
+            {esAdministrador ? (
+              <button
+                type="button"
+                className="perfil-acceso"
+                onClick={onPanelAdministrador}
+              >
+                <span className="perfil-acceso-icono" aria-hidden="true">⚙</span>
+                <span>
+                  <strong>Panel de administrador</strong>
+                  <small>Gestiona usuarios, alojamientos, reportes y auditoría.</small>
+                </span>
+                <span className="perfil-acceso-flecha" aria-hidden="true">→</span>
+              </button>
+            ) : (
+              <>
             <button
               type="button"
               className="perfil-acceso"
@@ -176,6 +205,9 @@ function PanelHuesped({
               </span>
             </button>
 
+              </>
+            )}
+
             {esAnfitrion && (
               <button
                 type="button"
@@ -207,24 +239,13 @@ function PanelHuesped({
               <span className="perfil-estado-cuenta">Cuenta activa</span>
             </div>
 
-            <dl className="perfil-informacion-lista">
-              <div>
-                <dt>Nombre completo</dt>
-                <dd>{nombreCompleto}</dd>
-              </div>
-              <div>
-                <dt>Correo electrónico</dt>
-                <dd>{usuario.correo}</dd>
-              </div>
-              <div>
-                <dt>Teléfono</dt>
-                <dd>{usuario.telefono || 'Sin registrar'}</dd>
-              </div>
-              <div>
-                <dt>Tipo de cuenta</dt>
-                <dd>{esAnfitrion ? 'Anfitrión' : 'Huésped'}</dd>
-              </div>
-            </dl>
+            <EditarDatosPerfil
+              usuario={usuario}
+              etiquetaRol={etiquetaRol}
+              onUsuarioActualizado={onUsuarioActualizado}
+              bloqueado={subiendoFoto || eliminandoFoto || cerrando}
+              onEdicionCambiada={setEditandoDatos}
+            />
           </section>
         </div>
 
@@ -246,11 +267,11 @@ function PanelHuesped({
                 type="button"
                 className="perfil-cambiar-foto"
                 onClick={() => entradaFoto.current?.click()}
-                disabled={subiendoFoto}
+                disabled={subiendoFoto || eliminandoFoto || editandoDatos}
                 aria-label="Cambiar foto de perfil"
                 title="Cambiar foto de perfil"
               >
-                {subiendoFoto ? '…' : '📷'}
+                {subiendoFoto ? 'agrega imagen' : '📷'}
               </button>
 
               <input
@@ -265,7 +286,7 @@ function PanelHuesped({
             <h2>{nombreCompleto}</h2>
             <p>{usuario.correo}</p>
             <span className="perfil-rol">
-              {esAnfitrion ? 'Anfitrión' : 'Huésped'}
+              {etiquetaRol}
             </span>
 
             {usuario.fotoUrl && (
@@ -273,7 +294,7 @@ function PanelHuesped({
                 type="button"
                 className="perfil-eliminar-foto"
                 onClick={eliminarFoto}
-                disabled={eliminandoFoto || subiendoFoto}
+                disabled={eliminandoFoto || subiendoFoto || editandoDatos}
               >
                 {eliminandoFoto ? 'Eliminando...' : 'Eliminar foto'}
               </button>
@@ -286,7 +307,7 @@ function PanelHuesped({
             )}
           </section>
 
-          {!esAnfitrion && (
+          {esHuesped && (
             <section className="perfil-anfitrion-invitacion">
               <span aria-hidden="true">⌂</span>
               <h2>Comparte tu alojamiento</h2>
@@ -308,13 +329,21 @@ function PanelHuesped({
               <div>
                 <h2>¿Necesitas ayuda?</h2>
                 <p>
-                  Te ayudamos con tu búsqueda, tus reservas o
-                  cualquier problema con tu cuenta.
+                  {esAdministrador
+                    ? 'Consulta la ayuda de tu cuenta y de las herramientas de administración.'
+                    : 'Te ayudamos con tu búsqueda, tus reservas o cualquier problema con tu cuenta.'}
                 </p>
               </div>
             </div>
 
             <div className="perfil-ayuda-opciones">
+              {esAdministrador ? (
+                <button type="button" onClick={onPanelAdministrador}>
+                  <span>Ir al panel de administrador</span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              ) : (
+                <>
               <button
                 type="button"
                 onClick={() => {
@@ -336,6 +365,9 @@ function PanelHuesped({
                 <span>Problemas con una reserva</span>
                 <span aria-hidden="true">→</span>
               </button>
+
+                </>
+              )}
 
               <button
                 type="button"

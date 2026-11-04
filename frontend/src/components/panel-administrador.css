@@ -1,0 +1,36 @@
+.admin-panel { padding-bottom: 64px; }
+.admin-panel-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 28px 0; }
+.admin-panel-cabecera h1 { margin: 8px 0; }
+.admin-panel-etiqueta { color: #52766a; font-size: 13px; text-transform: uppercase; letter-spacing: .1em; }
+.admin-panel-pestanas { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+.admin-panel-pestanas button { font: inherit; padding: 12px 16px; border: 1px solid #ccdcd4; border-radius: 10px; background: white; color: #164a40; cursor: pointer; }
+.admin-panel-pestanas button.activa { background: #0d5547; color: #fff; border-color: #0d5547; }
+.admin-panel-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.admin-panel-resumen .tarjeta { display: flex; flex-direction: column; gap: 14px; padding: 24px; }
+.admin-panel-resumen span { font-size: 14px; color: #526e64; }
+.admin-panel-resumen strong { font-size: 36px; color: #163b35; }
+.admin-panel-filtros { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; margin: 24px 0; }
+.admin-panel-filtros label:first-child { flex: 1; min-width: min(280px, 100%); }
+.admin-panel-filtros label, .admin-panel-modal label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 600; }
+.admin-panel input, .admin-panel select, .admin-panel-modal textarea { font: inherit; border: 1px solid #b7cec2; padding: 11px 12px; border-radius: 9px; background: white; color: #173b35; min-width: 0; }
+.admin-panel-lista { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.admin-panel-registro { padding: 24px; overflow-wrap: anywhere; }
+.admin-panel-titulo { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.admin-panel-titulo h2 { font-size: 20px; margin: 0; }
+.admin-panel-titulo span { border-radius: 20px; background: #e9f3ed; padding: 6px 12px; font-size: 12px; flex-shrink: 0; text-transform: capitalize; }
+.admin-panel-registro p, .admin-panel-ayuda p { line-height: 1.6; }
+.admin-panel-registro blockquote { margin: 16px 0; padding: 16px; background: #f4f8f5; border-left: 3px solid #a3c8b4; white-space: pre-wrap; }
+.admin-panel-acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.admin-panel-paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; margin-top: 24px; }
+.admin-panel button:disabled, .admin-panel-modal button:disabled { opacity: .55; cursor: default; }
+.admin-panel-modal { box-sizing: border-box; width: min(540px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); padding: 28px; border: 1px solid #d0e1d6; border-radius: 18px; color: #173b35; background: white; overflow-y: auto; }
+.admin-panel-modal::backdrop { background: #102c2a80; }
+.admin-panel-modal h2 { margin-top: 0; font-size: 23px; }
+.admin-panel-modal textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.admin-panel-nota { background: #f6f4e9; padding: 14px; line-height: 1.6; border-radius: 10px; }
+.admin-panel :focus-visible, .admin-panel-modal :focus-visible { outline: 3px solid #2c9b80; outline-offset: 3px; }
+@media (max-width: 600px) {
+  .admin-panel-cabecera { align-items: flex-start; flex-direction: column; }
+  .admin-panel-titulo { flex-direction: column; gap: 10px; }
+  .admin-panel-registro { padding: 18px; }
+}

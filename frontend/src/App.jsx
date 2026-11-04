@@ -9,6 +9,7 @@ import DetalleAlojamiento from './components/DetalleAlojamiento'
 import Reservar from './components/Reservar'
 import MisViajes from './components/MisViajes'
 import PanelAnfitrion from './components/PanelAnfitrion'
+import PanelAdministrador from './components/PanelAdministrador'
 import PanelHuesped from './components/PanelHuesped'
 import ResultadosBusqueda from './components/ResultadosBusqueda'
 import MisFavoritos from './components/MisFavoritos'
@@ -29,6 +30,7 @@ const PANTALLAS_INTERNAS = [
   'alojamientos',
   'favoritos',
   'calendario',
+  'administracion',
 ]
 
 function App() {
@@ -219,7 +221,7 @@ function App() {
       return
     }
 
-    navegar(datos.rol === 'ANFITRION' ? 'panel' : 'portada')
+    navegar(datos.rol === 'ADMINISTRADOR' ? 'administracion' : datos.rol === 'ANFITRION' ? 'panel' : 'portada')
   }
 
   async function cerrarSesion() {
@@ -269,7 +271,7 @@ function App() {
   function verAlojamiento(id, datosBusqueda) {
     setIdAlojamiento(id)
     setOrigenDetalle(
-      ['resultados', 'viajes', 'favoritos'].includes(pantalla)
+      ['resultados', 'viajes', 'favoritos', 'administracion'].includes(pantalla)
         ? pantalla
         : 'portada'
     )
@@ -353,6 +355,10 @@ function App() {
             key={pantalla}
             onVolver={() => navegar('portada')}
           >
+          {pantalla === 'administracion' && (
+            <PanelAdministrador usuario={usuario} onVerAlojamiento={(id) => verAlojamiento(id, null)} />
+          )}
+
           {pantalla === 'perfil' && (
             <PanelHuesped
               usuario={usuario}
@@ -361,6 +367,7 @@ function App() {
               onViajes={() => navegar('viajes')}
               onFavoritos={() => navegar('favoritos')}
               onPanelAnfitrion={() => navegar('panel')}
+              onPanelAdministrador={() => navegar('administracion')}
               onConvertirse={() =>
                 window.alert(
                   'En el siguiente paso conectaremos esta opción para activar el perfil de anfitrión con la misma cuenta.'
@@ -509,7 +516,7 @@ function App() {
 
               <dt>Tipo de cuenta</dt>
               <dd>
-                {usuario.rol === 'ANFITRION' ? 'Anfitrión' : 'Huésped'}
+                {usuario.rol === 'ADMINISTRADOR' ? 'Administrador' : usuario.rol === 'ANFITRION' ? 'Anfitrión' : 'Huésped'}
               </dd>
 
               <dt>Teléfono</dt>
