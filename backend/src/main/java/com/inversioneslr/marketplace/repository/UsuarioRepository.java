@@ -11,4 +11,8 @@ public interface UsuarioRepository
     boolean existsByCorreoIgnoreCase(String correo);
 
     Optional<Usuario> findByCorreoIgnoreCase(String correo);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM Usuario u WHERE LOWER(u.correo) = LOWER(:correo)")
+    java.util.Optional<Usuario> bloquearPorCorreo(@org.springframework.data.repository.query.Param("correo") String correo);
 }

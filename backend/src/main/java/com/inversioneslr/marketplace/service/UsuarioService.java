@@ -1,5 +1,6 @@
 package com.inversioneslr.marketplace.service;
 
+import com.inversioneslr.marketplace.dto.ActualizarPerfilRequest;
 import com.inversioneslr.marketplace.dto.InicioSesionRequest;
 import com.inversioneslr.marketplace.dto.RegistroUsuarioRequest;
 import com.inversioneslr.marketplace.dto.UsuarioResponse;
@@ -153,6 +154,39 @@ public class UsuarioService {
         }
 
         return UsuarioResponse.desde(usuario);
+    }
+
+    // Solo modifica la cuenta de la sesión; el correo y el rol no cambian.
+    @Transactional
+    public UsuarioResponse actualizarPerfil(String correo, ActualizarPerfilRequest datos) {
+        Usuario usuario = usuarioRepository.bloquearPorCorreo(correo)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "La cuenta de la sesión no existe"
+                ));
+        if (usuario.getEstado() != EstadoUsuario.ACTIVA) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "La cuenta no se encuentra activa"
+            );
+        }
+
+        String nombre = datos.nombre() == null ? "" : datos.nombre().strip();
+        String telefono = datos.telefono() == null ? "" : datos.telefono().strip();
+        if (nombre.length() < 2 || nombre.length() > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "El nombre debe tener entre 2 y 100 caracteres"
+            );
+        }
+        if (!telefono.isEmpty() && (telefono.length() > 20
+                || !telefono.matches("[+0-9() .-]+")
+                || telefono.replaceAll("[^0-9]", "").length() < 7)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El teléfono debe tener al menos 7 dígitos y máximo 20 caracteres"
+            );
+        }
+        usuario.setNombre(nombre);
+        usuario.setTelefono(telefono.isEmpty() ? null : telefono);
+        return UsuarioResponse.desde(usuarioRepository.save(usuario));
     }
 
     private void registrarIntentoFallido(Usuario usuario, LocalDateTime ahora) {

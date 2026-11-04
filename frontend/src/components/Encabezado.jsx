@@ -14,6 +14,10 @@ function Encabezado({
     { id: 'favoritos', texto: 'Favoritos' },
   ]
 
+  if (usuario?.rol === 'ADMINISTRADOR') {
+    enlaces.push({ id: 'administracion', texto: 'Administración' })
+  }
+
   if (usuario?.rol === 'ANFITRION') {
     enlaces.push({
       id: 'panel',

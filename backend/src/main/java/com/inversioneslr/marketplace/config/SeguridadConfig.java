@@ -1,6 +1,8 @@
 package com.inversioneslr.marketplace.config;
 
 import jakarta.servlet.DispatcherType;
+import com.inversioneslr.marketplace.repository.UsuarioRepository;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,9 +16,10 @@ public class SeguridadConfig {
 
     @Bean
     public SecurityFilterChain configurarSeguridad(
-            HttpSecurity http) throws Exception {
+            HttpSecurity http, UsuarioRepository usuarios) throws Exception {
 
         http
+                .addFilterBefore(new FiltroCuentaActiva(usuarios), AuthorizationFilter.class)
                 .authorizeHttpRequests(rutas -> rutas
                         .dispatcherTypeMatchers(
                                 DispatcherType.ERROR
@@ -43,6 +46,8 @@ public class SeguridadConfig {
                                 "/api/usuarios/nueva-clave"
                         )
                         .permitAll()
+
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMINISTRADOR")
 
                         .anyRequest()
                         .authenticated()

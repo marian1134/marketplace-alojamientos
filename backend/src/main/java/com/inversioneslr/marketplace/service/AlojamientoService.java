@@ -102,7 +102,7 @@ public class AlojamientoService {
 
         validarRequest(request);
 
-        Usuario anfitrion = obtenerAnfitrion(correo);
+        Usuario anfitrion = obtenerAnfitrion(correo, true);
 
         Alojamiento alojamiento = new Alojamiento();
         alojamiento.setAnfitrion(anfitrion);
@@ -122,8 +122,8 @@ public class AlojamientoService {
 
         validarRequest(request);
 
-        Usuario anfitrion = obtenerAnfitrion(correo);
-        Alojamiento alojamiento = buscarEntidad(id);
+        Usuario anfitrion = obtenerAnfitrion(correo, true);
+        Alojamiento alojamiento = buscarParaModificar(id);
 
         verificarPropietario(alojamiento, anfitrion);
 
@@ -147,10 +147,16 @@ public class AlojamientoService {
             );
         }
 
-        Usuario anfitrion = obtenerAnfitrion(correo);
-        Alojamiento alojamiento = buscarEntidad(id);
+        Usuario anfitrion = obtenerAnfitrion(correo, true);
+        Alojamiento alojamiento = buscarParaModificar(id);
 
         verificarPropietario(alojamiento, anfitrion);
+
+        if (alojamiento.getEstado() == EstadoPublicacion.BLOQUEADA
+                || estado == EstadoPublicacion.BLOQUEADA) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Solo el administrador puede bloquear o desbloquear un alojamiento");
+        }
 
         boolean necesitaImagen =
                 estado == EstadoPublicacion.PENDIENTE_REVISION
@@ -168,6 +174,7 @@ public class AlojamientoService {
         }
 
         alojamiento.setEstado(estado);
+        alojamiento.setMotivoEstado(null);
 
         Alojamiento guardado =
                 alojamientoRepository.save(alojamiento);
@@ -176,6 +183,10 @@ public class AlojamientoService {
     }
 
     private Usuario obtenerAnfitrion(String correo) {
+        return obtenerAnfitrion(correo, false);
+    }
+
+    private Usuario obtenerAnfitrion(String correo, boolean bloquear) {
 
         if (correo == null || correo.isBlank()) {
             throw new ResponseStatusException(
@@ -184,8 +195,9 @@ public class AlojamientoService {
             );
         }
 
-        Usuario usuario = usuarioRepository
-                .findByCorreoIgnoreCase(correo)
+        Usuario usuario = (bloquear
+                ? usuarioRepository.bloquearPorCorreo(correo)
+                : usuarioRepository.findByCorreoIgnoreCase(correo))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED,
                         "No se encontró el usuario de la sesión"
@@ -223,6 +235,12 @@ public class AlojamientoService {
                     "No puedes modificar el alojamiento de otro anfitrión"
             );
         }
+    }
+
+    private Alojamiento buscarParaModificar(Long id) {
+        return alojamientoRepository.bloquearPorId(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No se encontró el alojamiento con ID " + id));
     }
 
     private Alojamiento buscarEntidad(Long id) {
