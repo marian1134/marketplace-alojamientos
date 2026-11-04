@@ -164,6 +164,10 @@ function BandejaNotificaciones({ usuario } = {}) {
 
   async function abrirAviso(aviso) {
     if (aperturaEnCurso.current || escribiendo.current || sesionTerminada.current) return
+    if (aviso.entidad === 'REPORTE_RESENA' && aviso.tipo === 'REPORTE_RESENA_NUEVO') {
+      await abrirReporte(aviso)
+      return
+    }
     const idReserva = Number(aviso.entidadId)
     if (!Number.isSafeInteger(idReserva) || idReserva <= 0) {
       setError('La notificación no tiene una reserva válida.')
@@ -206,6 +210,42 @@ function BandejaNotificaciones({ usuario } = {}) {
         setReservaAbierta(datos)
       }
       setAbierta(false)
+    } catch (excepcion) {
+      if (excepcion.name !== 'AbortError' && vigente.current) setError(excepcion.message)
+    } finally {
+      aperturaEnCurso.current = false
+      if (vigente.current) setAbriendoAviso(null)
+    }
+  }
+
+  async function abrirReporte(aviso) {
+    const idReporte = Number(aviso.entidadId)
+    if (usuario?.rol !== 'ADMINISTRADOR' || !Number.isSafeInteger(idReporte) || idReporte <= 0) {
+      setError('No puedes abrir este reporte.')
+      return
+    }
+    aperturaEnCurso.current = true
+    setAbriendoAviso(aviso.id)
+    setError('')
+    const controlador = new AbortController()
+    consultaChat.current = controlador
+    try {
+      const respuesta = await fetch(`/api/v1/admin/avisos/reportes/${idReporte}`, {
+        credentials: 'same-origin', cache: 'no-store', signal: controlador.signal,
+      })
+      if (!respuesta.ok) {
+        if (respuesta.status === 401) sesionTerminada.current = true
+        throw new Error(await leerError(respuesta, 'No pudimos abrir el reporte.'))
+      }
+      const datos = await respuesta.json()
+      if (!Array.isArray(datos.contenido) || Number(datos.contenido[0]?.id) !== idReporte) {
+        throw new Error('El reporte recibido no corresponde a esta notificación.')
+      }
+      if (!vigente.current) return
+      if (!aviso.leida && !(await marcar(aviso.id))) return
+      if (!vigente.current) return
+      setAbierta(false)
+      window.dispatchEvent(new CustomEvent('stayhub:abrir-reporte', { detail: { idReporte } }))
     } catch (excepcion) {
       if (excepcion.name !== 'AbortError' && vigente.current) setError(excepcion.message)
     } finally {
@@ -259,7 +299,7 @@ function BandejaNotificaciones({ usuario } = {}) {
             </div>}
             {cargando && <p className="stayhub-avisos-vacio" role="status">Cargando notificaciones…</p>}
             {!cargando && !error && avisos.length === 0 && <p className="stayhub-avisos-vacio">
-              Todavía no tienes notificaciones. Aquí aparecerán los avisos de tus reservas y pagos.
+              Todavía no tienes notificaciones. Aquí aparecerán los avisos de tus reservas, mensajes y reportes.
             </p>}
             {avisos.length > 0 && <ul>
               {avisos.map((aviso) => <li key={aviso.id}
@@ -278,6 +318,14 @@ function BandejaNotificaciones({ usuario } = {}) {
                       {abriendoAviso === aviso.id ? 'Abriendo…' : aviso.tipo === 'MENSAJE_CHAT' ? 'Abrir chat' : 'Ver reserva'}
                     </button>
                   )}
+                  {aviso.entidad === 'REPORTE_RESENA' && aviso.tipo === 'REPORTE_RESENA_NUEVO'
+                    && usuario?.rol === 'ADMINISTRADOR' && aviso.entidadId != null && (
+                      <button type="button"
+                        disabled={guardando || abriendoAviso !== null || sesionTerminada.current}
+                        onClick={() => abrirAviso(aviso)}>
+                        {abriendoAviso === aviso.id ? 'Abriendo…' : 'Revisar reporte'}
+                      </button>
+                    )}
                   {!aviso.leida && <button type="button"
                     disabled={guardando || abriendoAviso !== null || sesionTerminada.current}
                     onClick={() => marcar(aviso.id)}>Marcar como leída</button>}
