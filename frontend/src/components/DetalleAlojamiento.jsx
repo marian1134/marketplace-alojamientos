@@ -3,6 +3,7 @@ import { consultar, enviarDatos, leerError } from '../api'
 import { NOMBRES_TIPO } from '../tipos'
 import { enlaceGoogleMaps, urlMapa } from '../mapa'
 import CampoFecha from './CampoFecha'
+import ReportarResena from './ReportarResena'
 import { Estrellas, IconoCorazon, IconoEstrella, IconoUbicacion } from './Iconos'
 import {
   aFecha,
@@ -569,6 +570,7 @@ function DetalleAlojamiento({
                         <Estrellas valor={resena.calificacion} />
                       </div>
                       <p>{resena.comentario}</p>
+                      <ReportarResena key={resena.idResena} idResena={resena.idResena} />
                     </li>
                   ))}
                 </ul>

@@ -1,0 +1,16 @@
+.reporte-resena { margin-top: 12px; }
+.reporte-resena .reporte-resena-enlace { border: 0; background: transparent; color: #08675b; text-decoration: underline; padding: 6px 0; font: inherit; cursor: pointer; }
+.reporte-resena-formulario { background: #f3f8f6; padding: 18px; border: 1px solid #ccded8; border-radius: 12px; }
+.reporte-resena-formulario label { display: block; font-weight: 700; color: #123d38; }
+.reporte-resena-formulario p { font-size: .93rem; line-height: 1.5; }
+.reporte-resena-formulario textarea { display: block; box-sizing: border-box; width: 100%; resize: vertical; min-height: 100px; border: 1px solid #9cb9b0; border-radius: 8px; padding: 12px; background: #fff; color: #123d38; font: inherit; }
+.reporte-resena-formulario small { display: block; margin-top: 6px; color: #536a63; }
+.reporte-resena-acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.reporte-resena-acciones button { padding: 10px 16px; font: inherit; font-weight: 600; cursor: pointer; border: 1px solid #08675b; border-radius: 8px; background: #08675b; color: #fff; }
+.reporte-resena-acciones button[type="button"] { background: #fff; color: #08675b; }
+.reporte-resena button:disabled { opacity: .65; cursor: wait; }
+.reporte-resena button:focus-visible, .reporte-resena textarea:focus-visible { outline: 3px solid #167e70; outline-offset: 3px; }
+.reporte-resena .reporte-resena-error { color: #a02727; }
+.reporte-resena-confirmacion { color: #086151; font-size: .94rem; }
+.reporte-resena-cargando { display: block; font-size: .85rem; color: #536a63; margin-top: 12px; }
+@media (max-width: 480px) { .reporte-resena-acciones button { width: 100%; } }
