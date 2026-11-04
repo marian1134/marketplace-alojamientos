@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
+import CalificarHuesped from './CalificarHuesped'
+import './reservas-anfitrion.css'
 import {
   aFecha,
   fechaCorta,
@@ -16,6 +18,7 @@ function PanelAnfitrion({
 }) {
   const [alojamientos, setAlojamientos] = useState([])
   const [reservas, setReservas] = useState([])
+  const [calificaciones, setCalificaciones] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
@@ -28,22 +31,25 @@ function PanelAnfitrion({
 
     async function cargar() {
       try {
-        const [respuestaAlojamientos, respuestaReservas] =
+        const [respuestaAlojamientos, respuestaReservas, respuestaCalificaciones] =
           await Promise.all([
             consultar('/api/v1/alojamientos/mis-alojamientos'),
             consultar('/api/v1/reservas/recibidas'),
+            consultar('/api/v1/resenas-huesped/mis-calificaciones'),
           ])
 
-        if (!respuestaAlojamientos.ok || !respuestaReservas.ok) {
+        if (!respuestaAlojamientos.ok || !respuestaReservas.ok || !respuestaCalificaciones.ok) {
           throw new Error('No se pudo cargar tu panel.')
         }
 
         const datosAlojamientos = await respuestaAlojamientos.json()
         const datosReservas = await respuestaReservas.json()
+        const datosCalificaciones = await respuestaCalificaciones.json()
 
         if (activo) {
           setAlojamientos(datosAlojamientos)
           setReservas(datosReservas)
+          setCalificaciones(datosCalificaciones)
         }
       } catch (excepcion) {
         if (activo) {
@@ -330,63 +336,57 @@ function PanelAnfitrion({
                 Todavía no has recibido reservas.
               </p>
             ) : (
-              <div className="tabla-scroll">
-                <table className="tabla">
-                  <thead>
-                    <tr>
-                      <th>Código</th>
-                      <th>Huésped</th>
-                      <th>Alojamiento</th>
-                      <th>Fechas</th>
-                      <th>Estado</th>
-                      <th>Check-in</th>
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reservas.map((reserva) => (
-                      <tr key={reserva.idReserva}>
-                        <td>{reserva.codigo}</td>
-                        <td>{reserva.nombreHuesped}</td>
-                        <td>{reserva.tituloAlojamiento}</td>
-                        <td>
-                          {fechaCorta(reserva.fechaLlegada)} –{' '}
-                          {fechaCorta(reserva.fechaSalida)}
-                        </td>
-                        <td>
-                          <span
-                            className={`estado-reserva estado-${reserva.estado.toLowerCase()}`}
-                          >
-                            {NOMBRES_ESTADO_RESERVA[reserva.estado]}
-                          </span>
-                        </td>
-                        <td>
-                          {reserva.checkInEn ? (
-                            <span className="etiqueta-verde">
-                              ✓ {horaBonita(reserva.checkInEn.slice(11, 16))}
-                            </span>
-                          ) : reserva.puedeCancelarNoShow ? (
-                            <button
-                              type="button"
-                              className="boton-peligro"
-                              onClick={() => cancelarNoShow(reserva)}
-                            >
-                              No se presentó
-                            </button>
-                          ) : reserva.estado === 'CONFIRMADA' ? (
-                            <span className="texto-suave">
-                              Desde {horaBonita(reserva.horaCheckIn)}
-                            </span>
-                          ) : (
-                            <span className="texto-suave">—</span>
-                          )}
-                        </td>
-                        <td>{pesos(reserva.total)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ul className="anfitrion-reservas-lista">
+                {reservas.map((reserva) => (
+                  <li key={reserva.idReserva} className="anfitrion-reserva-tarjeta">
+                    <div className="anfitrion-reserva-cabecera">
+                      <div>
+                        <p className="anfitrion-reserva-codigo">{reserva.codigo}</p>
+                        <h3>{reserva.tituloAlojamiento}</h3>
+                      </div>
+                      <span className={`estado-reserva estado-${reserva.estado.toLowerCase()}`}>
+                        {NOMBRES_ESTADO_RESERVA[reserva.estado]}
+                      </span>
+                    </div>
+                    <dl className="anfitrion-reserva-datos">
+                      <div><dt>Huésped</dt><dd>{reserva.nombreHuesped}</dd></div>
+                      <div><dt>Fechas</dt><dd>
+                        {fechaCorta(reserva.fechaLlegada)} – {fechaCorta(reserva.fechaSalida)}
+                      </dd></div>
+                      <div><dt>Huéspedes</dt><dd>{reserva.cantidadHuespedes}</dd></div>
+                      <div><dt>Total de la reserva</dt><dd>{pesos(reserva.total)}</dd></div>
+                    </dl>
+                    <div className="anfitrion-reserva-checkin">
+                      <strong>Check-in: </strong>
+                      {reserva.checkInEn ? (
+                        <span className="etiqueta-verde">
+                          ✓ Realizado a las {horaBonita(reserva.checkInEn.slice(11, 16))}
+                        </span>
+                      ) : reserva.puedeCancelarNoShow ? (
+                        <button type="button" className="boton-peligro" onClick={() => cancelarNoShow(reserva)}>
+                          No se presentó
+                        </button>
+                      ) : reserva.estado === 'CONFIRMADA' && reserva.horaCheckIn ? (
+                        <span>Desde {horaBonita(reserva.horaCheckIn)}</span>
+                      ) : <span className="texto-suave">Sin registro</span>}
+                    </div>
+                    <div className="anfitrion-reserva-calificacion">
+                      <h4>Tu calificación del huésped</h4>
+                      <CalificarHuesped
+                        reserva={reserva}
+                        resena={calificaciones.find((resena) => resena.idReserva === reserva.idReserva)}
+                        onGuardada={(resena) => {
+                          setCalificaciones((actuales) => [
+                            resena,
+                            ...actuales.filter((actual) => actual.idReserva !== resena.idReserva),
+                          ])
+                          setMensaje(`Calificación del huésped guardada para ${reserva.codigo}.`)
+                        }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </article>
         </>
