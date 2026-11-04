@@ -392,6 +392,13 @@ function Portada({
                   Mis viajes
                 </button>
 
+                {usuario.rol === 'ADMINISTRADOR' && (
+                  <button type="button" className="portada-boton-claro"
+                    onClick={() => onNavegar('administracion')}>
+                    Administración
+                  </button>
+                )}
+
                 {usuario.rol === 'ANFITRION' && (
                   <button
                     type="button"

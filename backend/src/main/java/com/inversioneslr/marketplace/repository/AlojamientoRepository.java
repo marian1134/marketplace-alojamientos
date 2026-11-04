@@ -15,4 +15,8 @@ public interface AlojamientoRepository extends JpaRepository<Alojamiento, Long> 
             EstadoPublicacion estado
     );
 
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Alojamiento a WHERE a.idAlojamiento = :id")
+    java.util.Optional<Alojamiento> bloquearPorId(@org.springframework.data.repository.query.Param("id") Long id);
 }

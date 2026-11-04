@@ -1,5 +1,6 @@
 package com.inversioneslr.marketplace.controller;
 
+import com.inversioneslr.marketplace.dto.ActualizarPerfilRequest;
 import com.inversioneslr.marketplace.dto.DatosNuevaClave;
 import com.inversioneslr.marketplace.dto.DatosRecuperacion;
 import com.inversioneslr.marketplace.dto.InicioSesionRequest;
@@ -144,6 +145,21 @@ public class UsuarioController {
         );
 
         return ResponseEntity.ok(usuario);
+    }
+
+    @PatchMapping("/perfil")
+    public ResponseEntity<UsuarioResponse> actualizarPerfil(
+            @Valid @RequestBody ActualizarPerfilRequest datos,
+            Authentication autenticacion) {
+
+        if (autenticacion == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Inicia sesión para editar tu perfil"
+            );
+        }
+        return ResponseEntity.ok(
+                usuarioService.actualizarPerfil(autenticacion.getName(), datos)
+        );
     }
 
     // Guarda o reemplaza la foto del usuario de la sesión.
