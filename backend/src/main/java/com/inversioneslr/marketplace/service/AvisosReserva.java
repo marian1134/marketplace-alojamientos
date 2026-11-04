@@ -19,8 +19,8 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
-// Avisos al huésped y al anfitrión cuando una reserva se crea, se aprueba,
-// se rechaza o se cancela. Cada aviso queda guardado en `notificacion`
+// Avisos al huésped y al anfitrión cuando una reserva se confirma
+// o se cancela. Cada aviso queda guardado en `notificacion`
 // y en `correo_enviado`, y luego se envía por correo.
 @Service
 public class AvisosReserva {
@@ -59,12 +59,14 @@ public class AvisosReserva {
         this.enlacePanel = urlFrontend + "/?ir=panel";
     }
 
-    // El huésped pagó: reserva confirmada o solicitud enviada al anfitrión
+    // El huésped pagó: la reserva queda confirmada sin aprobación manual.
     public void reservaCreada(Reserva reserva, Pago pago, Cotizacion cotizacion) {
 
         Usuario huesped = reserva.getHuesped();
         Usuario anfitrion = reserva.getAlojamiento().getAnfitrion();
-        boolean confirmada = reserva.getEstado() == EstadoReserva.CONFIRMADA;
+        if (reserva.getEstado() != EstadoReserva.CONFIRMADA) {
+            throw new IllegalStateException("El aviso de pago requiere una reserva confirmada");
+        }
         BigDecimal total = pago.getMonto();
         String moneda = pago.getMoneda();
 
@@ -75,71 +77,53 @@ public class AvisosReserva {
 
         comprobantePago(reserva, pago, cotizacion);
 
-        if (confirmada) {
-            avisar(huesped, "RESERVA_CONFIRMADA", reserva,
-                    "Tu reserva " + reserva.getCodigo() + " está confirmada",
-                    "Tu reserva en " + titulo(reserva) + " está confirmada. "
-                            + "Pagaste " + dinero(total, moneda) + ".",
-                    "Hola, " + huesped.getNombre() + ".\n\n"
-                            + "¡Tu reserva está confirmada! Estos son los datos:"
-                            + datosReserva(reserva)
-                            + pagoTexto
-                            + "\n\nAnfitrión: " + anfitrion.getNombre()
-                            + checkInTexto(reserva)
-                            + "\n\n¡Buen viaje!",
-                    "Ver mi reserva", enlaceViajes);
-
-            avisar(anfitrion, "NUEVA_RESERVA", reserva,
-                    "Nueva reserva " + reserva.getCodigo() + " en " + titulo(reserva),
-                    huesped.getNombre() + " reservó y pagó " + titulo(reserva)
-                            + " (" + fechas(reserva) + ").",
-                    "Hola, " + anfitrion.getNombre() + ".\n\n"
-                            + huesped.getNombre() + " reservó y pagó tu alojamiento."
-                            + datosReserva(reserva)
-                            + "Hora de check-in: desde las " + horaCheckIn(reserva) + "\n"
-                            + "\nTotal pagado por el huésped: " + dinero(total, moneda)
-                            + "\n\nTe avisaremos por correo cuando el huésped haga su check-in.",
-                    "Ir a mi panel", enlacePanel);
-        } else {
-            avisar(huesped, "SOLICITUD_ENVIADA", reserva,
-                    "Recibimos tu solicitud de reserva " + reserva.getCodigo(),
-                    "Tu solicitud para " + titulo(reserva)
-                            + " está esperando la aprobación del anfitrión.",
-                    "Hola, " + huesped.getNombre() + ".\n\n"
-                            + "Tu pago fue recibido y la solicitud se envió al anfitrión. "
-                            + "Te avisaremos por correo cuando la apruebe o la rechace. "
-                            + "Si la rechaza, se te devuelve todo el dinero."
-                            + datosReserva(reserva)
-                            + pagoTexto);
-
-            avisar(anfitrion, "SOLICITUD_RECIBIDA", reserva,
-                    "Tienes una solicitud de reserva por aprobar: " + reserva.getCodigo(),
-                    huesped.getNombre() + " quiere reservar " + titulo(reserva)
-                            + " (" + fechas(reserva) + "). Apruébala o recházala.",
-                    "Hola, " + anfitrion.getNombre() + ".\n\n"
-                            + huesped.getNombre() + " quiere reservar tu alojamiento y ya pagó."
-                            + datosReserva(reserva)
-                            + "\nTotal pagado por el huésped: " + dinero(total, moneda)
-                            + "\n\nEntra a tu panel de anfitrión en StayHub "
-                            + "para aprobar o rechazar la solicitud.");
-        }
-    }
-
-    // El anfitrión aprobó la solicitud
-    public void reservaAprobada(Reserva reserva) {
-
-        Usuario huesped = reserva.getHuesped();
-
-        avisar(huesped, "RESERVA_APROBADA", reserva,
-                "Tu reserva " + reserva.getCodigo() + " fue aprobada",
-                "El anfitrión aprobó tu reserva en " + titulo(reserva) + ".",
+        avisar(huesped, "RESERVA_CONFIRMADA", reserva,
+                "Tu reserva " + reserva.getCodigo() + " está confirmada",
+                "Tu reserva en " + titulo(reserva) + " está confirmada. "
+                        + "Pagaste " + dinero(total, moneda) + ".",
                 "Hola, " + huesped.getNombre() + ".\n\n"
-                        + "¡Buenas noticias! El anfitrión aprobó tu solicitud "
-                        + "y tu reserva está confirmada."
+                        + "¡Tu reserva está confirmada! Estos son los datos:"
                         + datosReserva(reserva)
+                        + pagoTexto
+                        + "\n\nAnfitrión: " + anfitrion.getNombre()
                         + checkInTexto(reserva)
                         + "\n\n¡Buen viaje!",
                 "Ver mi reserva", enlaceViajes);
+
+        avisar(anfitrion, "NUEVA_RESERVA", reserva,
+                "Nueva reserva " + reserva.getCodigo() + " en " + titulo(reserva),
+                huesped.getNombre() + " reservó y pagó " + titulo(reserva)
+                        + " (" + fechas(reserva) + ").",
+                "Hola, " + anfitrion.getNombre() + ".\n\n"
+                        + huesped.getNombre() + " reservó y pagó tu alojamiento."
+                        + datosReserva(reserva)
+                        + "Hora de check-in: desde las " + horaCheckIn(reserva) + "\n"
+                        + "\nTotal pagado por el huésped: " + dinero(total, moneda)
+                        + "\n\nTe avisaremos por correo cuando el huésped haga su check-in.",
+                "Ir a mi panel", enlacePanel);
+    }
+
+    // Confirma una reserva anterior cuyo pago y noches ya estaban registrados.
+    // No cobra de nuevo ni genera otro comprobante de pago.
+    public void reservaConfirmadaAutomaticamente(Reserva reserva) {
+        Usuario huesped = reserva.getHuesped();
+        Usuario anfitrion = reserva.getAlojamiento().getAnfitrion();
+        avisar(huesped, "RESERVA_CONFIRMADA", reserva,
+                "Tu reserva " + reserva.getCodigo() + " está confirmada",
+                "Tu reserva en " + titulo(reserva) + " quedó confirmada automáticamente. No tienes que volver a pagar.",
+                "Hola, " + huesped.getNombre() + ".\n\n"
+                        + "Tu reserva ya está confirmada y no requiere aprobación del anfitrión."
+                        + " El pago registrado se conserva, sin nuevos cobros."
+                        + datosReserva(reserva) + checkInTexto(reserva),
+                "Ver mi reserva", enlaceViajes);
+        avisar(anfitrion, "NUEVA_RESERVA", reserva,
+                "Reserva confirmada: " + reserva.getCodigo(),
+                "La reserva de " + huesped.getNombre() + " en " + titulo(reserva)
+                        + " quedó confirmada automáticamente con el pago ya registrado.",
+                "Hola, " + anfitrion.getNombre() + ".\n\n"
+                        + "Esta reserva ya está confirmada y no requiere aprobación manual."
+                        + datosReserva(reserva),
+                "Ir a mi panel", enlacePanel);
     }
 
     // Un día antes de la llegada
@@ -217,23 +201,6 @@ public class AvisosReserva {
                         + datosReserva(reserva)
                         + "\nEsas fechas ya están libres para nuevas reservas.",
                 null, null);
-    }
-
-    // El anfitrión rechazó la solicitud: se devuelve todo
-    public void reservaRechazada(Reserva reserva, BigDecimal devolucion, String moneda) {
-
-        Usuario huesped = reserva.getHuesped();
-
-        avisar(huesped, "RESERVA_RECHAZADA", reserva,
-                "Tu solicitud de reserva " + reserva.getCodigo() + " fue rechazada",
-                "El anfitrión rechazó tu solicitud para " + titulo(reserva)
-                        + ". Te devolvemos " + dinero(devolucion, moneda) + ".",
-                "Hola, " + huesped.getNombre() + ".\n\n"
-                        + "El anfitrión no pudo aceptar tu solicitud."
-                        + datosReserva(reserva)
-                        + "\nMotivo: " + reserva.getMotivoRechazo()
-                        + "\n\nTe devolveremos " + dinero(devolucion, moneda)
-                        + " a la misma tarjeta con la que pagaste.");
     }
 
     // El huésped canceló su reserva
