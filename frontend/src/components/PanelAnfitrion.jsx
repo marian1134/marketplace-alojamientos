@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { consultar, enviarDatos, leerError } from '../api'
+import ChatReserva from './ChatReserva'
 import CalificarHuesped from './CalificarHuesped'
 import './reservas-anfitrion.css'
 import {
@@ -18,6 +19,7 @@ function PanelAnfitrion({
 }) {
   const [alojamientos, setAlojamientos] = useState([])
   const [reservas, setReservas] = useState([])
+  const [chatAbierto, setChatAbierto] = useState(null)
   const [calificaciones, setCalificaciones] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -370,6 +372,12 @@ function PanelAnfitrion({
                         <span>Desde {horaBonita(reserva.horaCheckIn)}</span>
                       ) : <span className="texto-suave">Sin registro</span>}
                     </div>
+                    <div className="viaje-acciones">
+                      <button type="button" className="boton-secundario"
+                        onClick={() => setChatAbierto(reserva)}>
+                        Chat con el huésped
+                      </button>
+                    </div>
                     <div className="anfitrion-reserva-calificacion">
                       <h4>Tu calificación del huésped</h4>
                       <CalificarHuesped
@@ -428,6 +436,10 @@ function PanelAnfitrion({
           </form>
         )}
       </dialog>
+      {chatAbierto && (
+        <ChatReserva key={chatAbierto.idReserva} reserva={chatAbierto}
+          onCerrar={() => setChatAbierto(null)} />
+      )}
     </section>
   )
 }

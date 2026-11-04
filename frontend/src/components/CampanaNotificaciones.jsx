@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { enviarDatos, leerError } from '../api'
+import ChatReserva from './ChatReserva'
+import DetalleReservaAviso, { buscarReservaNotificacion } from './DetalleReservaAviso'
 import './campana-notificaciones.css'
 
 const RUTA = '/api/v1/notificaciones'
@@ -14,10 +16,10 @@ function fechaAviso(valor) {
 
 export default function CampanaNotificaciones({ usuario }) {
   if (!usuario) return null
-  return <BandejaNotificaciones key={usuario.correo || usuario.id} />
+  return <BandejaNotificaciones key={usuario.correo || usuario.id} usuario={usuario} />
 }
 
-function BandejaNotificaciones() {
+function BandejaNotificaciones({ usuario } = {}) {
   const id = useId()
   const boton = useRef(null)
   const panel = useRef(null)
@@ -26,7 +28,12 @@ function BandejaNotificaciones() {
   const version = useRef(0)
   const escribiendo = useRef(false)
   const sesionTerminada = useRef(false)
+  const aperturaEnCurso = useRef(false)
+  const consultaChat = useRef(null)
   const [abierta, setAbierta] = useState(false)
+  const [chatAbierto, setChatAbierto] = useState(null)
+  const [reservaAbierta, setReservaAbierta] = useState(null)
+  const [abriendoAviso, setAbriendoAviso] = useState(null)
   const [avisos, setAvisos] = useState([])
   const [sinLeer, setSinLeer] = useState(0)
   const [cargando, setCargando] = useState(true)
@@ -79,6 +86,7 @@ function BandejaNotificaciones() {
       vigente.current = false
       version.current++
       consulta.current?.abort()
+      consultaChat.current?.abort()
       window.clearInterval(intervalo)
       window.removeEventListener('focus', actualizar)
       document.removeEventListener('visibilitychange', actualizar)
@@ -120,7 +128,7 @@ function BandejaNotificaciones() {
   }, [abierta])
 
   async function marcar(idAviso) {
-    if (escribiendo.current || sesionTerminada.current) return
+    if (escribiendo.current || sesionTerminada.current) return false
     escribiendo.current = true
     version.current++
     consulta.current?.abort()
@@ -144,11 +152,65 @@ function BandejaNotificaciones() {
       }
       escribiendo.current = false
       if (vigente.current) await cargar()
+      return true
     } catch (excepcion) {
       if (vigente.current) setError(excepcion.message)
+      return false
     } finally {
       escribiendo.current = false
       if (vigente.current) setGuardando(false)
+    }
+  }
+
+  async function abrirAviso(aviso) {
+    if (aperturaEnCurso.current || escribiendo.current || sesionTerminada.current) return
+    const idReserva = Number(aviso.entidadId)
+    if (!Number.isSafeInteger(idReserva) || idReserva <= 0) {
+      setError('La notificación no tiene una reserva válida.')
+      return
+    }
+    aperturaEnCurso.current = true
+    setAbriendoAviso(aviso.id)
+    setError('')
+    const controlador = new AbortController()
+    consultaChat.current = controlador
+    try {
+      const esChat = aviso.tipo === 'MENSAJE_CHAT'
+      let datos
+      if (esChat) {
+        const respuesta = await fetch(`/api/v1/reservas/${idReserva}/mensajes`, {
+          credentials: 'same-origin', cache: 'no-store', signal: controlador.signal,
+        })
+        if (!respuesta.ok) {
+          if (respuesta.status === 401) sesionTerminada.current = true
+          throw new Error(await leerError(respuesta, 'No pudimos abrir el chat de esta reserva.'))
+        }
+        datos = await respuesta.json()
+        if (Number(datos.idReserva) !== idReserva) {
+          throw new Error('La conversación recibida no corresponde a esta reserva.')
+        }
+      } else {
+        datos = await buscarReservaNotificacion(idReserva, usuario?.rol, controlador.signal)
+      }
+      if (!vigente.current) return
+      // Si falla la marca de lectura, conserva la bandeja y permite reintentar.
+      if (!aviso.leida && !(await marcar(aviso.id))) return
+      if (!vigente.current) return
+      if (esChat) {
+        setChatAbierto({
+          idReserva,
+          codigo: datos.codigoReserva,
+          tituloAlojamiento: datos.tituloAlojamiento,
+        })
+      } else {
+        setReservaAbierta(datos)
+      }
+      setAbierta(false)
+    } catch (excepcion) {
+      if (excepcion.name !== 'AbortError' && vigente.current) setError(excepcion.message)
+    } finally {
+      aperturaEnCurso.current = false
+      if (vigente.current) setAbriendoAviso(null)
     }
   }
 
@@ -183,7 +245,7 @@ function BandejaNotificaciones() {
               onClick={() => { setAbierta(false); boton.current?.focus() }}>×</button>
           </div>
           {sinLeer > 0 && <div className="stayhub-avisos-herramientas">
-            <button type="button" disabled={guardando || cargando || sesionTerminada.current}
+            <button type="button" disabled={guardando || abriendoAviso !== null || cargando || sesionTerminada.current}
               onClick={() => marcar(null)}>Marcar todas como leídas</button>
           </div>}
           <div className="stayhub-avisos-lista" aria-busy={cargando || guardando}>
@@ -208,13 +270,35 @@ function BandejaNotificaciones() {
                 </div>
                 <p>{aviso.mensaje}</p>
                 <time dateTime={aviso.creadaEn}>{fechaAviso(aviso.creadaEn)}</time>
-                {!aviso.leida && <button type="button" disabled={guardando || sesionTerminada.current}
-                  onClick={() => marcar(aviso.id)}>Marcar como leída</button>}
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  {aviso.entidad === 'RESERVA' && aviso.entidadId != null && (
+                    <button type="button"
+                      disabled={guardando || abriendoAviso !== null || sesionTerminada.current}
+                      onClick={() => abrirAviso(aviso)}>
+                      {abriendoAviso === aviso.id ? 'Abriendo…' : aviso.tipo === 'MENSAJE_CHAT' ? 'Abrir chat' : 'Ver reserva'}
+                    </button>
+                  )}
+                  {!aviso.leida && <button type="button"
+                    disabled={guardando || abriendoAviso !== null || sesionTerminada.current}
+                    onClick={() => marcar(aviso.id)}>Marcar como leída</button>}
+                </div>
               </li>)}
             </ul>}
           </div>
           <p className="stayhub-avisos-pie">Se muestran los 50 avisos más recientes.</p>
         </section>, document.body)}
+      {reservaAbierta && createPortal(
+        <DetalleReservaAviso key={reservaAbierta.idReserva} reserva={reservaAbierta}
+          onCerrar={() => {
+            setReservaAbierta(null)
+            boton.current?.focus()
+          }} />, document.body)}
+      {chatAbierto && createPortal(
+        <ChatReserva key={chatAbierto.idReserva} reserva={chatAbierto}
+          onCerrar={() => {
+            setChatAbierto(null)
+            boton.current?.focus()
+          }} />, document.body)}
     </div>
   )
 }
