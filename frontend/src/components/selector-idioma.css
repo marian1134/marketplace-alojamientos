@@ -1,0 +1,7 @@
+.selector-idioma { display: inline-flex; align-items: center; gap: 5px; color: #123d38; flex-shrink: 0; }
+.selector-idioma select { appearance: auto; border: 1px solid #c7dcd6; border-radius: 8px; background: #fff; color: #123d38; padding: 8px 4px; width: 122px; font: inherit; font-size: .85rem; cursor: pointer; }
+.selector-idioma select:focus-visible { outline: 3px solid #167e70; outline-offset: 3px; }
+.selector-idioma-portada { color: #fff; }
+.selector-idioma-portada select { background: rgba(255,255,255,.96); }
+.selector-idioma-flotante { position: fixed; top: 12px; right: 16px; z-index: 100; background: #fff; border-radius: 12px; padding: 7px 10px; box-shadow: 0 3px 15px #123d381a; }
+@media (max-width: 600px) { .selector-idioma select { width: 98px; font-size: .8rem; } .selector-idioma-flotante { top: 8px; right: 8px; } }
