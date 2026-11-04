@@ -49,6 +49,7 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
   const [estrellas, setEstrellas] = useState(5)
   const [comentario, setComentario] = useState('')
   const [enviandoResena, setEnviandoResena] = useState(false)
+  const envioResenaEnCurso = useRef(false)
   const [mensajeResena, setMensajeResena] = useState('')
 
   async function cargar() {
@@ -169,18 +170,20 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
 
   async function enviarResena(evento) {
     evento.preventDefault()
+    if (envioResenaEnCurso.current) return
 
     if (comentario.trim().length < 10) {
       setMensajeResena('Cuéntanos un poco más (mínimo 10 caracteres).')
       return
     }
 
+    envioResenaEnCurso.current = true
     setEnviandoResena(true)
 
     try {
       const respuesta = await enviarDatos(
         `/api/v1/reservas/${aResenar.idReserva}/resena`,
-        { calificacion: estrellas, comentario }
+        { calificacion: estrellas, comentario: comentario.trim() }
       )
 
       if (!respuesta.ok) {
@@ -205,6 +208,7 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
     } catch {
       setMensajeResena('No se pudo conectar con el servidor.')
     } finally {
+      envioResenaEnCurso.current = false
       setEnviandoResena(false)
     }
   }
@@ -221,8 +225,8 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
     <section className="contenedor">
       <h1 className="titulo-serif">Mis viajes</h1>
       <p className="texto-suave">
-        Aquí ves tus reservas, su estado y puedes cancelarlas según la
-        política del alojamiento.
+        Consulta tus reservas, realiza el check-in y califica el alojamiento
+        cuando termine tu estadía, desde la pestaña Pasados.
       </p>
 
       <div className="pestanas" role="tablist">
@@ -245,6 +249,15 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
           )
         })}
       </div>
+
+      {reservas.some((reserva) => reserva.puedeResenar) && (
+        <div className="aviso" role="status">
+          Tienes alojamientos pendientes por calificar.{' '}
+          <button type="button" className="boton-enlace" onClick={() => setPestana('pasados')}>
+            Ver viajes para reseñar
+          </button>
+        </div>
+      )}
 
       {avisoCheckIn && (
         <p
@@ -359,6 +372,12 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                   )
                 )}
 
+                {reserva.estado === 'CONFIRMADA' && !reserva.calificacionResena && (
+                  <p className="texto-suave">
+                    Podrás calificar este alojamiento cuando la reserva esté completada.
+                  </p>
+                )}
+
                 {reserva.calificacionResena && (
                   <p className="tu-resena">
                     Tu reseña:{' '}
@@ -386,7 +405,7 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                       className="boton-principal"
                       onClick={() => abrirResena(reserva)}
                     >
-                      ★ Dejar reseña
+                      ★ Calificar alojamiento
                     </button>
                   )}
 
@@ -432,7 +451,7 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
 
         {aResenar && (
           <form onSubmit={enviarResena}>
-            <h2 id="resena-titulo">¿Cómo te fue?</h2>
+            <h2 id="resena-titulo">Calificar alojamiento</h2>
             <p>
               {aResenar.tituloAlojamiento} · {aResenar.ciudad}
             </p>

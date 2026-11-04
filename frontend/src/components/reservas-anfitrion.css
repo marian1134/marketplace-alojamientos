@@ -1,0 +1,16 @@
+.anfitrion-reservas-lista { display: grid; gap: 18px; padding: 0; margin: 20px 0 0; list-style: none; min-width: 0; }
+.anfitrion-reserva-tarjeta { min-width: 0; border: 1px solid #d9e6df; border-radius: 16px; padding: 22px; background: #fcfdfb; overflow-wrap: anywhere; }
+.anfitrion-reserva-cabecera { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.anfitrion-reserva-cabecera > div { min-width: 0; }
+.anfitrion-reserva-cabecera h3 { margin: 4px 0 0; color: #153e36; font-size: 20px; }
+.anfitrion-reserva-codigo { margin: 0; color: #5b7469; font-size: 13px; }
+.anfitrion-reserva-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 22px 0; }
+.anfitrion-reserva-datos > div { min-width: 0; }
+.anfitrion-reserva-datos dt { margin-bottom: 5px; color: #5b7469; font-size: 13px; }
+.anfitrion-reserva-datos dd { margin: 0; color: #153e36; }
+.anfitrion-reserva-checkin { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.anfitrion-reserva-calificacion { margin-top: 18px; padding-top: 16px; border-top: 1px solid #dce7e0; }
+.anfitrion-reserva-calificacion h4 { margin: 0 0 10px; font-size: 15px; }
+.anfitrion-reserva-calificacion .huesped-calificacion-guardada { max-width: none; min-width: 0; }
+@media (max-width: 1000px) { .anfitrion-reserva-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .anfitrion-reserva-datos { grid-template-columns: minmax(0, 1fr); gap: 14px; } .anfitrion-reserva-tarjeta { padding: 16px; } }
