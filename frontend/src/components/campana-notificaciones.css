@@ -1,0 +1,57 @@
+.stayhub-avisos { display: inline-flex; flex: 0 0 auto; }
+.stayhub-avisos .stayhub-avisos-boton {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; min-width: 46px; padding: 10px; margin: 0;
+  border: 1px solid #d2e3de; border-radius: 50%; background: #fff; color: #0c5149;
+  cursor: pointer; box-sizing: border-box;
+}
+.stayhub-avisos .stayhub-avisos-boton:hover { background: #e5f3ee; }
+.stayhub-avisos .stayhub-avisos-boton svg { width: 24px; height: 24px; }
+.stayhub-avisos-contador {
+  position: absolute; top: -5px; right: -7px; min-width: 21px; height: 21px;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0 4px;
+  box-sizing: border-box; border: 2px solid white; border-radius: 20px;
+  background: #b12d37; color: white; font: 700 11px/1 system-ui, sans-serif;
+}
+.stayhub-avisos-panel {
+  position: fixed; z-index: 10000; width: 390px; max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 24px); display: flex; flex-direction: column;
+  box-sizing: border-box; overflow: hidden; border: 1px solid #d2e3de; border-radius: 18px;
+  background: #fff; color: #163b36; box-shadow: 0 16px 48px #102c3833;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+.stayhub-avisos-panel * { box-sizing: border-box; }
+.stayhub-avisos-panel button { font: inherit; cursor: pointer; }
+.stayhub-avisos-panel button:disabled { opacity: .55; cursor: wait; }
+.stayhub-avisos-panel button:focus-visible, .stayhub-avisos-boton:focus-visible {
+  outline: 3px solid #d39728; outline-offset: 3px;
+}
+.stayhub-avisos-cabecera { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 12px; }
+.stayhub-avisos-cabecera h2 { margin: 0; font: 700 20px/1.3 system-ui, sans-serif; color: #163b36; }
+.stayhub-avisos-cabecera p { margin: 4px 0 0; color: #59716b; }
+.stayhub-avisos-panel .stayhub-avisos-cerrar {
+  padding: 0; width: 36px; height: 36px; border: 0; border-radius: 50%;
+  background: #eef6f2; color: #163b36; font-size: 26px; line-height: 1;
+}
+.stayhub-avisos-herramientas { padding: 0 20px 12px; border-bottom: 1px solid #e2ebe7; }
+.stayhub-avisos-herramientas button, .stayhub-avisos-lista li button, .stayhub-avisos-error button {
+  border: 0; border-radius: 6px; padding: 4px 0; background: transparent; color: #08665b;
+  text-align: left; text-decoration: underline; font-weight: 600;
+}
+.stayhub-avisos-lista { overflow-y: auto; overscroll-behavior: contain; max-height: min(440px, 50dvh); }
+.stayhub-avisos-lista ul { margin: 0; padding: 0; list-style: none; }
+.stayhub-avisos-lista li { padding: 16px 20px; border-bottom: 1px solid #e5ede9; }
+.stayhub-avisos-lista li.stayhub-aviso-pendiente { background: #eff8f4; box-shadow: inset 3px 0 #08766a; }
+.stayhub-aviso-titulo { display: flex; align-items: flex-start; gap: 8px; }
+.stayhub-aviso-titulo h3 { flex: 1; margin: 0; font: 700 14px/1.45 system-ui, sans-serif; color: #163b36; }
+.stayhub-aviso-nuevo { flex-shrink: 0; font-size: 10px; font-weight: 700; color: #08665b; background: #d6ece4; border-radius: 10px; padding: 2px 6px; }
+.stayhub-avisos-lista li p { margin: 8px 0; color: #3e5953; overflow-wrap: anywhere; }
+.stayhub-avisos-lista time { display: block; margin-bottom: 6px; color: #62766f; font-size: 12px; }
+.stayhub-avisos-vacio { margin: 0; padding: 26px 20px; color: #59716b; }
+.stayhub-avisos-error { padding: 12px 20px; background: #fff3ef; color: #8c3024; }
+.stayhub-avisos-error p { margin: 0 0 6px; }
+.stayhub-avisos-pie { margin: 0; padding: 10px 20px; border-top: 1px solid #e2ebe7; color: #62766f; font-size: 11px; }
+@media (max-width: 600px) {
+  .stayhub-avisos-panel { right: 16px !important; width: calc(100vw - 32px); }
+  .stayhub-avisos .stayhub-avisos-boton { width: 40px; height: 40px; min-width: 40px; padding: 8px; }
+}
