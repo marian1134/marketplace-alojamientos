@@ -19,8 +19,9 @@ public class AdministradorService {
     private final UsuarioRepository usuarios;
     private final AdministradorConsultas consultas;
     private final JdbcTemplate jdbc;
-    public AdministradorService(UsuarioRepository usuarios, AdministradorConsultas consultas, JdbcTemplate jdbc) {
-        this.usuarios = usuarios; this.consultas = consultas; this.jdbc = jdbc;
+    private final AvisoReporteService avisos;
+    public AdministradorService(UsuarioRepository usuarios, AdministradorConsultas consultas, JdbcTemplate jdbc, AvisoReporteService avisos) {
+        this.usuarios = usuarios; this.consultas = consultas; this.jdbc = jdbc; this.avisos = avisos;
     }
 
     public UsuarioResponse crearAdministrador(CrearAdministradorRequest datos, String correo) {
@@ -146,7 +147,7 @@ public class AdministradorService {
         Map<String, Object> referencia = fila("SELECT resena_id FROM reporte_resena WHERE id = ?", id);
         Long idResena = ((Number) referencia.get("resena_id")).longValue();
         Map<String, Object> resena = fila("SELECT id, visible FROM resena WHERE id = ? FOR UPDATE", idResena);
-        Map<String, Object> reporte = fila("SELECT id, atendido FROM reporte_resena WHERE id = ? FOR UPDATE", id);
+        Map<String, Object> reporte = fila("SELECT id, atendido, reportado_por FROM reporte_resena WHERE id = ? FOR UPDATE", id);
         if (booleano(reporte.get("atendido"))) throw error(HttpStatus.CONFLICT, "Este reporte ya fue atendido. Actualiza la lista.");
         if (booleano(resena.get("visible")) != datos.visibleActual()) {
             throw error(HttpStatus.CONFLICT, "La visibilidad de la reseña cambió. Actualiza la lista.");
@@ -156,6 +157,7 @@ public class AdministradorService {
                     motivo, admin.getIdUsuario(), idResena);
         }
         jdbc.update("UPDATE reporte_resena SET atendido = TRUE WHERE id = ?", id);
+        avisos.reporteAtendido(id, ((Number) reporte.get("reportado_por")).longValue(), datos.decision());
         auditar(admin, "RESOLVER_REPORTE", "REPORTE_RESENA", id,
                 datos.decision() + ". Reseña " + idResena + ". " + motivo);
     }
