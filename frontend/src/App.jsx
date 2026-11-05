@@ -38,6 +38,10 @@ function App() {
     const [pantalla, setPantalla] = useState('portada');
     const [reporteSolicitado, setReporteSolicitado] = useState(null);
     const [usuario, setUsuario] = useState(null);
+    // El soporte se monta en main.jsx; solo le avisamos que debe revisar su sesion.
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('stayhub:sesion', { detail: usuario?.idUsuario ?? null }));
+    }, [usuario?.idUsuario]);
     const [cargando, setCargando] = useState(true);
     const [cerrando, setCerrando] = useState(false);
     const [mensajeSesion, setMensajeSesion] = useState('');
