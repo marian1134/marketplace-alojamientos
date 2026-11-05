@@ -144,3 +144,32 @@
     bottom: 16px;
   }
 }
+
+/* Asistente IA: conserva la apariencia del centro de ayuda existente. */
+.soporte-panel.soporte-panel--ia { width: min(430px, calc(100vw - 32px)); max-height: calc(100dvh - 110px); overflow-y: auto; box-sizing: border-box; }
+.soporte-panel--ia:focus { outline: none; }
+.soporte-panel--ia button:focus-visible, .soporte-panel--ia textarea:focus-visible { outline: 3px solid #00877b; outline-offset: 3px; }
+.soporte-pestanas { display: flex; gap: 6px; margin-top: 16px; padding: 4px; border-radius: 12px; background: #edf5f2; }
+.soporte-pestanas button { flex: 1; border: 0; border-radius: 9px; padding: 10px 8px; font: inherit; font-size: 14px; color: #214b45; background: transparent; cursor: pointer; }
+.soporte-pestanas button[aria-pressed="true"] { color: #fff; background: #07695d; font-weight: 700; }
+.soporte-conversacion { display: flex; flex-direction: column; gap: 10px; min-height: 100px; max-height: 240px; overflow-y: auto; padding: 3px; }
+.soporte-vacio, .soporte-pensando { margin: 8px 0; color: #526b65; font-size: 14px; line-height: 1.5; }
+.soporte-mensaje { max-width: 92%; padding: 12px; border: 1px solid #dfe9e4; border-radius: 12px; background: #f4f8f6; overflow-wrap: anywhere; }
+.soporte-mensaje--user { align-self: flex-end; background: #e1f1eb; }
+.soporte-mensaje--assistant { align-self: flex-start; }
+.soporte-mensaje strong { font-size: 12px; color: #07695d; }
+.soporte-mensaje p { margin: 5px 0 0; font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.soporte-sugerencias { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.soporte-sugerencias button { border: 1px solid #c9dfd7; padding: 7px 9px; border-radius: 9px; color: #07695d; background: white; font: inherit; font-size: 12px; cursor: pointer; }
+.soporte-formulario { display: grid; gap: 7px; margin-top: 12px; }
+.soporte-formulario label { font-weight: 700; font-size: 13px; }
+.soporte-formulario textarea { box-sizing: border-box; width: 100%; min-height: 70px; max-height: 150px; resize: vertical; padding: 10px; border: 1px solid #b9d0c9; border-radius: 10px; font: inherit; font-size: 14px; color: #163b37; background: white; }
+.soporte-acciones { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.soporte-acciones > span { margin-right: auto; font-size: 11px; color: #627b73; }
+.soporte-acciones button { border: 1px solid #c9dfd7; border-radius: 9px; background: white; color: #07695d; padding: 8px 13px; font: inherit; font-size: 13px; cursor: pointer; }
+.soporte-acciones button[type="submit"] { background: #07695d; color: white; }
+.soporte-panel--ia button:disabled { cursor: default; opacity: .5; }
+.soporte-privacidad { margin: 10px 0 0; color: #61766e; font-size: 11px; line-height: 1.5; }
+.soporte-aviso { padding: 10px; border-radius: 9px; background: #fff5df; color: #695017; font-size: 13px; line-height: 1.5; }
+.soporte-error { color: #a52828; font-size: 13px; line-height: 1.5; }
+@media (max-height: 650px) { .soporte-conversacion { max-height: 150px; } }
