@@ -28,22 +28,19 @@ public class AsistenteIaService {
     }
 
     public Map<String, Object> estado(Authentication autenticacion) {
-    Optional<Usuario> usuario = usuarioActivo(autenticacion);
-    String cuenta = "";
-
-    if (usuario.isPresent()) {
-        Long id = usuario.get().getIdUsuario();
-        if (id != null) {
-            cuenta = id.toString();
+        Optional<Usuario> usuario = usuarioActivo(autenticacion);
+        String cuenta = "";
+        if (usuario.isPresent()) {
+            Long id = usuario.get().getIdUsuario();
+            if (id != null) {
+                cuenta = id.toString();
+            }
         }
+        return Map.of(
+                "disponible", habilitado && cliente.configurado(),
+                "autenticado", usuario.isPresent(),
+                "cuenta", cuenta);
     }
-
-    return Map.of(
-            "disponible", habilitado && cliente.configurado(),
-            "autenticado", usuario.isPresent(),
-            "cuenta", cuenta
-    );
-}
 
     public String preguntar(PreguntaAsistenteRequest datos, Authentication autenticacion) {
         Usuario usuario = usuarioActivo(autenticacion)
@@ -59,22 +56,28 @@ public class AsistenteIaService {
                 mensajes.add(Map.of("role", mensaje.rol(), "content", mensaje.texto().strip()));
             }
         }
+        if (caracteres > 4000) throw new FalloAsistente(HttpStatus.BAD_REQUEST, "IA_DATOS");
+        mensajes.add(Map.of("role", "user", "content", datos.pregunta().strip()));
         String reglaIdioma = "en".equals(datos.idioma())
-        ? """
-          LANGUAGE REQUIREMENT: Answer only in English.
-          This applies even if the user writes in Spanish or previous
-          messages are in Spanish. Use English interface button names.
-          """
-        : """
-          REGLA DE IDIOMA: Responde únicamente en español.
-          Esto aplica aunque el usuario escriba en inglés o el historial
-          esté en inglés. Usa los nombres de los botones en español.
-          """;
-
-String instrucciones = GUIA
-        + "\n\n" + reglaIdioma
-        + "\nEl rol verificado de esta sesión es "
-        + usuario.getRol().name() + ".";
+                ? """
+                  LANGUAGE REQUIREMENT: Answer only in English.
+                  This applies even if the user writes in Spanish or previous messages
+                  are in Spanish. Use English interface button names.
+                  The selected interface language takes precedence over the language
+                  of the question and conversation history.
+                  """
+                : """
+                  REGLA DE IDIOMA: Responde únicamente en español.
+                  Esto aplica aunque el usuario escriba en inglés o el historial
+                  esté en inglés. Usa los nombres de los botones en español.
+                  El idioma seleccionado en la interfaz tiene prioridad sobre
+                  el idioma de la pregunta y del historial.
+                  """;
+        String instrucciones = GUIA + "\n\n" + reglaIdioma
+                + "\nEl rol verificado de esta sesión es " + usuario.getRol().name() + ".";
+        try (var turno = limites.reservar(usuario.getIdUsuario())) {
+            return cliente.responder(instrucciones, mensajes);
+        }
     }
 
     private Optional<Usuario> usuarioActivo(Authentication autenticacion) {
