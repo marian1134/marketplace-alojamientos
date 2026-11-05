@@ -59,14 +59,22 @@ public class AsistenteIaService {
                 mensajes.add(Map.of("role", mensaje.rol(), "content", mensaje.texto().strip()));
             }
         }
-        if (caracteres > 4000) throw new FalloAsistente(HttpStatus.BAD_REQUEST, "IA_DATOS");
-        mensajes.add(Map.of("role", "user", "content", datos.pregunta().strip()));
-        String idioma = "en".equals(datos.idioma()) ? "ingles" : "espanol";
-        String instrucciones = GUIA + "\nResponde en " + idioma
-                + ". El rol verificado de esta sesion es " + usuario.getRol().name() + ".";
-        try (var turno = limites.reservar(usuario.getIdUsuario())) {
-            return cliente.responder(instrucciones, mensajes);
-        }
+        String reglaIdioma = "en".equals(datos.idioma())
+        ? """
+          LANGUAGE REQUIREMENT: Answer only in English.
+          This applies even if the user writes in Spanish or previous
+          messages are in Spanish. Use English interface button names.
+          """
+        : """
+          REGLA DE IDIOMA: Responde únicamente en español.
+          Esto aplica aunque el usuario escriba en inglés o el historial
+          esté en inglés. Usa los nombres de los botones en español.
+          """;
+
+String instrucciones = GUIA
+        + "\n\n" + reglaIdioma
+        + "\nEl rol verificado de esta sesión es "
+        + usuario.getRol().name() + ".";
     }
 
     private Optional<Usuario> usuarioActivo(Authentication autenticacion) {
