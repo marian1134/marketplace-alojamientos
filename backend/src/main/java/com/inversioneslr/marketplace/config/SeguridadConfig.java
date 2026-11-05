@@ -29,6 +29,7 @@ public class SeguridadConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/estado",
+                                "/api/v1/asistente/estado",
                                 "/api/usuarios/csrf",
                                 "/api/v1/alojamientos",
                                 "/api/v1/alojamientos/ciudad/**",
