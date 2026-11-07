@@ -13,6 +13,6 @@ CREATE TABLE IF NOT EXISTS resena_huesped (
     CONSTRAINT fk_resena_huesped_reserva FOREIGN KEY (reserva_id) REFERENCES reserva (id),
     CONSTRAINT ck_resena_huesped_calificacion CHECK (calificacion BETWEEN 1 AND 5),
     CONSTRAINT ck_resena_huesped_comentario CHECK (CHAR_LENGTH(TRIM(comentario)) BETWEEN 10 AND 1000)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SHOW CREATE TABLE resena_huesped;
