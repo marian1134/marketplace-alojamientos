@@ -219,7 +219,7 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento, favoritos, o
         </ul>)}
 
       {!cargando && visibles.length > cantidadVisible && (<div className="ver-mas">
-          <p className="texto-suave">{t("Mostrando")}{cantidadVisible}{t(" de ")}{visibles.length}
+          <p className="texto-suave">{t("Mostrando")}{' '}{cantidadVisible}{t(" de ")}{visibles.length}
           </p>
           <button type="button" className="boton-secundario" onClick={() => setCantidadVisible(cantidadVisible + 24)}>{t("Ver m\u00E1s alojamientos")}</button>
         </div>)}

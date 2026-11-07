@@ -390,7 +390,7 @@ function Reservar({ reserva: solicitud, onVolver, onVerViajes, onExplorar, }) {
                     {t(NOMBRES_TIPO[alojamiento.tipoAlojamiento])} ·{' '}
                     {plural(alojamiento.habitaciones ?? 1, t("habitaci\u00F3n"), t("habitaciones"))} ·{' '}
                     {plural(alojamiento.banos ?? 1, t("ba\u00F1o"), t("ba\u00F1os"))}{t(" \u00B7 Hasta")}{' '}
-                    {alojamiento.capacidad}{t("hu\u00E9spedes")}</p>
+                    {alojamiento.capacidad}{' '}{t("hu\u00E9spedes")}</p>
                 </div>
               </div>
 

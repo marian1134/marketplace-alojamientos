@@ -229,19 +229,19 @@ function MisViajes({ onExplorar, onVerAlojamiento }) {
                   {reserva.ultimos4 && t(" \u00B7 Tarjeta terminada en {0}", reserva.ultimos4)}
                 </p>
 
-                {reserva.valorDevolucion && (<p className="etiqueta-verde">{t("Devoluci\u00F3n:")}{dinero(reserva.valorDevolucion, reserva.monedaPago)}
+                {reserva.valorDevolucion && (<p className="etiqueta-verde">{t("Devoluci\u00F3n:")}{' '}{dinero(reserva.valorDevolucion, reserva.monedaPago)}
                   </p>)}
 
-                {reserva.motivo && (<p className="texto-suave">{t("Motivo:")}{reserva.motivo}
+                {reserva.motivo && (<p className="texto-suave">{t("Motivo:")}{' '}{reserva.motivo}
                   </p>)}
 
                 {reserva.checkInEn ? (<p className="etiqueta-verde">{t("\u2713 Check-in hecho a las")}{' '}
                     {horaBonita(reserva.checkInEn.slice(11, 16))}
-                  </p>) : (reserva.estado === 'CONFIRMADA' &&
-                    reserva.horaCheckIn && (<p className="texto-suave">{t("Check-in:")}{fechaCorta(reserva.fechaLlegada)}{t(", desde las")}{' '}
-                      {horaBonita(reserva.horaCheckIn)}{t("hasta las 11:59 p. m. Si no lo haces ese d\u00EDa, el anfitri\u00F3n podr\u00E1 cancelar tu reserva.")}</p>))}
+                  </p>) : (reserva.estado === 'CONFIRMADA' && !reserva.puedeResenar &&
+                    reserva.horaCheckIn && (<p className="texto-suave">{t("Check-in:")}{' '}{fechaCorta(reserva.fechaLlegada)}{t(", desde las")}{' '}
+                      {horaBonita(reserva.horaCheckIn)}{' '}{t("hasta las 11:59 p. m. Si no lo haces ese d\u00EDa, el anfitri\u00F3n podr\u00E1 cancelar tu reserva.")}</p>))}
 
-                {reserva.estado === 'CONFIRMADA' && !reserva.calificacionResena && (<p className="texto-suave">{t("Podr\u00E1s calificar este alojamiento cuando la reserva est\u00E9 completada.")}</p>)}
+                {reserva.estado === 'CONFIRMADA' && !reserva.puedeResenar && !reserva.calificacionResena && (<p className="texto-suave">{t("Podr\u00E1s calificar este alojamiento cuando la reserva est\u00E9 completada.")}</p>)}
 
                 {reserva.calificacionResena && (<p className="tu-resena">{t("Tu rese\u00F1a:")}{' '}
                     <Estrellas valor={reserva.calificacionResena}/>
