@@ -2,6 +2,8 @@
 -- Reemplaza NULL por su correo entre comillas simples, por ejemplo:
 -- SET @correo_admin = 'mi-cuenta-administrativa@gmail.com';
 -- No conviertas tu cuenta de anfitrión ni la de huésped que usas para las pruebas.
+-- SET NAMES: el correo se compara con la misma collation de la tabla usuario
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE marketplace;
 SET @correo_admin = NULL;
 

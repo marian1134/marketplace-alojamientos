@@ -15,6 +15,15 @@
 --   * Se mantienen los valores congelados a propósito: precios de la
 --     cotización y de sus servicios adicionales, porcentaje y valor de la
 --     devolución, rol en la auditoría y destinatario del correo.
+--     No rompen la 3FN: son el valor que tenía el dato EN ESE MOMENTO
+--     (lo que se cobró, a quién se envió), no una copia del valor actual.
+--   * noche_reservada.publicacion_id se repite a propósito (se podría sacar
+--     de la reserva): la llave primaria (publicacion_id, fecha) es la que
+--     impide las reservas dobles. Para que nunca quede distinto al de la
+--     reserva, la llave foránea es compuesta (reserva_id, publicacion_id).
+--   * notificacion y evento_auditoria usan (entidad, entidad_id) para
+--     apuntar a distintas tablas (reserva, usuario, reporte...). Por eso no
+--     llevan llave foránea en esas dos columnas.
 --   * Nombres del equipo en publicacion: ubicacion_descripcion, etapa,
 --     motivo_etapa. Política de cancelación con columna tipo
 --     (FLEXIBLE, MODERADA, ESTRICTA). Tablas correo_enviado y
@@ -214,6 +223,7 @@ CREATE TABLE marketplace.reserva (
   PRIMARY KEY (id),
   UNIQUE KEY ux_reserva_codigo (codigo),
   UNIQUE KEY ux_reserva_idempotencia (clave_idempotencia),
+  UNIQUE KEY ux_reserva_id_publicacion (id, publicacion_id),  -- para la llave compuesta de noche_reservada
   INDEX ix_reserva_huesped (huesped_id),
   INDEX ix_reserva_publicacion (publicacion_id, fecha_llegada, fecha_salida),
   CONSTRAINT fk_reserva_publicacion FOREIGN KEY (publicacion_id) REFERENCES marketplace.publicacion (id),
@@ -233,7 +243,9 @@ CREATE TABLE marketplace.noche_reservada (
   reserva_id     INT UNSIGNED NOT NULL,
   PRIMARY KEY (publicacion_id, fecha),
   CONSTRAINT fk_noche_publicacion FOREIGN KEY (publicacion_id) REFERENCES marketplace.publicacion (id),
-  CONSTRAINT fk_noche_reserva     FOREIGN KEY (reserva_id)     REFERENCES marketplace.reserva (id) ON DELETE CASCADE
+  -- Compuesta: la noche siempre es del mismo alojamiento que su reserva
+  CONSTRAINT fk_noche_reserva_publicacion FOREIGN KEY (reserva_id, publicacion_id)
+    REFERENCES marketplace.reserva (id, publicacion_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE marketplace.cotizacion (
