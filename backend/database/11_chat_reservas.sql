@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS mensaje_reserva (
   CONSTRAINT fk_mensaje_reserva_reserva FOREIGN KEY (reserva_id) REFERENCES reserva (id),
   CONSTRAINT fk_mensaje_reserva_remitente FOREIGN KEY (remitente_id) REFERENCES usuario (id),
   CONSTRAINT ck_mensaje_reserva_contenido CHECK (CHAR_LENGTH(TRIM(contenido)) BETWEEN 1 AND 2000)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 SHOW CREATE TABLE mensaje_reserva;
