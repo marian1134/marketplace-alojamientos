@@ -224,7 +224,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
           </button>
 
           <nav aria-label={t("Navegaci\u00F3n principal")}>
-            {usuario ? (<button type="button" className="portada-enlace" onClick={() => onNavegar('destinos')}>{t("Alojamientos")}</button>) : (<a href={alojamientos.length > 0
+            {!usuario && (<a href={alojamientos.length > 0
                 ? '#alojamientos-destacados'
                 : '#destinos-populares'}>{t("Alojamientos")}</a>)}
 
@@ -389,8 +389,11 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
         <p className="portada-descripcion-seccion">{t("Elige un destino y descubre d\u00F3nde quedarte.")}</p>
 
         <div className="destinos-grilla">
-          {DESTINOS.map((destino) => (<TarjetaDestino key={destino.id} destino={destino} cantidad={contarEnDestino(destino)} onElegir={elegirDestino}/>))}
+          {DESTINOS.slice(0, 3).map((destino) => (<TarjetaDestino key={destino.id} destino={destino} cantidad={contarEnDestino(destino)} onElegir={elegirDestino}/>))}
         </div>
+
+        {/* Con sesión, "Ver más" abre la pantalla con todos los destinos */}
+        {usuario && (<button type="button" className="boton-ver-todos boton-ver-todos-grande" onClick={() => onNavegar('destinos')}>{t("Ver m\u00E1s")}</button>)}
 
       </section>
 
