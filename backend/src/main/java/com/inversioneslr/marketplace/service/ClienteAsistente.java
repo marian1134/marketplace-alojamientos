@@ -36,7 +36,8 @@ public class ClienteAsistente {
     }
 
     ClienteAsistente(String clave, String modelo, RestClient cliente) {
-        this.clave = clave == null ? "" : clave.strip();
+        // Quita espacios y comillas que se cuelan al copiar la clave
+        this.clave = clave == null ? "" : clave.strip().replaceAll("^[\"']+|[\"']+$", "").strip();
         this.modelo = modelo == null || modelo.isBlank() ? "gemini-2.5-flash" : modelo.strip();
         this.cliente = cliente;
     }
@@ -61,30 +62,48 @@ public class ClienteAsistente {
                 "generationConfig", Map.of("maxOutputTokens", 2048, "temperature", 0.4)
         );
 
-        Map<?, ?> respuesta;
-        try {
-            // Sin reintentos automaticos para no gastar la cuota gratis.
-            respuesta = cliente.post().uri("/v1beta/models/{modelo}:generateContent", modelo)
-                    .header("x-goog-api-key", clave)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(cuerpo).retrieve().body(Map.class);
-        } catch (RestClientResponseException error) {
-            int estado = error.getStatusCode().value();
-            log.warn("Consulta IA rechazada por Gemini HTTP={}", estado);
-            String codigo = estado == 429 ? "IA_CUOTA_PROVEEDOR"
-                    : estado == 400 || estado == 401 || estado == 403 || estado == 404
-                    ? "IA_CONFIGURACION" : "IA_PROVEEDOR";
-            throw new FalloAsistente(HttpStatus.SERVICE_UNAVAILABLE, codigo);
-        } catch (RuntimeException error) {
-            Throwable causa = error;
-            for (int i = 0; i < 10 && causa.getCause() != null; i++) {
-                causa = causa.getCause();
+        // Si Google ya no tiene el modelo configurado (404), prueba los siguientes
+        List<String> modelos = new ArrayList<>(List.of(modelo));
+        for (String alterno : List.of("gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash")) {
+            if (!modelos.contains(alterno)) modelos.add(alterno);
+        }
+        Map<?, ?> respuesta = null;
+        for (int i = 0; i < modelos.size(); i++) {
+            try {
+                // Sin reintentos automaticos para no gastar la cuota gratis.
+                respuesta = cliente.post().uri("/v1beta/models/{modelo}:generateContent", modelos.get(i))
+                        .header("x-goog-api-key", clave)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(cuerpo).retrieve().body(Map.class);
+                break;
+            } catch (RestClientResponseException error) {
+                int estado = error.getStatusCode().value();
+                log.warn("Gemini rechazó la consulta (modelo {}): HTTP {} - {}",
+                        modelos.get(i), estado, mensajeDeGoogle(error.getResponseBodyAsString()));
+                if (estado == 404 && i < modelos.size() - 1) continue;
+                String codigo = estado == 429 ? "IA_CUOTA_PROVEEDOR"
+                        : estado == 400 || estado == 401 || estado == 403 || estado == 404
+                        ? "IA_CONFIGURACION" : "IA_PROVEEDOR";
+                throw new FalloAsistente(HttpStatus.SERVICE_UNAVAILABLE, codigo);
+            } catch (RuntimeException error) {
+                Throwable causa = error;
+                for (int j = 0; j < 10 && causa.getCause() != null; j++) {
+                    causa = causa.getCause();
+                }
+                log.warn("Consulta IA fallida: tipo={}, causa={}",
+                        error.getClass().getSimpleName(), causa.getClass().getSimpleName());
+                throw new FalloAsistente(HttpStatus.GATEWAY_TIMEOUT, "IA_TIEMPO");
             }
-            log.warn("Consulta IA fallida: tipo={}, causa={}",
-                    error.getClass().getSimpleName(), causa.getClass().getSimpleName());
-            throw new FalloAsistente(HttpStatus.GATEWAY_TIMEOUT, "IA_TIEMPO");
         }
         return extraerTexto(respuesta);
+    }
+
+    // Saca el texto "message" del error de Google (nunca incluye la clave)
+    static String mensajeDeGoogle(String cuerpo) {
+        if (cuerpo == null) return "";
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("\"message\"\\s*:\\s*\"([^\"]{0,300})").matcher(cuerpo);
+        return m.find() ? m.group(1) : cuerpo.substring(0, Math.min(cuerpo.length(), 200));
     }
 
     static String extraerTexto(Map<?, ?> respuesta) {

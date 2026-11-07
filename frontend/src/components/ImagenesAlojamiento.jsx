@@ -112,7 +112,7 @@ function ImagenesAlojamiento({ idAlojamiento }) {
         <div>
           <h4>{t("Fotograf\u00EDas")}</h4>
           <p>
-            {imagenes.length}{t(" de ")}{MAXIMO_IMAGENES}{t("im\u00E1genes")}</p>
+            {imagenes.length}{t(" de ")}{MAXIMO_IMAGENES}{' '}{t("im\u00E1genes")}</p>
         </div>
 
         <label className="boton-agregar-imagen">

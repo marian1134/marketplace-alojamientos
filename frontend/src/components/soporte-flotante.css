@@ -173,3 +173,19 @@
 .soporte-aviso { padding: 10px; border-radius: 9px; background: #fff5df; color: #695017; font-size: 13px; line-height: 1.5; }
 .soporte-error { color: #a52828; font-size: 13px; line-height: 1.5; }
 @media (max-height: 650px) { .soporte-conversacion { max-height: 150px; } }
+
+/* En el celular el botón de ayuda es solo el círculo con "?" para no tapar la página */
+@media (max-width: 600px) {
+  .soporte-activador .soporte-activador-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .soporte-activador {
+    padding: 10px;
+  }
+}
