@@ -3232,3 +3232,72 @@ main.registro-pagina > section {
     padding: 8px 2px;
   }
 }
+
+/* Ventana de la portada: Alojamientos, Cómo funciona y Sobre nosotros */
+.portada-ventana {
+  width: min(1180px, calc(100% - 32px));
+  max-height: calc(100svh - 48px);
+  padding: 8px 0 40px;
+  overflow-y: auto;
+  background: #f5f6f4;
+  border: 0;
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgb(16 49 43 / 28%);
+}
+
+.portada-ventana::backdrop {
+  background: rgb(10 30 27 / 55%);
+  backdrop-filter: blur(3px);
+}
+
+.portada-ventana > section {
+  width: 100%;
+  margin: 0;
+  padding-top: 48px;
+}
+
+.portada-ventana .portada-ventana-cerrar {
+  position: sticky;
+  top: 12px;
+  right: auto;
+  background: white;
+  box-shadow: 0 2px 10px rgb(16 49 43 / 15%);
+  z-index: 2;
+  float: right;
+  margin-right: 16px;
+}
+
+@media (max-width: 700px) {
+  .portada-ventana {
+    width: calc(100% - 16px);
+    max-height: calc(100svh - 16px);
+    border-radius: 18px;
+  }
+}
+
+/* En pantallas medianas y celulares los botones del menú siguen visibles */
+@media (max-width: 1050px) {
+  .portada-navegacion {
+    flex-wrap: wrap;
+    row-gap: 14px;
+  }
+
+  .portada-navegacion nav {
+    display: flex;
+    order: 3;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 22px;
+  }
+}
+
+@media (max-width: 700px) {
+  .portada-navegacion nav {
+    gap: 16px;
+  }
+
+  .portada-navegacion nav .portada-enlace {
+    font-size: 15px;
+  }
+}
