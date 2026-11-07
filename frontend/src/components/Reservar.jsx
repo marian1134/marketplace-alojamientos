@@ -365,7 +365,8 @@ function Reservar({ reserva: solicitud, onVolver, onVerViajes, onExplorar, }) {
     const resumen = (<Resumen alojamiento={alojamiento} imagen={imagen} entrada={entrada} salida={salida} huespedes={huespedes} precio={reserva ?? cotizacion} politica={politica}/>);
     return (<section className="contenedor flujo-reserva">
       <div className="flujo-cabecera">
-        {paso !== 'procesando' && paso !== 'listo' && (<button type="button" className="boton-volver" onClick={() => paso === 'pago' ? setPaso('confirmar') : onVolver()}>{t("\u2190 Volver")}</button>)}
+        {paso !== 'procesando' && paso !== 'listo' && (<button type="button" className="boton-volver-pantalla" onClick={() => paso === 'pago' ? setPaso('confirmar') : onVolver()}>
+            <span aria-hidden="true">←</span>{t("Volver")}</button>)}
         <Pasos actual={paso}/>
       </div>
 

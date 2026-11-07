@@ -22,7 +22,7 @@ import java.util.Properties;
 import java.util.concurrent.Semaphore;
 
 /** Limites para una presentacion: 200 intentos totales, 30/hora por cuenta, 2 simultaneos.
- * El contador total se guarda ANTES de llamar a OpenAI y no se devuelve si hay timeout.
+ * El contador total se guarda ANTES de llamar a la IA (Gemini) y no se devuelve si hay timeout.
  * Conservar el archivo entre reinicios/despliegues. No es un presupuesto monetario del proveedor.
  */
 @Component

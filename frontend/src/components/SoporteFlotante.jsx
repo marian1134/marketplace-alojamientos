@@ -229,7 +229,7 @@ export default function SoporteFlotante() {
                   <button type="submit" disabled={!puedePreguntar || enviando || !pregunta.trim()}>{enviando ? tr('Enviando…', 'Sending…') : tr('Enviar', 'Send')}</button>
                 </div>
               </form>
-              <p className="soporte-privacidad">{tr('Tu pregunta y un contexto breve se envían a OpenAI. No compartas contraseñas, códigos ni datos de tarjetas.', 'Your question and a short context are sent to OpenAI. Do not share passwords, verification codes or card details.')}</p>
+              <p className="soporte-privacidad">{tr('Tu pregunta y un contexto breve se envían a Google Gemini. No compartas contraseñas, códigos ni datos de tarjetas.', 'Your question and a short context are sent to Google Gemini. Do not share passwords, verification codes or card details.')}</p>
             </>
           ) : (
             <>

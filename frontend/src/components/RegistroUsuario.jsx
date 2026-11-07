@@ -2,7 +2,6 @@ import { t, useIdioma } from '../idiomas'
 import { useState } from 'react';
 import { enviarDatos } from '../api';
 import CampoContrasena from './CampoContrasena';
-import { CANTIDAD_PRIMEROS, PAISES, validarCelular } from '../telefonos';
 import CodigoVerificacion from './CodigoVerificacion';
 // Mínimo 8 caracteres, con una letra, un número y un símbolo
 const CONTRASENA_SEGURA = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d\s]).{8,}$/u;
@@ -15,10 +14,9 @@ function RegistroUsuario({ onSesion }) {
     async function registrar(evento) {
         evento.preventDefault();
         const formulario = evento.currentTarget;
-        const { confirmarContrasena, celular, pais, ...datos } = Object.fromEntries(new FormData(formulario));
-        // El celular se guarda con el prefijo del país: +573001234567
-        const prefijo = PAISES.find((item) => item.nombre === pais)?.prefijo ?? '+57';
-        datos.telefono = celular ? `${prefijo}${celular}` : '';
+        const { confirmarContrasena, celular, ...datos } = Object.fromEntries(new FormData(formulario));
+        // El celular es de Colombia y se guarda con el prefijo: +573001234567
+        datos.telefono = `+57${celular}`;
         setMensaje('');
         if (new TextEncoder().encode(datos.contrasena).length > 72) {
             setMensaje(t("La contrase\u00F1a no puede superar 72 bytes."));
@@ -32,9 +30,8 @@ function RegistroUsuario({ onSesion }) {
             setMensaje(t("Las contrase\u00F1as no coinciden."));
             return;
         }
-        const errorCelular = validarCelular(prefijo, celular);
-        if (errorCelular) {
-            setMensaje(errorCelular);
+        if (!/^3\d{9}$/.test(celular)) {
+            setMensaje(t("El celular debe tener 10 d\u00EDgitos y empezar por 3."));
             return;
         }
         setEnviando(true);
@@ -129,26 +126,15 @@ function RegistroUsuario({ onSesion }) {
         </div>
 
         <div>
-          <label htmlFor="celular">{t("Celular (opcional)")}</label>
+          <label htmlFor="celular">{t("Celular")}</label>
 
           <div className="campo-celular">
-            <select name="pais" defaultValue="Colombia" aria-label={t("Pa\u00EDs del celular")}>
-              {PAISES.map((item) => (<option key={item.nombre} value={item.nombre}>
-                  {t(item.nombre)} ({item.prefijo})
-                </option>)).flatMap((opcion, indice) => indice === CANTIDAD_PRIMEROS
-            ? [
-                <option key="separador" disabled>
-                        ──────────
-                      </option>,
-                opcion,
-            ]
-            : [opcion])}
-            </select>
+            <span className="prefijo-celular" aria-hidden="true">🇨🇴 +57</span>
 
-            <input id="celular" name="celular" type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={14} onInput={(evento) => {
+            <input id="celular" name="celular" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="3001234567" maxLength={10} pattern="3[0-9]{9}" title={t("El celular debe tener 10 d\u00EDgitos y empezar por 3.")} aria-label={t("Celular (Colombia +57)")} required onInput={(evento) => {
             evento.currentTarget.value = evento.currentTarget.value
                 .replace(/\D/g, '')
-                .slice(0, 14);
+                .slice(0, 10);
         }}/>
           </div>
         </div>

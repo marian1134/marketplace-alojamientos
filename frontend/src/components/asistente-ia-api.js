@@ -1,4 +1,4 @@
-// Solo llama al backend de StayHub. La clave de OpenAI nunca viaja al navegador.
+// Solo llama al backend de StayHub. La clave de la IA (Gemini) nunca viaja al navegador.
 export async function preguntarIa(datos, signal) {
   const csrf = await fetch('/api/usuarios/csrf', {
     credentials: 'same-origin', cache: 'no-store', signal,
