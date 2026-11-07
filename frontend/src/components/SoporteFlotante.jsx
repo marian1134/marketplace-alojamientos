@@ -245,7 +245,7 @@ export default function SoporteFlotante() {
         </section>
       )}
       <button type="button" ref={activador} className="soporte-activador" onClick={() => abierto ? cerrar() : setAbierto(true)} aria-expanded={abierto} aria-controls="panel-soporte">
-        <span className="soporte-signo" aria-hidden="true">?</span><span>{abierto ? t('Cerrar ayuda') : t('¿Necesitas ayuda?')}</span>
+        <span className="soporte-signo" aria-hidden="true">?</span><span className="soporte-activador-texto">{abierto ? t('Cerrar ayuda') : t('¿Necesitas ayuda?')}</span>
       </button>
     </div>
   )
