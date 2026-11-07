@@ -176,16 +176,15 @@ public class UsuarioService {
                     HttpStatus.BAD_REQUEST, "El nombre debe tener entre 2 y 100 caracteres"
             );
         }
-        if (!telefono.isEmpty() && (telefono.length() > 20
-                || !telefono.matches("[+0-9() .-]+")
-                || telefono.replaceAll("[^0-9]", "").length() < 7)) {
+        // Celular de Colombia: +57 y 10 dígitos que empiezan por 3
+        if (!telefono.matches("\\+573[0-9]{9}")) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "El teléfono debe tener al menos 7 dígitos y máximo 20 caracteres"
+                    "El celular debe tener 10 dígitos y empezar por 3"
             );
         }
         usuario.setNombre(nombre);
-        usuario.setTelefono(telefono.isEmpty() ? null : telefono);
+        usuario.setTelefono(telefono);
         return UsuarioResponse.desde(usuarioRepository.save(usuario));
     }
 

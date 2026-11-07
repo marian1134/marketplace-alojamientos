@@ -23,7 +23,7 @@ public class AsistenteIaService {
     private final boolean habilitado;
 
     public AsistenteIaService(ClienteAsistente cliente, LimitesAsistente limites, UsuarioRepository usuarios,
-                             @Value("${app.ia.enabled:false}") boolean habilitado) {
+                             @Value("${app.ia.enabled:true}") boolean habilitado) {
         this.cliente = cliente; this.limites = limites; this.usuarios = usuarios; this.habilitado = habilitado;
     }
 

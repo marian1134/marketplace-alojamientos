@@ -28,12 +28,11 @@ public record RegistroUsuarioRequest(
         )
         String contrasena,
 
-        // Opcional
-        // Celular con prefijo internacional (formato E.164): + y entre
-        // 7 y 15 dígitos. Para Colombia (+57): 10 dígitos que empiezan por 3.
+        // Celular de Colombia con prefijo: +57 y 10 dígitos que empiezan por 3
+        @NotBlank(message = "El celular es obligatorio")
         @Pattern(
-                regexp = "^$|^\\+573[0-9]{9}$|^\\+(?!57)[1-9][0-9]{6,14}$",
-                message = "Revisa el celular: debe tener el prefijo del país y un número válido"
+                regexp = "^\\+573[0-9]{9}$",
+                message = "El celular debe tener 10 dígitos y empezar por 3"
         )
         String telefono,
 

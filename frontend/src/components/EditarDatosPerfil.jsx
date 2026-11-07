@@ -13,7 +13,7 @@ function EditarDatosPerfil({ usuario, etiquetaRol, onUsuarioActualizado, bloquea
     const envioEnCurso = useRef(false);
     function editar() {
         setNombre(usuario.nombre || '');
-        setTelefono(usuario.telefono || '');
+        setTelefono((usuario.telefono || '').replace(/^\+57/, '').replace(/\D/g, '').slice(-10));
         setMensaje('');
         setError('');
         setEditando(true);
@@ -38,10 +38,8 @@ function EditarDatosPerfil({ usuario, etiquetaRol, onUsuarioActualizado, bloquea
             setError(t("El nombre debe tener entre 2 y 100 caracteres."));
             return;
         }
-        if (telefonoLimpio && (telefonoLimpio.length > 20 ||
-            !/^[+0-9() .-]+$/.test(telefonoLimpio) ||
-            telefonoLimpio.replace(/[^0-9]/g, '').length < 7)) {
-            setError(t("El tel\u00E9fono debe tener al menos 7 d\u00EDgitos y m\u00E1ximo 20 caracteres."));
+        if (!/^3\d{9}$/.test(telefonoLimpio)) {
+            setError(t("El celular debe tener 10 d\u00EDgitos y empezar por 3."));
             return;
         }
         envioEnCurso.current = true;
@@ -49,7 +47,7 @@ function EditarDatosPerfil({ usuario, etiquetaRol, onUsuarioActualizado, bloquea
         try {
             const respuesta = await enviarDatos('/api/usuarios/perfil', {
                 nombre: nombreLimpio,
-                telefono: telefonoLimpio,
+                telefono: `+57${telefonoLimpio}`,
             }, 'PATCH');
             if (!respuesta.ok) {
                 const detalle = await respuesta.json().catch(() => null);
@@ -78,9 +76,11 @@ function EditarDatosPerfil({ usuario, etiquetaRol, onUsuarioActualizado, bloquea
             <legend>{t("Editar datos personales")}</legend>
             <label htmlFor="perfil-nombre">{t("Nombre completo")}</label>
             <input id="perfil-nombre" name="nombre" autoComplete="name" value={nombre} onChange={(evento) => setNombre(evento.target.value)} required minLength={2} maxLength={100} autoFocus/>
-            <label htmlFor="perfil-telefono">{t("Tel\u00E9fono (opcional)")}</label>
-            <input id="perfil-telefono" name="telefono" type="tel" autoComplete="tel" value={telefono} onChange={(evento) => setTelefono(evento.target.value)} maxLength={20} aria-describedby="perfil-telefono-ayuda"/>
-            <small id="perfil-telefono-ayuda">{t("Puedes dejarlo vac\u00EDo para quitar el tel\u00E9fono registrado.")}</small>
+            <label htmlFor="perfil-telefono">{t("Celular")}</label>
+            <div className="campo-celular">
+              <span className="prefijo-celular" aria-hidden="true">🇨🇴 +57</span>
+              <input id="perfil-telefono" name="telefono" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="3001234567" value={telefono} onChange={(evento) => setTelefono(evento.target.value.replace(/\D/g, '').slice(0, 10))} maxLength={10} pattern="3[0-9]{9}" title={t("El celular debe tener 10 d\u00EDgitos y empezar por 3.")} required/>
+            </div>
             <p>{t("Correo electr\u00F3nico: ")}{usuario.correo}</p>
             <p>{t("Tipo de cuenta: ")}{t(etiquetaRol)}</p>
             <div className="editar-datos-acciones">
@@ -94,7 +94,7 @@ function EditarDatosPerfil({ usuario, etiquetaRol, onUsuarioActualizado, bloquea
           <dl className="perfil-informacion-lista">
             <div><dt>{t("Nombre completo")}</dt><dd>{usuario.nombre}</dd></div>
             <div><dt>{t("Correo electr\u00F3nico")}</dt><dd>{usuario.correo}</dd></div>
-            <div><dt>{t("Tel\u00E9fono")}</dt><dd>{usuario.telefono || t("Sin registrar")}</dd></div>
+            <div><dt>{t("Celular")}</dt><dd>{usuario.telefono || t("Sin registrar")}</dd></div>
             <div><dt>{t("Tipo de cuenta")}</dt><dd>{t(etiquetaRol)}</dd></div>
           </dl>
           <button type="button" className="editar-datos-boton" onClick={editar} disabled={bloqueado}>{t("Editar datos")}</button>
