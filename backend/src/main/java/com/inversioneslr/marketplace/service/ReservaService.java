@@ -251,7 +251,7 @@ public class ReservaService {
 
         completarSiTermino(reserva);
 
-        if (reserva.getEstado() != EstadoReserva.COMPLETADA) {
+        if (!estadiaTerminada(reserva)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Podrás dejar tu reseña cuando termine la estadía"
@@ -1270,6 +1270,14 @@ public class ReservaService {
                 && LocalDate.now().isAfter(reserva.getFechaLlegada());
     }
 
+    // El huésped puede calificar desde el día de salida, aunque no haya
+    // hecho check-in (la reserva aún puede estar CONFIRMADA esos 2 días).
+    private boolean estadiaTerminada(Reserva reserva) {
+        return reserva.getEstado() == EstadoReserva.COMPLETADA
+                || (reserva.getEstado() == EstadoReserva.CONFIRMADA
+                && !reserva.getFechaSalida().isAfter(LocalDate.now()));
+    }
+
     // Una reserva confirmada cuya fecha de salida ya pasó queda COMPLETADA.
     // Si el huésped no hizo check-in, el anfitrión tiene 2 días más para
     // reportar que no se presentó.
@@ -1434,7 +1442,7 @@ public class ReservaService {
                 motivo,
                 puedeCancelar(reserva),
                 reserva.getCreadaEn(),
-                reserva.getEstado() == EstadoReserva.COMPLETADA && resena == null,
+                estadiaTerminada(reserva) && resena == null,
                 resena != null ? resena.getCalificacion() : null,
                 pago != null ? pago.getMonto() : null,
                 pago != null ? pago.getMoneda() : MonedaService.COP,

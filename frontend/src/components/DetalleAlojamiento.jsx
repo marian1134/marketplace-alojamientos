@@ -270,8 +270,7 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
               <strong>{t(tipo)}</strong>{t("tipo")}</li>
             <li>
               <strong>
-                {alojamiento.modoReserva === 'CON_APROBACION'
-            ? t("Con aprobaci\u00F3n") : t("Inmediata")}
+                {t("Inmediata")}
               </strong>{t("reserva")}</li>
             <li>
               <strong>{t(nombreCortoPolitica(politica.tipo))}</strong>{t("cancelaci\u00F3n")}</li>
@@ -301,7 +300,7 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
               <ul className="lista-reglas">
                 <li>{t("Check-in: 3:00 p. m.")}</li>
                 <li>{t("Check-out: 11:00 a. m.")}</li>
-                <li>{t("M\u00E1ximo")}{alojamiento.capacidad}{t("hu\u00E9spedes")}</li>
+                <li>{t("M\u00E1ximo")}{' '}{alojamiento.capacidad}{' '}{t("hu\u00E9spedes")}</li>
               </ul>
               <p>
                 <strong>{t(NOMBRES_POLITICA[politica.tipo])}.</strong>{' '}
@@ -313,7 +312,7 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
           {detalle.periodosDisponibles.length > 0 && (<article className="tarjeta">
               <h2>{t("Fechas en que recibe hu\u00E9spedes")}</h2>
               <ul className="fechas-ocupadas">
-                {detalle.periodosDisponibles.map((periodo) => (<li key={periodo.idPeriodo}>{t("Del")}{fechaCorta(periodo.fechaInicio)}{t(" al")}{' '}
+                {detalle.periodosDisponibles.map((periodo) => (<li key={periodo.idPeriodo}>{t("Del")}{' '}{fechaCorta(periodo.fechaInicio)}{t(" al")}{' '}
                     {fechaCorta(periodo.fechaFin)}
                   </li>))}
               </ul>
@@ -479,8 +478,7 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
 
           <div className="reserva-segura">
             <strong>{t("Reserva segura")}</strong>
-            <p>{t("Tu pago est\u00E1 protegido")}{alojamiento.modoReserva === 'CON_APROBACION'
-            ? t(" y la reserva se confirma cuando el anfitri\u00F3n la acepte.") : t(" y la reserva se confirma al instante.")}
+            <p>{t("Tu pago est\u00E1 protegido")}{' '}{t(" y la reserva se confirma al instante.")}
             </p>
           </div>
         </aside>

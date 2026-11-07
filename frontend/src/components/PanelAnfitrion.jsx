@@ -153,7 +153,7 @@ function PanelAnfitrion({ usuario, onGestionarAlojamientos, onCalendario, }) {
                     </dl>
                     <div className="anfitrion-reserva-checkin">
                       <strong>{t("Check-in: ")}</strong>
-                      {reserva.checkInEn ? (<span className="etiqueta-verde">{t("\u2713 Realizado a las")}{horaBonita(reserva.checkInEn.slice(11, 16))}
+                      {reserva.checkInEn ? (<span className="etiqueta-verde">{t("\u2713 Realizado a las")}{' '}{horaBonita(reserva.checkInEn.slice(11, 16))}
                         </span>) : reserva.puedeCancelarNoShow ? (<button type="button" className="boton-peligro" onClick={() => cancelarNoShow(reserva)}>{t("No se present\u00F3")}</button>) : reserva.estado === 'CONFIRMADA' && reserva.horaCheckIn ? (<span>{t("Desde ")}{horaBonita(reserva.horaCheckIn)}</span>) : <span className="texto-suave">{t("Sin registro")}</span>}
                     </div>
                     <div className="viaje-acciones">

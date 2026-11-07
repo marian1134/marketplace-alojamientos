@@ -922,15 +922,22 @@ main.registro-pagina > section {
   gap: 46px;
 }
 
-.portada-navegacion nav a {
+.portada-navegacion nav a,
+.portada-navegacion nav .portada-enlace {
   position: relative;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
   color: white;
   font-size: 16px;
   font-weight: 500;
   text-decoration: none;
 }
 
-.portada-navegacion nav a::after {
+.portada-navegacion nav a::after,
+.portada-navegacion nav .portada-enlace::after {
   position: absolute;
   right: 0;
   bottom: -8px;
@@ -946,7 +953,9 @@ main.registro-pagina > section {
 }
 
 .portada-navegacion nav a:hover::after,
-.portada-navegacion nav a:focus-visible::after {
+.portada-navegacion nav a:focus-visible::after,
+.portada-navegacion nav .portada-enlace:hover::after,
+.portada-navegacion nav .portada-enlace:focus-visible::after {
   opacity: 1;
   transform: scaleX(1);
 }
@@ -3173,4 +3182,53 @@ main.registro-pagina > section {
 .portada-boton-perfil .avatar-usuario-nombre {
   color: white;
   font-weight: 700;
+}
+/* Pantalla "Alojamientos" con los destinos populares */
+.pantalla-destinos {
+  padding: 24px 20px 72px;
+}
+
+.pantalla-destinos h1 {
+  margin: 0;
+  color: #102828;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(34px, 4vw, 52px);
+}
+
+/* Portada en celulares: logo arriba y botones debajo, sin que se corten */
+@media (max-width: 700px) {
+  .portada-navegacion {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .portada-acciones {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .portada-acciones .portada-boton-claro {
+    display: inline-flex;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .portada-acciones .portada-boton-principal {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .portada-acciones .selector-idioma > svg,
+  .portada-acciones .selector-idioma > span[aria-hidden='true'] {
+    display: none;
+  }
+
+  .portada-acciones .selector-idioma select {
+    width: 92px;
+    padding: 8px 2px;
+  }
 }

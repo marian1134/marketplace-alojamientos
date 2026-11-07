@@ -26,7 +26,7 @@ function TarjetaResultado({ resultado, esFavorito, onFavorito, onAbrir }) {
           </span>
           <span className="texto-suave con-icono">
             <IconoUbicacion tamano={15}/>
-            {alojamiento.ciudad}{t(" \u00B7 hasta ")}{alojamiento.capacidad}{t("hu\u00E9spedes")}</span>
+            {alojamiento.ciudad}{t(" \u00B7 hasta ")}{alojamiento.capacidad}{' '}{t("hu\u00E9spedes")}</span>
           <span className="texto-suave">
             {plural(alojamiento.habitaciones ?? 1, t("habitaci\u00F3n"), t("habitaciones"))} ·{' '}
             {plural(alojamiento.banos ?? 1, t("ba\u00F1o"), t("ba\u00F1os"))}
@@ -35,7 +35,7 @@ function TarjetaResultado({ resultado, esFavorito, onFavorito, onAbrir }) {
             <strong>{pesos(alojamiento.precioNoche)}</strong>{t("noche")}</span>
           {totalEstimado && (<span className="texto-suave">
               {pesos(totalEstimado)}{t(" por ")}{noches}{' '}
-              {noches === 1 ? t("noche") : t("noches")}{t("(con limpieza)")}</span>)}
+              {noches === 1 ? t("noche") : t("noches")}{' '}{t("(con limpieza)")}</span>)}
         </span>
       </button>
 

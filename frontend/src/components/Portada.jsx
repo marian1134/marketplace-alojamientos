@@ -224,9 +224,9 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
           </button>
 
           <nav aria-label={t("Navegaci\u00F3n principal")}>
-            <a href={alojamientos.length > 0
-            ? '#alojamientos-destacados'
-            : '#destinos-populares'}>{t("Alojamientos")}</a>
+            {usuario ? (<button type="button" className="portada-enlace" onClick={() => onNavegar('destinos')}>{t("Alojamientos")}</button>) : (<a href={alojamientos.length > 0
+                ? '#alojamientos-destacados'
+                : '#destinos-populares'}>{t("Alojamientos")}</a>)}
 
             {!usuario && (<>
                 <a href="#como-funciona">{t("C\u00F3mo funciona")}</a>
@@ -487,7 +487,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
                         salida: '',
                         huespedes: '',
                     });
-                }}>{t("Ver los")}{alojamientos.length.toLocaleString(localeActual())}{' '}{t("alojamientos")}</button>)}
+                }}>{t("Ver m\u00E1s")}</button>)}
       </section>)}
 
       <dialog ref={ventanaSesion} className="modal-sesion" aria-labelledby="modal-sesion-titulo">
@@ -582,8 +582,6 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
       </section>
       </>)}
 
-      <footer className="portada-pie">
-        © {new Date().getFullYear()}{t("StayHub \u00B7 Inversiones LR \u00B7 Hecho en Colombia")}</footer>
     </main>);
 }
 export default Portada;

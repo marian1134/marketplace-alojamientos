@@ -70,7 +70,7 @@ function CodigoVerificacion({ correo, contrasena, correoOculto, minutos, onSesio
     }
     return (<section>
       <h1>{t("Verifica que eres t\u00FA")}</h1>
-      <p>{t("Te enviamos un c\u00F3digo de 6 n\u00FAmeros a")}<strong>{correoOculto}</strong>{t(". Vence en")}{minutos}{t("minutos.")}</p>
+      <p>{t("Te enviamos un c\u00F3digo de 6 n\u00FAmeros a")}{' '}<strong>{correoOculto}</strong>{t(". Vence en")}{' '}{minutos}{' '}{t("minutos.")}</p>
 
       <form onSubmit={verificar}>
         <div>

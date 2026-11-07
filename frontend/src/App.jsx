@@ -14,6 +14,7 @@ import PanelAdministrador from './components/PanelAdministrador';
 import PanelHuesped from './components/PanelHuesped';
 import ResultadosBusqueda from './components/ResultadosBusqueda';
 import MisFavoritos from './components/MisFavoritos';
+import DestinosPopulares from './components/DestinosPopulares';
 import CalendarioAnfitrion from './components/CalendarioAnfitrion';
 import RedDeSeguridad from './components/RedDeSeguridad';
 import { consultar, enviarDatos } from './api';
@@ -23,6 +24,7 @@ import './reservas.css';
 const PANTALLAS_INTERNAS = [
     'perfil',
     'resultados',
+    'destinos',
     'detalle',
     'reservar',
     'viajes',
@@ -291,6 +293,8 @@ function App() {
           {pantalla === 'viajes' && (<MisViajes onExplorar={() => navegar('portada')} onVerAlojamiento={(id) => verAlojamiento(id, null)}/>)}
 
           {pantalla === 'panel' && (<PanelAnfitrion usuario={usuario} onGestionarAlojamientos={() => navegar('alojamientos')} onCalendario={() => navegar('calendario')}/>)}
+
+          {pantalla === 'destinos' && (<DestinosPopulares onBuscar={buscar}/>)}
 
           {pantalla === 'favoritos' && (<MisFavoritos favoritos={favoritos} onFavorito={cambiarFavorito} onExplorar={() => navegar('portada')} onVerAlojamiento={(id) => verAlojamiento(id, null)}/>)}
 

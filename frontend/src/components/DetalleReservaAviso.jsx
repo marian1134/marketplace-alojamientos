@@ -67,7 +67,7 @@ export default function DetalleReservaAviso({ reserva, onCerrar }) {
 
         <section className="detalle-reserva-aviso-bloque" aria-label="Check-in">
           <h3>Check-in</h3>
-          {reserva.checkInEn ? (<p>{t("Realizado el ")}{fechaCorta(reserva.checkInEn.slice(0, 10))}{t(", a las")}{horaBonita(reserva.checkInEn.slice(11, 16))}.</p>) : (<p>{t("Sin registro de check-in.")}{reserva.horaCheckIn && t(" Hora de llegada: desde las {0}.", horaBonita(reserva.horaCheckIn))}
+          {reserva.checkInEn ? (<p>{t("Realizado el ")}{fechaCorta(reserva.checkInEn.slice(0, 10))}{t(", a las")}{' '}{horaBonita(reserva.checkInEn.slice(11, 16))}.</p>) : (<p>{t("Sin registro de check-in.")}{' '}{reserva.horaCheckIn && t(" Hora de llegada: desde las {0}.", horaBonita(reserva.horaCheckIn))}
             </p>)}
         </section>
 
