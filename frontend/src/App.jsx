@@ -1,5 +1,4 @@
 import { t, useIdioma } from './idiomas'
-import SelectorIdioma from './components/SelectorIdioma';
 import { useEffect, useRef, useState } from 'react';
 import RegistroUsuario from './components/RegistroUsuario';
 import InicioSesion from './components/InicioSesion';
@@ -50,8 +49,6 @@ function App() {
     const [idAlojamiento, setIdAlojamiento] = useState(null);
     const [busqueda, setBusqueda] = useState(null);
     const [solicitudReserva, setSolicitudReserva] = useState(null);
-    // Pantalla a la que vuelve el botón "Volver" del detalle
-    const [origenDetalle, setOrigenDetalle] = useState('portada');
     // Ids de los alojamientos guardados con el corazón
     const [favoritos, setFavoritos] = useState(() => new Set());
     // Alojamiento que quiso ver antes de iniciar sesión
@@ -236,9 +233,6 @@ function App() {
     }
     function verAlojamiento(id, datosBusqueda) {
         setIdAlojamiento(id);
-        setOrigenDetalle(['resultados', 'viajes', 'favoritos', 'administracion'].includes(pantalla)
-            ? pantalla
-            : 'portada');
         if (datosBusqueda !== undefined) {
             setBusqueda(datosBusqueda);
         }
@@ -262,10 +256,11 @@ function App() {
         <Encabezado usuario={usuario} pantalla={pantalla} onNavegar={navegar} onCerrarSesion={cerrarSesion}/>
 
         <main>
-          <div className="navegacion-interna">
+          {/* La reserva tiene su propio "Volver" (regresa paso por paso) */}
+          {pantalla !== 'reservar' && (<div className="navegacion-interna">
             <button type="button" className="boton-volver-pantalla" onClick={volverPantallaAnterior} aria-label={t("Volver a la pantalla anterior")}>
               <span aria-hidden="true">←</span>{t("Volver")}</button>
-          </div>
+          </div>)}
 
           <RedDeSeguridad key={pantalla} onVolver={() => navegar('portada')}>
           {pantalla === 'administracion' && (<PanelAdministrador key={reporteSolicitado?.revision || 0} reporteSolicitado={reporteSolicitado} usuario={usuario} onVerAlojamiento={(id) => verAlojamiento(id, null)}/>)}
@@ -274,7 +269,7 @@ function App() {
 
           {pantalla === 'resultados' && busqueda && (<ResultadosBusqueda key={JSON.stringify(busqueda)} busqueda={busqueda} onBuscar={buscar} onVerAlojamiento={(id) => verAlojamiento(id)} favoritos={favoritos} onFavorito={cambiarFavorito}/>)}
 
-          {pantalla === 'detalle' && (<DetalleAlojamiento key={idAlojamiento} idAlojamiento={idAlojamiento} busqueda={busqueda} favoritos={favoritos} onFavorito={cambiarFavorito} onVolver={() => navegar(origenDetalle)} onReservar={(datos) => {
+          {pantalla === 'detalle' && (<DetalleAlojamiento key={idAlojamiento} idAlojamiento={idAlojamiento} busqueda={busqueda} favoritos={favoritos} onFavorito={cambiarFavorito} onReservar={(datos) => {
                     setSolicitudReserva(datos);
                     setBusqueda({
                         entrada: datos.entrada,
@@ -319,7 +314,6 @@ function App() {
         titulo = t("Bienvenido de nuevo");
     }
     return (<main className="registro-pagina">
-      <SelectorIdioma flotante/>
       <aside className="registro-imagen">
         <button type="button" className="registro-marca boton-marca" onClick={() => navegar('portada')} aria-label={t("StayHub, ir a la portada")}>{t("\u2190 StayHub")}</button>
 

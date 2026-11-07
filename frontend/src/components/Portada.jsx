@@ -228,13 +228,15 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
             ? '#alojamientos-destacados'
             : '#destinos-populares'}>{t("Alojamientos")}</a>
 
-            <a href="#como-funciona">{t("C\u00F3mo funciona")}</a>
+            {!usuario && (<>
+                <a href="#como-funciona">{t("C\u00F3mo funciona")}</a>
 
-            <a href="#sobre-nosotros">{t("Sobre nosotros")}</a>
+                <a href="#sobre-nosotros">{t("Sobre nosotros")}</a>
+              </>)}
           </nav>
 
           <div className="portada-acciones">
-            <SelectorIdioma portada/>
+            {!usuario && <SelectorIdioma portada/>}
 
             {usuario ? (<>
                 <CampanaNotificaciones usuario={usuario}/>
@@ -510,6 +512,8 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
         }}>{t("Crear cuenta")}</button>
       </dialog>
 
+      {/* Solo se muestran en la portada pública, sin sesión */}
+      {!usuario && (<>
       <section className="portada-como-funciona" id="como-funciona">
         <p className="portada-etiqueta">{t("C\u00F3mo funciona")}</p>
 
@@ -576,6 +580,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
 
         <p className="nosotros-firma">{t("Viajar es coleccionar momentos. Nosotros nos encargamos del lugar; t\u00FA, de los recuerdos.")}</p>
       </section>
+      </>)}
 
       <footer className="portada-pie">
         © {new Date().getFullYear()}{t("StayHub \u00B7 Inversiones LR \u00B7 Hecho en Colombia")}</footer>
