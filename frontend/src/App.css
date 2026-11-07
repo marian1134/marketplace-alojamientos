@@ -1,15 +1,12 @@
+/* Inicio de sesión y registro: ocupan toda la pantalla */
 main.registro-pagina {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: stretch;
-  width: calc(100% - 48px);
-  max-width: 1200px;
-  min-height: calc(100svh - 48px);
-  margin: 24px auto;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100svh;
+  margin: 0;
   background: white;
-  border-radius: 24px;
-  box-shadow: 0 12px 40px rgb(16 49 43 / 10%);
 }
 
 /* Imagen y bienvenida */
@@ -30,6 +27,10 @@ main.registro-pagina {
     url('/imagenes/registro-fondo.png');
   background-position: center;
   background-size: cover;
+  /* La foto se queda quieta aunque el formulario sea largo */
+  position: sticky;
+  top: 0;
+  height: 100svh;
 }
 
 .registro-marca {
@@ -55,9 +56,12 @@ main.registro-pagina {
 /* Panel del formulario */
 main.registro-pagina > section {
   align-self: center;
+  justify-self: center;
   min-width: 0;
   width: 100%;
-  padding: 40px;
+  max-width: 560px;
+  /* Espacio abajo para que el botón de ayuda no tape los enlaces */
+  padding: 48px 40px 104px;
   background: white;
 }
 
@@ -192,12 +196,12 @@ main.registro-pagina > section {
 @media (max-width: 760px) {
   main.registro-pagina {
     grid-template-columns: 1fr;
-    width: calc(100% - 24px);
-    min-height: auto;
-    margin: 12px auto;
+    min-height: 100svh;
   }
 
   .registro-imagen {
+    position: static;
+    height: auto;
     min-height: 320px;
     padding: 28px;
     gap: 80px;
@@ -209,10 +213,6 @@ main.registro-pagina > section {
 }
 
 @media (max-width: 480px) {
-  main.registro-pagina {
-    border-radius: 18px;
-  }
-
   .registro-imagen {
     min-height: 280px;
     padding: 24px;
@@ -2185,6 +2185,21 @@ main.registro-pagina > section {
   font: inherit;
   font-size: 14px;
   font-weight: 600;
+}
+
+.prefijo-celular {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  color: #142b2b;
+  background: #edf3f0;
+  border: 1px solid #d8e0dc;
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .campo-celular input {

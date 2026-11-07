@@ -1,5 +1,4 @@
 import { t, useIdioma } from '../idiomas'
-import SelectorIdioma from './SelectorIdioma';
 import AvatarUsuario from './AvatarUsuario';
 import CampanaNotificaciones from './CampanaNotificaciones';
 // Barra superior de las pantallas internas
@@ -41,7 +40,6 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
       </nav>
 
       <div className="encabezado-usuario">
-        <SelectorIdioma />
         <CampanaNotificaciones usuario={usuario}/>
         <button type="button" className="encabezado-perfil" onClick={() => onNavegar('perfil')} title={t("Mi perfil")}>
           <AvatarUsuario usuario={usuario} className="avatar-pequeno"/>

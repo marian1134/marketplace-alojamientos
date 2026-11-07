@@ -24,7 +24,7 @@ function agruparNoches(noches) {
     }
     return grupos;
 }
-function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, onVolver, onReservar, }) {
+function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, onReservar, }) {
     useIdioma();
     const [detalle, setDetalle] = useState(null);
     const [error, setError] = useState('');
@@ -142,7 +142,6 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
     ]);
     if (error) {
         return (<section className="contenedor">
-        <button type="button" className="boton-volver" onClick={onVolver}>{t("\u2190 Volver")}</button>
         <p className="aviso aviso-error" role="alert">
           {t(error)}
         </p>
@@ -204,8 +203,6 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
         });
     }
     return (<section className="contenedor detalle">
-      <button type="button" className="boton-volver" onClick={onVolver}>{t("\u2190 Volver")}</button>
-
       {detalle.backendDesactualizado && (<p className="aviso aviso-error" role="alert">{t("El backend est\u00E1 desactualizado: las rese\u00F1as y los periodos no se ven. Ejecuta 06_resenas_favoritos.sql y reinicia el backend (Ctrl + C y mvnw.cmd spring-boot:run).")}</p>)}
 
       <div className="detalle-galeria">
