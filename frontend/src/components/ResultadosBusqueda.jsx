@@ -20,7 +20,7 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento, favoritos, o
     const [destino, setDestino] = useState(busqueda.destino ?? '');
     const [entrada, setEntrada] = useState(busqueda.entrada ?? '');
     const [salida, setSalida] = useState(busqueda.salida ?? '');
-    const [huespedes, setHuespedes] = useState(busqueda.huespedes ? String(busqueda.huespedes) : '');
+    const [huespedes, setHuespedes] = useState(busqueda.huespedes ? String(busqueda.huespedes) : '1');
     const [resultados, setResultados] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState('');
@@ -138,7 +138,6 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento, favoritos, o
           <label htmlFor="barra-huespedes" className="etiqueta-icono">
             <IconoPersonas tamano={16}/>{t("Hu\u00E9spedes")}</label>
           <select id="barra-huespedes" value={huespedes} onChange={(evento) => setHuespedes(evento.target.value)}>
-            <option value="">{t("Cualquiera")}</option>
             {Array.from({ length: 16 }, (_, indice) => indice + 1).map((cantidad) => (<option key={cantidad} value={cantidad}>
                   {plural(cantidad, t("hu\u00E9sped"), t("hu\u00E9spedes"))}
                 </option>))}

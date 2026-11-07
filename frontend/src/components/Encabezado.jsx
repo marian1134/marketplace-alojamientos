@@ -6,7 +6,6 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
     useIdioma();
     const enlaces = [
         { id: 'portada', texto: t("Explorar") },
-        { id: 'destinos', texto: t("Alojamientos") },
         { id: 'viajes', texto: t("Mis viajes") },
         { id: 'favoritos', texto: t("Favoritos") },
     ];
