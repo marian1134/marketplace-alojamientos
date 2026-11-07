@@ -63,23 +63,26 @@ public class ClienteAsistente {
         for (String alterno : List.of("gemini-3-flash", "gemini-3.0-flash", "gemini-3-flash-preview", "gemini-flash-latest")) {
             if (!modelos.contains(alterno)) modelos.add(alterno);
         }
-        // "Pensar poco" hace que responda en pocos segundos; si el modelo no lo acepta, se quita
+        // "Pensar lo mínimo" hace que responda en pocos segundos; si el modelo no lo acepta, se quita
         boolean pensarPoco = true;
         Map<?, ?> respuesta = null;
         for (int i = 0; i < modelos.size() && i < 8; i++) {
-            Map<String, Object> configuracion = new java.util.HashMap<>(Map.of("maxOutputTokens", 2048, "temperature", 0.4));
-            if (pensarPoco) configuracion.put("thinkingConfig", Map.of("thinkingLevel", "low"));
+            Map<String, Object> configuracion = new java.util.HashMap<>(Map.of("maxOutputTokens", 1024, "temperature", 0.4));
+            if (pensarPoco) configuracion.put("thinkingConfig", Map.of("thinkingLevel", "minimal"));
             Map<String, Object> cuerpo = Map.of(
                     "systemInstruction", instruccionSistema,
                     "contents", contenidos,
                     "generationConfig", configuracion
             );
+            long inicio = System.nanoTime();
             try {
                 // Sin reintentos automaticos para no gastar la cuota gratis.
                 respuesta = cliente.post().uri("/v1beta/models/{modelo}:generateContent", modelos.get(i))
                         .header("x-goog-api-key", clave)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(cuerpo).retrieve().body(Map.class);
+                log.info("Gemini respondió con el modelo {} en {} s", modelos.get(i),
+                        (System.nanoTime() - inicio) / 1_000_000_000);
                 break;
             } catch (RestClientResponseException error) {
                 int estado = error.getStatusCode().value();
@@ -108,8 +111,9 @@ public class ClienteAsistente {
                 for (int j = 0; j < 10 && causa.getCause() != null; j++) {
                     causa = causa.getCause();
                 }
-                log.warn("Consulta IA fallida (modelo {}): tipo={}, causa={}",
-                        modelos.get(i), error.getClass().getSimpleName(), causa.getClass().getSimpleName());
+                log.warn("Consulta IA fallida (modelo {}) tras {} s: tipo={}, causa={} - {}",
+                        modelos.get(i), (System.nanoTime() - inicio) / 1_000_000_000,
+                        error.getClass().getSimpleName(), causa.getClass().getSimpleName(), causa.getMessage());
                 throw new FalloAsistente(HttpStatus.GATEWAY_TIMEOUT, "IA_TIEMPO");
             }
         }
@@ -151,7 +155,9 @@ public class ClienteAsistente {
     }
 
     private static RestClient crearCliente() {
-        HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
+        // HTTP/1.1: algunos antivirus y redes dejan colgadas las conexiones HTTP/2
+        HttpClient http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NEVER).build();
         JdkClientHttpRequestFactory fabrica = new JdkClientHttpRequestFactory(http);
         fabrica.setReadTimeout(Duration.ofSeconds(60));
