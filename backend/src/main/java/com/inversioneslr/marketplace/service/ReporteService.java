@@ -33,8 +33,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Reportes de gestión para el administrador, en Excel (XLSX) o PDF.
@@ -47,7 +49,27 @@ public class ReporteService {
     public enum Tipo { USUARIOS, PUBLICACIONES, RESERVAS, INGRESOS, DEMANDA }
     public enum Formato { XLSX, PDF }
 
-    public record Archivo(String nombre, String tipoContenido, byte[] contenido) { }
+    // Archivo generado. Como guarda un arreglo de bytes, compara y muestra su contenido (no la referencia)
+    public record Archivo(String nombre, String tipoContenido, byte[] contenido) {
+
+        @Override
+        public boolean equals(Object otro) {
+            return otro instanceof Archivo archivo
+                    && nombre.equals(archivo.nombre)
+                    && tipoContenido.equals(archivo.tipoContenido)
+                    && Arrays.equals(contenido, archivo.contenido);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Objects.hash(nombre, tipoContenido) + Arrays.hashCode(contenido);
+        }
+
+        @Override
+        public String toString() {
+            return "Archivo[nombre=" + nombre + ", tipoContenido=" + tipoContenido + ", bytes=" + contenido.length + "]";
+        }
+    }
 
     private record Consulta(String titulo, List<String> columnas, List<String> claves, String sql) { }
 
