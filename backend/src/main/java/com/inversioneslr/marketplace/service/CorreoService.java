@@ -42,12 +42,24 @@ public class CorreoService {
     private final String claveBrevo;
     private final RestClient brevo;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public CorreoService(
             JavaMailSender emisor,
             @Value("${spring.mail.username}") String correoRemitente,
             @Value("${app.correo.nombre:Alojamientos Marketplace}") String nombreRemitente,
             @Value("${BREVO_API_KEY:}") String claveBrevo,
             CorreoEnviadoRepository correoRepository) {
+        this(emisor, correoRemitente, nombreRemitente, claveBrevo, correoRepository, RestClient.builder());
+    }
+
+    // Para las pruebas: permite simular la API de Brevo
+    CorreoService(
+            JavaMailSender emisor,
+            String correoRemitente,
+            String nombreRemitente,
+            String claveBrevo,
+            CorreoEnviadoRepository correoRepository,
+            RestClient.Builder clienteBrevo) {
 
         this.emisor = emisor;
         this.correoRemitente = correoRemitente;
@@ -56,7 +68,7 @@ public class CorreoService {
         this.remitente = nombreRemitente + " <" + correoRemitente + ">";
         this.correoRepository = correoRepository;
         this.claveBrevo = claveBrevo == null ? "" : claveBrevo.strip();
-        this.brevo = RestClient.builder().baseUrl("https://api.brevo.com").build();
+        this.brevo = clienteBrevo.baseUrl("https://api.brevo.com").build();
     }
 
     // Envía un correo por Brevo (si hay clave) o por SMTP. El html es opcional.
