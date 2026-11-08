@@ -177,6 +177,18 @@ video {
     min-height: 44px;
   }
 
+  /* Visitante sin cuenta: "Iniciar sesión" y "Crear cuenta" alineados a la izquierda */
+  .encabezado-invitado.menu-movil-abierto {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .encabezado-invitado.menu-movil-abierto button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
   .contenedor,
   .panel-contenido,
   .flujo-contenido,

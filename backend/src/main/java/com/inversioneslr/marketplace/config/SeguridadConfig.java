@@ -34,6 +34,9 @@ public class SeguridadConfig {
                                 "/api/v1/alojamientos",
                                 "/api/v1/alojamientos/ciudad/**",
                                 "/api/v1/alojamientos/*/imagenes",
+                                // Un visitante puede buscar y ver alojamientos sin cuenta
+                                "/api/v1/busqueda",
+                                "/api/v1/alojamientos/*/detalle",
                                 "/uploads/alojamientos/**",
                                 // Contrato OpenAPI y Swagger UI
                                 "/v3/api-docs/**",
@@ -48,7 +51,8 @@ public class SeguridadConfig {
                                 "/api/usuarios/login",
                                 "/api/usuarios/verificar-codigo",
                                 "/api/usuarios/recuperar",
-                                "/api/usuarios/nueva-clave"
+                                "/api/usuarios/nueva-clave",
+                                "/api/v1/reservas/cotizacion"
                         )
                         .permitAll()
 

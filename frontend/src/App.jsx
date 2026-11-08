@@ -17,6 +17,7 @@ import MisFavoritos from './components/MisFavoritos';
 import DestinosPopulares from './components/DestinosPopulares';
 import CalendarioAnfitrion from './components/CalendarioAnfitrion';
 import RedDeSeguridad from './components/RedDeSeguridad';
+import AvisoSesion from './components/AvisoSesion';
 import { consultar, enviarDatos } from './api';
 import './App.css';
 import './reservas.css';
@@ -34,6 +35,8 @@ const PANTALLAS_INTERNAS = [
     'calendario',
     'administracion',
 ];
+// Pantallas que también puede ver un visitante sin cuenta
+const PANTALLAS_PUBLICAS = ['resultados', 'destinos', 'detalle'];
 function App() {
     useIdioma();
     const [pantalla, setPantalla] = useState('portada');
@@ -55,6 +58,10 @@ function App() {
     const [favoritos, setFavoritos] = useState(() => new Set());
     // Alojamiento que quiso ver antes de iniciar sesión
     const [pendiente, setPendiente] = useState(null);
+    // Reserva que un visitante quiso hacer: se retoma después del login
+    const [reservaPendiente, setReservaPendiente] = useState(null);
+    // Letrero "Inicia sesión para continuar" de las pantallas internas
+    const [avisoSesion, setAvisoSesion] = useState(false);
     const [token, setToken] = useState(() => new URLSearchParams(window.location.search).get('token'));
     // Pantalla pedida desde el botón de un correo (?ir=viajes o ?ir=panel)
     const [irA, setIrA] = useState(() => {
@@ -140,6 +147,12 @@ function App() {
     }, [usuario]);
     // Agrega o quita un favorito (se pinta de una vez y luego se guarda)
     async function cambiarFavorito(idAlojamiento) {
+        if (!usuario) {
+            setPendiente(idAlojamiento);
+            setReservaPendiente(null);
+            setAvisoSesion(true);
+            return;
+        }
         const yaEsta = favoritos.has(idAlojamiento);
         const nuevos = new Set(favoritos);
         if (yaEsta) {
@@ -193,6 +206,13 @@ function App() {
     function recibirSesion(datos) {
         setUsuario(datos);
         setMensajeSesion('');
+        if (reservaPendiente) {
+            setSolicitudReserva(reservaPendiente);
+            setReservaPendiente(null);
+            setPendiente(null);
+            navegar('reservar');
+            return;
+        }
         if (pendiente) {
             setIdAlojamiento(pendiente);
             setPendiente(null);
@@ -210,6 +230,7 @@ function App() {
                 throw new Error(t("No se pudo cerrar la sesi\u00F3n"));
             }
             setUsuario(null);
+            setReservaPendiente(null);
             setFavoritos(new Set());
             setSolicitudReserva(null);
             navegar('portada');
@@ -244,6 +265,11 @@ function App() {
         setPendiente(idDeseado ?? null);
         navegar(destino);
     }
+    // Desde el letrero: va a iniciar sesión o a crear la cuenta
+    function irACuenta(destino) {
+        setAvisoSesion(false);
+        navegar(destino);
+    }
     if (!esRecuperacion && cargando) {
         return (<p className="cargando" role="status">{t("Comprobando sesi\u00F3n...")}</p>);
     }
@@ -251,11 +277,12 @@ function App() {
         return (<Portada usuario={usuario} onIniciarSesion={(id) => pedirCuenta('login', id)} onRegistrarse={(id) => pedirCuenta('registro', id)} onNavegar={navegar} onCerrarSesion={cerrarSesion} onVerAlojamiento={verAlojamiento} onBuscar={buscar} favoritos={favoritos} onFavorito={cambiarFavorito}/>);
     }
     if (!esRecuperacion && PANTALLAS_INTERNAS.includes(pantalla)) {
-        if (!usuario) {
+        if (!usuario && !PANTALLAS_PUBLICAS.includes(pantalla)) {
             return (<Portada usuario={null} onIniciarSesion={(id) => pedirCuenta('login', id)} onRegistrarse={(id) => pedirCuenta('registro', id)} onNavegar={navegar} onCerrarSesion={cerrarSesion} onVerAlojamiento={verAlojamiento} onBuscar={buscar} favoritos={favoritos} onFavorito={cambiarFavorito}/>);
         }
         return (<div className="pagina-interna">
-        <Encabezado usuario={usuario} pantalla={pantalla} onNavegar={navegar} onCerrarSesion={cerrarSesion}/>
+        <Encabezado usuario={usuario} pantalla={pantalla} onNavegar={navegar} onCerrarSesion={cerrarSesion} onIniciarSesion={() => pedirCuenta('login', pantalla === 'detalle' ? idAlojamiento : null)} onRegistrarse={() => pedirCuenta('registro', pantalla === 'detalle' ? idAlojamiento : null)}/>
+        <AvisoSesion abierto={avisoSesion} onCerrar={() => setAvisoSesion(false)} onIniciarSesion={() => irACuenta('login')} onRegistrarse={() => irACuenta('registro')}/>
 
         <main>
           {/* La reserva tiene su propio "Volver" (regresa paso por paso) */}
@@ -272,12 +299,19 @@ function App() {
           {pantalla === 'resultados' && busqueda && (<ResultadosBusqueda key={JSON.stringify(busqueda)} busqueda={busqueda} onBuscar={buscar} onVerAlojamiento={(id) => verAlojamiento(id)} favoritos={favoritos} onFavorito={cambiarFavorito}/>)}
 
           {pantalla === 'detalle' && (<DetalleAlojamiento key={idAlojamiento} idAlojamiento={idAlojamiento} busqueda={busqueda} favoritos={favoritos} onFavorito={cambiarFavorito} onReservar={(datos) => {
-                    setSolicitudReserva(datos);
                     setBusqueda({
                         entrada: datos.entrada,
                         salida: datos.salida,
                         huespedes: datos.huespedes,
                     });
+                    // Sin cuenta: sale el letrero y la reserva sigue después del login
+                    if (!usuario) {
+                        setReservaPendiente(datos);
+                        setPendiente(idAlojamiento);
+                        setAvisoSesion(true);
+                        return;
+                    }
+                    setSolicitudReserva(datos);
                     navegar('reservar');
                 }}/>)}
 

@@ -17,9 +17,9 @@ class SeguridadRolesTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-05 CA2: sin sesión no se puede buscar ni ver el detalle")
-    void sinSesionNoHayBusqueda() throws Exception {
-        mvc.perform(get("/api/v1/busqueda"))
+    @DisplayName("HU-05 CA2: sin sesión no se pueden ver los viajes propios")
+    void sinSesionNoHayViajes() throws Exception {
+        mvc.perform(get("/api/v1/reservas/mis-reservas"))
                 .andExpect(status().isUnauthorized());
     }
 

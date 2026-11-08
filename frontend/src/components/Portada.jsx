@@ -10,32 +10,13 @@ const MAXIMO_HUESPEDES = 16;
 import { DESTINOS } from '../destinos';
 import TarjetaDestino from './TarjetaDestino';
 import CampoCiudad from './CampoCiudad';
+import AvisoSesion from './AvisoSesion';
 import CampoFecha from './CampoFecha';
 import { IconoBuscar, IconoCalendario, IconoCorazon, IconoPersonas, IconoSalida, IconoUbicacion, } from './Iconos';
 function IconoCasa() {
     useIdioma();
     return (<svg viewBox="0 0 24 24" aria-hidden="true" className="portada-icono-logo">
       <path d="M3 10.5 12 3l9 7.5M5.5 9.5V21h13V9.5M9 21v-7h6v7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>);
-}
-// Casa con candado del mockup "Inicia sesión para continuar"
-function IlustracionCandado() {
-    useIdioma();
-    return (<svg viewBox="0 0 220 120" aria-hidden="true" className="modal-sesion-ilustracion">
-      <ellipse cx="110" cy="70" rx="100" ry="48" fill="#f6ede4"/>
-      <path d="M20 108h180" stroke="#7a9a6a" strokeWidth="4" strokeLinecap="round"/>
-      <circle cx="42" cy="84" r="14" fill="#8fb48a"/>
-      <rect x="40" y="94" width="4" height="14" fill="#6b5a45"/>
-      <circle cx="180" cy="80" r="16" fill="#7fa77c"/>
-      <rect x="178" y="92" width="4" height="16" fill="#6b5a45"/>
-      <path d="M62 66 110 34l48 32" fill="#6d4c3d"/>
-      <rect x="70" y="64" width="80" height="44" rx="2" fill="#d9a77c"/>
-      <rect x="102" y="82" width="16" height="26" rx="2" fill="#7b5236"/>
-      <rect x="80" y="74" width="12" height="10" rx="1" fill="#557a6a"/>
-      <rect x="128" y="74" width="12" height="10" rx="1" fill="#557a6a"/>
-      <path d="M98 30v-8a12 12 0 0 1 24 0v8" fill="none" stroke="#b07d55" strokeWidth="5"/>
-      <rect x="94" y="28" width="32" height="24" rx="4" fill="#c99366"/>
-      <circle cx="110" cy="40" r="3" fill="#6d4c3d"/>
     </svg>);
 }
 function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarSesion, onVerAlojamiento, onBuscar, favoritos, onFavorito, }) {
@@ -50,17 +31,14 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
     const [destacados, setDestacados] = useState([]);
     const [cargandoAlojamientos, setCargandoAlojamientos] = useState(true);
     const [mensajeAlojamientos, setMensajeAlojamientos] = useState('');
-    // Ventana que pide iniciar sesión antes de buscar
-    const ventanaSesion = useRef(null);
-    // Alojamiento que quiso abrir sin sesión (se abre después del login)
+    // Letrero de inicio de sesión: solo para guardar favoritos
+    const [avisoSesion, setAvisoSesion] = useState(false);
+    // Alojamiento que quiso guardar sin sesión (se abre después del login)
     const alojamientoDeseado = useRef(null);
     function pedirSesion(idAlojamiento) {
         alojamientoDeseado.current = idAlojamiento ?? null;
         ventanaSeccion.current?.close();
-        const ventana = ventanaSesion.current;
-        if (ventana && !ventana.open) {
-            ventana.showModal();
-        }
+        setAvisoSesion(true);
     }
     // Ventana con "Alojamientos", "Cómo funciona" o "Sobre nosotros"
     const ventanaSeccion = useRef(null);
@@ -75,26 +53,13 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
     function cerrarSeccion() {
         ventanaSeccion.current?.close();
     }
-    function cerrarVentanaSesion() {
-        ventanaSesion.current?.close();
-    }
     function abrirAlojamiento(idAlojamiento) {
-        if (!usuario) {
-            pedirSesion(idAlojamiento);
-            return;
-        }
+        ventanaSeccion.current?.close();
         onVerAlojamiento(idAlojamiento, {
             entrada,
             salida,
             huespedes,
         });
-    }
-    // Sin sesión, cualquier clic en el buscador abre la ventana
-    function revisarSesion(evento) {
-        if (!usuario) {
-            evento.preventDefault();
-            pedirSesion();
-        }
     }
     const fechaActual = new Date();
     const fechaMinima = [
@@ -174,10 +139,6 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
     }
     // Al tocar un destino se muestran sus alojamientos
     function elegirDestino(destino) {
-        if (!usuario) {
-            pedirSesion();
-            return;
-        }
         onBuscar({
             destino: destino.nombre,
             ciudades: destino.ciudades,
@@ -193,10 +154,6 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
     function buscarAlojamientos(evento) {
         evento.preventDefault();
         setMensajeBusqueda('');
-        if (!usuario) {
-            pedirSesion();
-            return;
-        }
         const cantidadHuespedes = Number(huespedes);
         if (!destino.trim()) {
             setMensajeBusqueda(t("Escribe la ciudad o el destino que deseas buscar."));
@@ -257,7 +214,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
                         : 'portada-favorito'} onClick={(evento) => {
                         evento.stopPropagation();
                         if (!usuario) {
-                            pedirSesion();
+                            pedirSesion(alojamiento.idAlojamiento);
                             return;
                         }
                         onFavorito(alojamiento.idAlojamiento);
@@ -310,10 +267,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
           </div>)}
 
         {alojamientos.length > destacados.length && (<button type="button" className="boton-ver-todos boton-ver-todos-grande" onClick={() => {
-                    if (!usuario) {
-                        pedirSesion();
-                        return;
-                    }
+                    ventanaSeccion.current?.close();
                     onBuscar({
                         destino: '',
                         entrada: '',
@@ -445,7 +399,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
 
           <p>{t("Descubre alojamientos \u00FAnicos en los mejores destinos de Colombia.")}</p>
 
-          <form className="portada-buscador" onSubmit={buscarAlojamientos} onClick={revisarSesion} noValidate>
+          <form className="portada-buscador" onSubmit={buscarAlojamientos} noValidate>
             <div className="buscador-item">
               <span className="buscador-icono"><IconoUbicacion tamano={24}/></span>
 
@@ -457,7 +411,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
                 <CampoCiudad id="buscar-destino" value={destino} onChange={(valor) => {
             setDestino(valor);
             setMensajeBusqueda('');
-        }} bloqueado={!usuario}/>
+        }}/>
               </span>
             </div>
 
@@ -467,7 +421,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
               <span className="buscador-campo">
                 <strong>{t("Entrada")}</strong>
 
-                <CampoFecha etiqueta={t("Fecha de entrada")} value={entrada} min={fechaMinima} max={fechaMaximaLlegada()} bloqueado={!usuario} onChange={(valor) => {
+                <CampoFecha etiqueta={t("Fecha de entrada")} value={entrada} min={fechaMinima} max={fechaMaximaLlegada()} onChange={(valor) => {
             setEntrada(valor);
             setMensajeBusqueda('');
             if (salida &&
@@ -489,7 +443,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
             ? sumarDias(entrada, 1)
             : sumarDias(fechaMinima, 1)} max={entrada
             ? sumarDias(entrada, MAXIMO_NOCHES)
-            : sumarDias(fechaMaximaLlegada(), MAXIMO_NOCHES)} bloqueado={!usuario} onChange={(valor) => {
+            : sumarDias(fechaMaximaLlegada(), MAXIMO_NOCHES)} onChange={(valor) => {
             setSalida(valor);
             setMensajeBusqueda('');
         }}/>
@@ -504,12 +458,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
                   <strong>{t("Hu\u00E9spedes")}</strong>
                 </label>
 
-                <select id="buscar-huespedes" value={huespedes} onMouseDown={(evento) => {
-            // Sin sesión no se abre: el clic muestra el aviso
-            if (!usuario) {
-                evento.preventDefault();
-            }
-        }} onChange={(evento) => {
+                <select id="buscar-huespedes" value={huespedes} onChange={(evento) => {
             setHuespedes(evento.target.value);
             setMensajeBusqueda('');
         }}>
@@ -573,35 +522,21 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
           {DESTINOS.slice(0, 3).map((destino) => (<TarjetaDestino key={destino.id} destino={destino} cantidad={contarEnDestino(destino)} onElegir={elegirDestino}/>))}
         </div>
 
-        {/* Con sesión, "Ver más" abre la pantalla con todos los destinos */}
-        {usuario && (<button type="button" className="boton-ver-todos boton-ver-todos-grande" onClick={() => onNavegar('destinos')}>{t("Ver m\u00E1s")}</button>)}
+        {/* "Ver más" abre la pantalla con todos los destinos */}
+        {(<button type="button" className="boton-ver-todos boton-ver-todos-grande" onClick={() => onNavegar('destinos')}>{t("Ver m\u00E1s")}</button>)}
 
       </section>
 
       {/* Con sesión los alojamientos se ven aquí; sin sesión se abren con el botón de arriba */}
       {usuario && seccionAlojamientos}
 
-      <dialog ref={ventanaSesion} className="modal-sesion" aria-labelledby="modal-sesion-titulo">
-        <button type="button" className="modal-cerrar" onClick={cerrarVentanaSesion} aria-label={t("Cerrar")}>
-          ×
-        </button>
-
-        <IlustracionCandado />
-
-        <h2 id="modal-sesion-titulo">{t("Inicia sesi\u00F3n para continuar")}</h2>
-
-        <p>{t("Para buscar alojamientos, ver disponibilidad y reservar, necesitas una cuenta en StayHub.")}</p>
-
-        <button type="button" className="modal-sesion-principal" onClick={() => {
-            cerrarVentanaSesion();
+      <AvisoSesion abierto={avisoSesion} onCerrar={() => setAvisoSesion(false)} onIniciarSesion={() => {
+            setAvisoSesion(false);
             onIniciarSesion(alojamientoDeseado.current);
-        }}>{t("Iniciar sesi\u00F3n")}</button>
-
-        <button type="button" className="modal-sesion-secundario" onClick={() => {
-            cerrarVentanaSesion();
+        }} onRegistrarse={() => {
+            setAvisoSesion(false);
             onRegistrarse(alojamientoDeseado.current);
-        }}>{t("Crear cuenta")}</button>
-      </dialog>
+        }}/>
 
       {/* Ventana de "Alojamientos", "Cómo funciona" y "Sobre nosotros" (sin sesión) */}
       <dialog ref={ventanaSeccion} className="portada-ventana" aria-label={t("Informaci\u00F3n de StayHub")} onClose={() => setSeccionAbierta(null)}>

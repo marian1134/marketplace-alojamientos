@@ -33,7 +33,7 @@ public class ReservaController {
             @PathVariable Long id,
             Authentication autenticacion) {
 
-        return reservaService.obtenerDetalle(id, autenticacion.getName());
+        return reservaService.obtenerDetalle(id, correoOpcional(autenticacion));
     }
 
     @GetMapping("/api/v1/busqueda")
@@ -53,7 +53,7 @@ public class ReservaController {
                 llegada,
                 salida,
                 huespedes,
-                autenticacion.getName()
+                correoOpcional(autenticacion)
         );
     }
 
@@ -62,7 +62,7 @@ public class ReservaController {
             @Valid @RequestBody CotizacionRequest datos,
             Authentication autenticacion) {
 
-        return reservaService.cotizar(datos, autenticacion.getName());
+        return reservaService.cotizar(datos, correoOpcional(autenticacion));
     }
 
     @PostMapping("/api/v1/reservas")
@@ -133,4 +133,9 @@ public class ReservaController {
         return reservaService.cancelarPorNoPresentarse(id, autenticacion.getName());
     }
 
+
+    // Correo del usuario con sesión, o null si es un visitante
+    private static String correoOpcional(Authentication autenticacion) {
+        return autenticacion == null ? null : autenticacion.getName();
+    }
 }
