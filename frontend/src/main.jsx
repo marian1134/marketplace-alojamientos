@@ -4,6 +4,7 @@ import App from './App.jsx'
 import SoporteFlotante from './components/SoporteFlotante.jsx'
 import './index.css'
 import './components/soporte-flotante.css'
+import './responsive.css'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
