@@ -48,11 +48,13 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, onIniciarSes
           </button>))}
       </nav>
 
+      {/* La campana queda fuera del menú para que en el celular siempre se vea */}
+      <div className="encabezado-derecha">
+      <CampanaNotificaciones usuario={usuario}/>
       {!usuario ? (<div className={menuMovilAbierto ? 'encabezado-usuario encabezado-invitado menu-movil-abierto' : 'encabezado-usuario encabezado-invitado'}>
         <button type="button" className="encabezado-salir" onClick={() => { setMenuMovilAbierto(false); onIniciarSesion?.(); }}>{t("Iniciar sesi\u00F3n")}</button>
         <button type="button" className="encabezado-perfil encabezado-registro" onClick={() => { setMenuMovilAbierto(false); onRegistrarse?.(); }}>{t("Crear cuenta")}</button>
       </div>) : (<div className={menuMovilAbierto ? 'encabezado-usuario menu-movil-abierto' : 'encabezado-usuario'}>
-        <CampanaNotificaciones usuario={usuario}/>
         <button type="button" className="encabezado-perfil" onClick={() => { setMenuMovilAbierto(false); onNavegar('perfil'); }} title={t("Mi perfil")}>
           <AvatarUsuario usuario={usuario} className="avatar-pequeno"/>
 
@@ -63,6 +65,7 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, onIniciarSes
 
         <button type="button" className="encabezado-salir" onClick={() => { setMenuMovilAbierto(false); onCerrarSesion(); }}>{t("Salir")}</button>
       </div>)}
+      </div>
     </header>);
 }
 export default Encabezado;

@@ -77,10 +77,36 @@ class CorreoServiceTest {
     }
 
     @Test
-    @DisplayName("Sin clave de Brevo, el código sale por Gmail (SMTP)")
+    @DisplayName("Sin clave de Brevo, el código sale por Gmail (SMTP) con diseño HTML")
     void codigoPorGmail() {
+        when(smtp.createMimeMessage()).thenReturn(new MimeMessage((Session) null));
         conGmail().enviarCodigo("ana@gmail.com", "Ana", "654321");
-        verify(smtp).send(any(SimpleMailMessage.class));
+        verify(smtp).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Los correos llevan el logo de StayHub arriba")
+    void correoConLogo() {
+        RestClient.Builder cliente = RestClient.builder();
+        MockRestServiceServer brevo = MockRestServiceServer.bindTo(cliente).build();
+        brevo.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("https://logo.stayhub/icono.png")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Crear nueva contrase")))
+                .andRespond(withSuccess("{\"messageId\":\"2\"}", org.springframework.http.MediaType.APPLICATION_JSON));
+
+        CorreoService servicio = conBrevo(cliente);
+        servicio.setUrlLogo("https://logo.stayhub/icono.png");
+        servicio.enviarEnlace("ana@gmail.com", "https://stayhub/?token=x");
+
+        brevo.verify();
+    }
+
+    @Test
+    @DisplayName("Sin logo configurado se usa el de la página publicada")
+    void logoPorDefecto() {
+        CorreoService servicio = conGmail();
+        servicio.setUrlLogo(" ");
+        assertThat(servicio.plantilla("Hola")).contains(CorreoService.LOGO_POR_DEFECTO).contains("Hola");
     }
 
     @Test

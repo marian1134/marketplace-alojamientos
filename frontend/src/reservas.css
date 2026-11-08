@@ -101,6 +101,12 @@
   gap: 4px;
 }
 
+.encabezado-derecha {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .encabezado-perfil {
   display: flex;
   align-items: center;
@@ -1160,7 +1166,7 @@ p.etiqueta-verde {
     overflow-x: auto;
   }
 
-  .encabezado-usuario {
+  .encabezado-derecha {
     margin-left: auto;
   }
 

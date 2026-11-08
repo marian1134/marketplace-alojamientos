@@ -55,3 +55,29 @@
   .stayhub-avisos-panel { right: 16px !important; width: calc(100vw - 32px); }
   .stayhub-avisos .stayhub-avisos-boton { width: 40px; height: 40px; min-width: 40px; padding: 8px; }
 }
+
+/* Aviso emergente de notificación nueva */
+.stayhub-aviso-emergente {
+  position: fixed; top: max(12px, env(safe-area-inset-top)); left: 50%; z-index: 1300;
+  display: flex; align-items: stretch; width: min(420px, calc(100vw - 24px));
+  transform: translateX(-50%); overflow: hidden;
+  background: #fff; border: 1px solid #cfe2dc; border-radius: 14px;
+  box-shadow: 0 16px 40px rgb(7 60 52 / 22%);
+  animation: stayhub-aviso-entrada .25s ease-out;
+}
+.stayhub-aviso-emergente button { font: inherit; cursor: pointer; background: none; border: 0; }
+.stayhub-aviso-emergente-abrir {
+  display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px;
+  padding: 12px 14px; color: #163b36; text-align: left;
+}
+.stayhub-aviso-emergente-abrir svg {
+  flex: none; width: 36px; height: 36px; padding: 7px; color: #fff; background: #07695d; border-radius: 50%;
+}
+.stayhub-aviso-emergente-abrir > span { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.stayhub-aviso-emergente-abrir strong { font-size: 14px; }
+.stayhub-aviso-emergente-abrir span span {
+  overflow: hidden; color: #4c655f; font-size: 13px; white-space: nowrap; text-overflow: ellipsis;
+}
+.stayhub-aviso-emergente-cerrar { flex: none; width: 44px; color: #4c655f; font-size: 22px; border-left: 1px solid #e3ece8 !important; }
+@keyframes stayhub-aviso-entrada { from { opacity: 0; transform: translate(-50%, -12px); } }
+@media (prefers-reduced-motion: reduce) { .stayhub-aviso-emergente { animation: none; } }

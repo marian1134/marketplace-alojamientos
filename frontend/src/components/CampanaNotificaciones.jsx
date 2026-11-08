@@ -41,6 +41,10 @@ function BandejaNotificaciones({ usuario } = {}) {
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState('');
     const [posicion, setPosicion] = useState({ top: 80, right: 16 });
+    // Aviso emergente cuando llega una notificación nueva mientras se usa la página
+    const [avisoNuevo, setAvisoNuevo] = useState(null);
+    const sinLeerAnterior = useRef(null);
+    const temporizadorAviso = useRef(null);
     const cargar = useCallback(async () => {
         if (escribiendo.current || sesionTerminada.current)
             return;
@@ -68,6 +72,17 @@ function BandejaNotificaciones({ usuario } = {}) {
                 throw new Error(t("La respuesta de notificaciones no es v\u00E1lida."));
             }
             if (actual()) {
+                const anterior = sinLeerAnterior.current;
+                sinLeerAnterior.current = datos.sinLeer;
+                const nueva = anterior !== null && datos.sinLeer > anterior
+                    ? datos.notificaciones.find((aviso) => !aviso.leida)
+                    : null;
+                if (nueva) {
+                    setAvisoNuevo(nueva);
+                    navigator.vibrate?.(80);
+                    window.clearTimeout(temporizadorAviso.current);
+                    temporizadorAviso.current = window.setTimeout(() => setAvisoNuevo(null), 8000);
+                }
                 setAvisos(datos.notificaciones);
                 setSinLeer(datos.sinLeer);
                 setError('');
@@ -87,7 +102,7 @@ function BandejaNotificaciones({ usuario } = {}) {
         const actualizar = () => { if (!document.hidden)
             cargar(); };
         actualizar();
-        const intervalo = window.setInterval(actualizar, 30000);
+        const intervalo = window.setInterval(actualizar, 20000);
         window.addEventListener('focus', actualizar);
         document.addEventListener('visibilitychange', actualizar);
         return () => {
@@ -96,6 +111,7 @@ function BandejaNotificaciones({ usuario } = {}) {
             consulta.current?.abort();
             consultaChat.current?.abort();
             window.clearInterval(intervalo);
+            window.clearTimeout(temporizadorAviso.current);
             window.removeEventListener('focus', actualizar);
             document.removeEventListener('visibilitychange', actualizar);
         };
@@ -345,6 +361,21 @@ function BandejaNotificaciones({ usuario } = {}) {
           </div>
           <p className="stayhub-avisos-pie">{t("Se muestran los 50 avisos m\u00E1s recientes.")}</p>
         </section>, document.body)}
+      {avisoNuevo && !abierta && createPortal(<div className="stayhub-aviso-emergente" role="status" aria-live="polite">
+          <button type="button" className="stayhub-aviso-emergente-abrir" onClick={() => {
+                setAvisoNuevo(null);
+                setAbierta(true);
+            }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
+            </svg>
+            <span>
+              <strong>{t("Nueva notificaci\u00F3n")}</strong>
+              <span>{textoNotificacion(avisoNuevo, 'titulo')}</span>
+            </span>
+          </button>
+          <button type="button" className="stayhub-aviso-emergente-cerrar" aria-label={t("Cerrar aviso")} onClick={() => setAvisoNuevo(null)}>×</button>
+        </div>, document.body)}
       {reservaAbierta && createPortal(<DetalleReservaAviso key={reservaAbierta.idReserva} reserva={reservaAbierta} onCerrar={() => {
                 setReservaAbierta(null);
                 boton.current?.focus();

@@ -42,6 +42,17 @@ public class CorreoService {
     private final String claveBrevo;
     private final RestClient brevo;
 
+    // Logo de StayHub que va arriba de cada correo (imagen pública de la página)
+    static final String LOGO_POR_DEFECTO = "https://stayhub-fawn.vercel.app/icono-192.png";
+    private String urlLogo = LOGO_POR_DEFECTO;
+
+    @Value("${app.correo.logo:" + LOGO_POR_DEFECTO + "}")
+    void setUrlLogo(String urlLogo) {
+        if (urlLogo != null && !urlLogo.isBlank()) {
+            this.urlLogo = urlLogo.strip();
+        }
+    }
+
     @org.springframework.beans.factory.annotation.Autowired
     public CorreoService(
             JavaMailSender emisor,
@@ -129,7 +140,12 @@ public class CorreoService {
                 + "\n\nEste enlace vence en 15 minutos "
                 + "y solo puede utilizarse una vez.\n\n"
                 + "Si no solicitaste este cambio, ignora este correo.\n\n"
-                + "Equipo StayHub", null);
+                + "Equipo StayHub",
+                plantilla("<p style=\"margin:0 0 16px\">Hola,</p>"
+                        + "<p style=\"margin:0 0 16px\">Recibimos una solicitud para cambiar tu contraseña de StayHub.</p>"
+                        + boton("Crear nueva contraseña", enlace)
+                        + "<p style=\"margin:0 0 16px;color:#5b6b69;font-size:13px\">Este enlace vence en 15 minutos "
+                        + "y solo puede utilizarse una vez. Si no solicitaste este cambio, ignora este correo.</p>"));
     }
 
     // Código de 6 números para entrar. No se guarda en notificacion ni en los
@@ -143,7 +159,13 @@ public class CorreoService {
                 + "y solo se puede usar una vez.\n\n"
                 + "Si no intentaste entrar, alguien conoce tu contraseña: "
                 + "cámbiala desde \"¿Olvidaste tu contraseña?\".\n\n"
-                + "Equipo StayHub", null);
+                + "Equipo StayHub",
+                plantilla("<p style=\"margin:0 0 16px\">Tu código para iniciar sesión en StayHub es:</p>"
+                        + "<p style=\"margin:0 0 20px;font-size:32px;font-weight:bold;letter-spacing:8px;"
+                        + "color:#0b5d4b\">" + HtmlUtils.htmlEscape(codigo) + "</p>"
+                        + "<p style=\"margin:0 0 16px;color:#5b6b69;font-size:13px\">Vence en "
+                        + VerificacionService.MINUTOS_VIGENCIA + " minutos y solo se puede usar una vez. "
+                        + "Si no intentaste entrar, cambia tu contraseña desde «¿Olvidaste tu contraseña?».</p>"));
     }
 
     // Avisos de reservas. Se envían en segundo plano y solo cuando la
@@ -207,23 +229,42 @@ public class CorreoService {
     }
 
     // Versión HTML: el mismo texto, con saltos de línea y un botón verde
-    private static String html(CorreoPendiente correo) {
+    private String html(CorreoPendiente correo) {
 
         String cuerpo = HtmlUtils.htmlEscape(correo.texto()).replace("\n", "<br>");
 
-        String boton = tieneBoton(correo)
-                ? "<p style=\"margin:28px 0\"><a href=\""
-                        + HtmlUtils.htmlEscape(correo.botonEnlace())
-                        + "\" style=\"background:#0b5d4b;color:#ffffff;padding:12px 24px;"
-                        + "border-radius:8px;text-decoration:none;font-weight:bold;"
-                        + "display:inline-block\">"
-                        + HtmlUtils.htmlEscape(correo.botonTexto())
-                        + "</a></p>"
-                : "";
+        String enlace = tieneBoton(correo) ? boton(correo.botonTexto(), correo.botonEnlace()) : "";
 
-        return "<div style=\"font-family:Arial,sans-serif;font-size:15px;"
-                + "line-height:1.5;color:#1f2933;max-width:560px\">"
-                + cuerpo + boton + "</div>";
+        return plantilla("<p style=\"margin:0 0 16px\">" + cuerpo + "</p>" + enlace);
+    }
+
+    private static String boton(String texto, String enlace) {
+        return "<p style=\"margin:24px 0\"><a href=\""
+                + HtmlUtils.htmlEscape(enlace)
+                + "\" style=\"background:#0b5d4b;color:#ffffff;padding:12px 24px;"
+                + "border-radius:8px;text-decoration:none;font-weight:bold;"
+                + "display:inline-block\">"
+                + HtmlUtils.htmlEscape(texto)
+                + "</a></p>";
+    }
+
+    // Diseño común de los correos: encabezado verde con el logo, contenido y pie
+    String plantilla(String contenido) {
+        return "<div style=\"margin:0;padding:24px 12px;background:#f3f6f4\">"
+                + "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" "
+                + "style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:14px;"
+                + "overflow:hidden;font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f2933\">"
+                + "<tr><td style=\"padding:18px 24px;background:#0b5d4b\">"
+                + "<img src=\"" + HtmlUtils.htmlEscape(urlLogo) + "\" width=\"40\" height=\"40\" alt=\"\" "
+                + "style=\"vertical-align:middle;border:0;border-radius:10px\">"
+                + "<span style=\"vertical-align:middle;margin-left:12px;color:#ffffff;font-size:22px;"
+                + "font-weight:bold;font-family:Georgia,serif\">StayHub</span>"
+                + "</td></tr>"
+                + "<tr><td style=\"padding:28px 24px 8px\">" + contenido + "</td></tr>"
+                + "<tr><td style=\"padding:16px 24px 24px;color:#7a8a87;font-size:12px;"
+                + "border-top:1px solid #e6ecea\">"
+                + "Equipo StayHub · Inversiones LR<br>Este es un correo automático, no lo respondas."
+                + "</td></tr></table></div>";
     }
 
     private static String recortar(String texto, int maximo) {
