@@ -57,4 +57,32 @@ class VisitanteTest extends PruebaIntegracion {
                         .content(reservaJson(id, enDias(210), enDias(212), 2, nuevaClave())))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("HU-17: con sesión, el huésped ve el detalle y si es su favorito")
+    void huespedVeDetalle() throws Exception {
+        long id = alojamiento("Villa frente al mar");
+        mvc.perform(get("/api/v1/alojamientos/" + id + "/detalle").with(huesped()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.esFavorito").value(false));
+    }
+
+    @Test
+    @DisplayName("HU-18: el anfitrión no puede cotizar su propio alojamiento")
+    void anfitrionNoCotizaLoSuyo() throws Exception {
+        long id = alojamiento("Villa frente al mar");
+        String cuerpo = """
+                {"idAlojamiento": %d, "fechaLlegada": "%s", "fechaSalida": "%s", "cantidadHuespedes": 2}
+                """.formatted(id, enDias(50), enDias(52));
+        mvc.perform(post("/api/v1/reservas/cotizacion").with(anfitrion()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(cuerpo))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("HU-16: con sesión, la búsqueda también funciona")
+    void huespedBusca() throws Exception {
+        mvc.perform(get("/api/v1/busqueda").with(huesped()).param("destino", "Cartagena"))
+                .andExpect(status().isOk());
+    }
 }

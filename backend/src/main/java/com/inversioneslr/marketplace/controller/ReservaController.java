@@ -13,7 +13,6 @@ import com.inversioneslr.marketplace.service.ReservaService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -137,11 +136,6 @@ public class ReservaController {
 
     // Correo del usuario con sesión, o null si es un visitante
     private static String correoOpcional(Authentication autenticacion) {
-        if (autenticacion == null
-                || autenticacion instanceof AnonymousAuthenticationToken
-                || !autenticacion.isAuthenticated()) {
-            return null;
-        }
-        return autenticacion.getName();
+        return autenticacion == null ? null : autenticacion.getName();
     }
 }
