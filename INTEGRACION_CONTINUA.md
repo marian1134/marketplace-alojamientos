@@ -1,0 +1,66 @@
+# Integración continua y pruebas
+
+## Qué pasa en cada Pull Request
+
+El flujo del proyecto es:
+
+**Historia Jira → rama → commits → Pull Request → GitHub Actions → pruebas → SonarCloud Quality Gate → revisión → merge**
+
+El archivo `.github/workflows/integracion-continua.yml` se ejecuta solo en cada
+Pull Request hacia `main` y hace tres trabajos:
+
+| Trabajo | Qué hace |
+|---|---|
+| **Backend · compilación y pruebas** | Levanta MySQL 8, crea la base con los scripts 01 a 14 (sin el 05), compila con Maven y ejecuta las pruebas automatizadas. Guarda los resultados y la cobertura (JaCoCo). |
+| **Frontend · construcción** | Instala las dependencias, revisa el código con oxlint y construye la aplicación. |
+| **SonarCloud · análisis estático** | Envía el código y la cobertura a SonarCloud y espera el Quality Gate. Solo corre si existe el secreto `SONAR_TOKEN`. |
+
+## Pruebas automatizadas (backend)
+
+Están en `backend/src/test/java` y se relacionan con las historias de usuario:
+
+| Clase | Historias | Qué comprueba |
+|---|---|---|
+| `RegistroUsuarioTest` | HU-01 | Registro válido, correo repetido, celular inválido, contraseña débil |
+| `SeguridadRolesTest` | HU-04, HU-26 | Un huésped no entra a administración, sin sesión no hay búsqueda |
+| `CotizacionTest` | HU-14 | Total con limpieza, servicio 12,5 % y descuento semanal; fechas y capacidad inválidas |
+| `ReservaTest` | HU-11, HU-15, HU-17 | Reserva confirmada al instante, sin superposición, idempotente, tarjeta vencida, búsqueda sin ocupados |
+| `CancelacionYResenaTest` | HU-18, HU-22 | Devolución según política, registro de la cancelación, reseña solo al terminar y una sola vez |
+| `ClienteAsistenteTest` | HU-30 | Lectura de la respuesta de Gemini (prueba unitaria) |
+
+### Correrlas en el computador
+
+1. Tener la base `marketplace` creada con los scripts (01 a 04 y 06 a 14).
+2. En la terminal, dentro de `backend`:
+
+```
+set DB_USERNAME=root
+set DB_PASSWORD=SU_CLAVE_MYSQL
+set MAIL_USERNAME=pruebas@stayhub.co
+set MAIL_PASSWORD=x
+mvnw.cmd verify
+```
+
+Cada prueba se deshace al terminar, así que no ensucia la base.
+El reporte de cobertura queda en `backend/target/site/jacoco/index.html`.
+
+## Activar SonarCloud (una sola vez)
+
+Lo hace la dueña del repositorio (marian1134):
+
+1. Entrar a https://sonarcloud.io con GitHub e importar el repositorio `marketplace-alojamientos`.
+2. En SonarCloud: **Administration → Analysis Method** → desactivar *Automatic Analysis*.
+3. Copiar el **token** que da SonarCloud.
+4. En GitHub: **Settings → Secrets and variables → Actions → New repository secret**,
+   nombre `SONAR_TOKEN` y pegar el token.
+5. Revisar que `sonar.organization` y `sonar.projectKey` de `sonar-project.properties`
+   sean los que muestra SonarCloud.
+
+## Proteger la rama main (una sola vez)
+
+En GitHub: **Settings → Branches → Add branch ruleset** (o *Add rule*) para `main`:
+
+- Exigir Pull Request antes de unir, con **1 aprobación**.
+- Exigir que pasen las verificaciones: *Backend · compilación y pruebas*,
+  *Frontend · construcción* y *SonarCloud · análisis estático*.
+- No permitir pushes directos a `main`.
