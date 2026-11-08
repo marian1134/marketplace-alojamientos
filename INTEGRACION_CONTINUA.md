@@ -11,7 +11,7 @@ Pull Request hacia `main` y hace tres trabajos:
 
 | Trabajo | Qué hace |
 |---|---|
-| **Backend · compilación y pruebas** | Levanta MySQL 8, crea la base con los scripts 01 a 14 (sin el 05), compila con Maven y ejecuta las pruebas automatizadas. Guarda los resultados y la cobertura (JaCoCo). |
+| **Backend · compilación y pruebas** | Levanta MySQL 8, crea la base con los scripts 01 a 16 (sin el 05, 12 ni 15), compila con Maven y ejecuta las pruebas automatizadas. Guarda los resultados y la cobertura (JaCoCo). |
 | **Frontend · construcción** | Instala las dependencias, revisa el código con oxlint y construye la aplicación. |
 | **SonarCloud · análisis estático** | Envía el código y la cobertura a SonarCloud y espera el Quality Gate. Solo corre si existe el secreto `SONAR_TOKEN`. |
 
@@ -26,11 +26,13 @@ Están en `backend/src/test/java` y se relacionan con las historias de usuario:
 | `CotizacionTest` | HU-14 | Total con limpieza, servicio 12,5 % y descuento semanal; fechas y capacidad inválidas |
 | `ReservaTest` | HU-11, HU-15, HU-17 | Reserva confirmada al instante, sin superposición, idempotente, tarjeta vencida, búsqueda sin ocupados |
 | `CancelacionYResenaTest` | HU-18, HU-22 | Devolución según política, registro de la cancelación, reseña solo al terminar y una sola vez |
+| `ServiciosYReglasTest` | HU-07 | Publicar con servicios y reglas, validaciones de capacidad y servicios |
+| `AdministracionReportesTest` | HU-26, HU-27 | Dashboard completo, reportes en Excel y PDF registrados, permisos, contrato OpenAPI |
 | `ClienteAsistenteTest` | HU-30 | Lectura de la respuesta de Gemini (prueba unitaria) |
 
 ### Correrlas en el computador
 
-1. Tener la base `marketplace` creada con los scripts (01 a 04 y 06 a 14).
+1. Tener la base `marketplace` creada con los scripts (01 a 04, 06 a 11, 13, 14 y 16).
 2. En la terminal, dentro de `backend`:
 
 ```
@@ -64,3 +66,10 @@ En GitHub: **Settings → Branches → Add branch ruleset** (o *Add rule*) para 
 - Exigir que pasen las verificaciones: *Backend · compilación y pruebas*,
   *Frontend · construcción* y *SonarCloud · análisis estático*.
 - No permitir pushes directos a `main`.
+
+## Contrato de la API (OpenAPI / Swagger)
+
+Con el backend prendido:
+
+- Página interactiva: http://localhost:8081/swagger-ui.html
+- Contrato en JSON: http://localhost:8081/v3/api-docs

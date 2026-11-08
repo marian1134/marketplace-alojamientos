@@ -26,6 +26,11 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento, favoritos, o
     const [error, setError] = useState('');
     const [tipo, setTipo] = useState('TODOS');
     const [orden, setOrden] = useState('recomendados');
+    // Filtros por rango de precio por noche y por servicios
+    const [precioMinimo, setPrecioMinimo] = useState('');
+    const [precioMaximo, setPrecioMaximo] = useState('');
+    const [serviciosElegidos, setServiciosElegidos] = useState([]);
+    const [verFiltros, setVerFiltros] = useState(false);
     // Se muestran de a 24 para que la página cargue rápido
     const [cantidadVisible, setCantidadVisible] = useState(24);
     useEffect(() => {
@@ -90,9 +95,28 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento, favoritos, o
     const tiposPresentes = [
         ...new Set(resultados.map((resultado) => resultado.alojamiento.tipoAlojamiento)),
     ];
+    const serviciosPresentes = [
+        ...new Set(resultados.flatMap((resultado) => resultado.alojamiento.servicios ?? [])),
+    ].sort((a, b) => a.localeCompare(b, 'es'));
+    const filtrosActivos = (precioMinimo ? 1 : 0) + (precioMaximo ? 1 : 0) + serviciosElegidos.length;
+    function cambiarServicioFiltro(servicio) {
+        setServiciosElegidos((actuales) => actuales.includes(servicio)
+            ? actuales.filter((elegido) => elegido !== servicio)
+            : [...actuales, servicio]);
+        setCantidadVisible(24);
+    }
+    function limpiarFiltros() {
+        setPrecioMinimo('');
+        setPrecioMaximo('');
+        setServiciosElegidos([]);
+        setCantidadVisible(24);
+    }
     const visibles = resultados
         .filter((resultado) => tipo === 'TODOS' ||
         resultado.alojamiento.tipoAlojamiento === tipo)
+        .filter((resultado) => !precioMinimo || Number(resultado.alojamiento.precioNoche) >= Number(precioMinimo))
+        .filter((resultado) => !precioMaximo || Number(resultado.alojamiento.precioNoche) <= Number(precioMaximo))
+        .filter((resultado) => serviciosElegidos.every((servicio) => (resultado.alojamiento.servicios ?? []).includes(servicio)))
         .sort((a, b) => {
         const precioA = Number(a.alojamiento.precioNoche);
         const precioB = Number(b.alojamiento.precioNoche);
@@ -183,6 +207,42 @@ function ResultadosBusqueda({ busqueda, onBuscar, onVerAlojamiento, favoritos, o
                 }}>
               {valor === 'TODOS' ? t("Todos") : NOMBRES_TIPO[valor]}
             </button>))}
+        </div>)}
+
+      <div className="filtros-avanzados">
+        <button type="button" className="boton-secundario" aria-expanded={verFiltros} onClick={() => setVerFiltros(!verFiltros)}>
+          {t("Precio y servicios")}{filtrosActivos > 0 ? ` (${filtrosActivos})` : ''} {verFiltros ? '▲' : '▼'}
+        </button>
+        {filtrosActivos > 0 && (<button type="button" className="boton-enlace" onClick={limpiarFiltros}>{t("Quitar filtros")}</button>)}
+      </div>
+
+      {verFiltros && (<div className="tarjeta panel-filtros">
+          <div className="filtro-precio">
+            <span className="etiqueta-servicios">{t("Precio por noche (COP)")}</span>
+            <div className="filtro-precio-campos">
+              <label>{t("Mínimo")}
+                <input type="number" inputMode="numeric" min="0" step="10000" placeholder="0" value={precioMinimo} onChange={(evento) => {
+                setPrecioMinimo(evento.target.value);
+                setCantidadVisible(24);
+            }}/>
+              </label>
+              <span aria-hidden="true">—</span>
+              <label>{t("Máximo")}
+                <input type="number" inputMode="numeric" min="0" step="10000" placeholder={t("Sin límite")} value={precioMaximo} onChange={(evento) => {
+                setPrecioMaximo(evento.target.value);
+                setCantidadVisible(24);
+            }}/>
+              </label>
+            </div>
+          </div>
+          {serviciosPresentes.length > 0 && (<div>
+              <span className="etiqueta-servicios">{t("Servicios")}</span>
+              <div className="servicios-opciones" role="group" aria-label={t("Servicios")}>
+                {serviciosPresentes.map((servicio) => (<button key={servicio} type="button" className={serviciosElegidos.includes(servicio) ? 'chip-servicio activo' : 'chip-servicio'} aria-pressed={serviciosElegidos.includes(servicio)} onClick={() => cambiarServicioFiltro(servicio)}>
+                    {t(servicio)}
+                  </button>))}
+              </div>
+            </div>)}
         </div>)}
 
       {error && (<p className="aviso aviso-error" role="alert">

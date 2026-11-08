@@ -34,3 +34,24 @@
   .admin-panel-titulo { flex-direction: column; gap: 10px; }
   .admin-panel-registro { padding: 18px; }
 }
+
+/* Dashboard: reservas por estado, ciudades con más demanda y exportación */
+.admin-panel-graficas { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.admin-panel-graficas .tarjeta, .admin-exportar { padding: 24px; }
+.admin-panel-graficas h2, .admin-exportar h2 { margin: 0 0 16px; font-size: 20px; }
+.admin-barras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.admin-barras li { display: grid; grid-template-columns: 140px 1fr 48px; align-items: center; gap: 12px; font-size: 14px; }
+.admin-barras span { text-transform: capitalize; color: #36534c; }
+.admin-barras strong { text-align: right; color: #163b35; }
+.admin-barra { height: 12px; border-radius: 6px; background: #e9f3ed; overflow: hidden; }
+.admin-barra > div { height: 100%; border-radius: 6px; background: #0b4f45; }
+.admin-tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-tabla th, .admin-tabla td { padding: 10px 8px; border-bottom: 1px solid #e3ece7; text-align: left; }
+.admin-tabla th { color: #526e64; font-weight: 600; }
+.admin-tabla td:not(:first-child), .admin-tabla th:not(:first-child) { text-align: right; }
+.admin-exportar { margin-bottom: 24px; }
+.admin-exportar form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; margin-top: 12px; }
+.admin-exportar label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 600; }
+.admin-exportar select, .admin-exportar input { font: inherit; border: 1px solid #b7cec2; padding: 10px 12px; border-radius: 9px; background: white; color: #173b35; }
+@media (max-width: 600px) { .admin-barras li { grid-template-columns: 100px 1fr 36px; } .admin-exportar form > * { flex: 1 1 100%; } }
+.admin-panel-resumen strong.valor-largo { font-size: 24px; white-space: nowrap; letter-spacing: -0.5px; }
