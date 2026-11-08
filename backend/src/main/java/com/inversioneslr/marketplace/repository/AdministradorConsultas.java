@@ -19,8 +19,27 @@ public class AdministradorConsultas {
                   (SELECT COUNT(*) FROM publicacion WHERE etapa = 'ACTIVA') AS alojamientosActivos,
                   (SELECT COUNT(*) FROM publicacion WHERE etapa = 'BLOQUEADA') AS alojamientosBloqueados,
                   (SELECT COUNT(*) FROM publicacion WHERE etapa = 'PENDIENTE_REVISION') AS pendientesRevision,
-                  (SELECT COUNT(*) FROM reporte_resena WHERE atendido = FALSE) AS reportesPendientes
+                  (SELECT COUNT(*) FROM reporte_resena WHERE atendido = FALSE) AS reportesPendientes,
+                  (SELECT COUNT(*) FROM reserva) AS reservas,
+                  (SELECT COALESCE(SUM(c.total), 0) FROM cotizacion c JOIN reserva r ON r.id = c.reserva_id
+                     WHERE r.estado IN ('CONFIRMADA', 'COMPLETADA')) AS ingresosEstimados
                 """);
+    }
+
+    // Cantidad de reservas en cada estado (dashboard)
+    public List<Map<String, Object>> reservasPorEstado() {
+        return jdbc.queryForList("SELECT estado, COUNT(*) AS cantidad FROM reserva GROUP BY estado ORDER BY cantidad DESC");
+    }
+
+    // Ciudades con más reservas confirmadas o completadas (dashboard)
+    public List<Map<String, Object>> ciudadesConMasDemanda(int limite) {
+        return jdbc.queryForList("""
+                SELECT p.ciudad, COUNT(*) AS reservas, COALESCE(SUM(c.total), 0) AS ingresos
+                FROM reserva r JOIN publicacion p ON p.id = r.publicacion_id
+                LEFT JOIN cotizacion c ON c.reserva_id = r.id
+                WHERE r.estado IN ('CONFIRMADA', 'COMPLETADA')
+                GROUP BY p.ciudad ORDER BY reservas DESC, ingresos DESC LIMIT ?
+                """, limite);
     }
 
     public AdminPagina usuarios(String q, String estado, int pagina) {
