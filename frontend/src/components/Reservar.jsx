@@ -470,7 +470,7 @@ function Reservar({ reserva: solicitud, onVolver, onVerViajes, onExplorar, }) {
                     </span>
                   </label>))}
 
-                {moneda === 'USD' && (<p className="texto-suave">{t("Tasa usada: 1 USD =")}{pesos(configuracion.tasaUsd)}
+                {moneda === 'USD' && (<p className="texto-suave">{t("Tasa usada: 1 USD =")}{' '}{pesos(configuracion.tasaUsd)}
                   </p>)}
               </fieldset>
 
