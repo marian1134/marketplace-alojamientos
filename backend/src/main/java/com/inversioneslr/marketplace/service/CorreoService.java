@@ -46,6 +46,41 @@ public class CorreoService {
     static final String LOGO_POR_DEFECTO = "https://stayhub-fawn.vercel.app/icono-192.png";
     private String urlLogo = LOGO_POR_DEFECTO;
 
+    // Envío por la cuenta de Gmail con un Google Apps Script (por HTTPS).
+    // Así el correo sale desde Google y Gmail muestra la foto de perfil de la
+    // cuenta en vez de la inicial. Si el script falla, se usa Brevo o SMTP.
+    private String urlScript = "";
+    private String claveScript = "";
+    private RestClient script;
+
+    @Value("${GOOGLE_SCRIPT_URL:}")
+    void setUrlScript(String url) {
+        usarScript(url, claveScript, null);
+    }
+
+    @Value("${GOOGLE_SCRIPT_CLAVE:}")
+    void setClaveScript(String clave) {
+        usarScript(urlScript, clave, null);
+    }
+
+    // El script de Google responde con una redirección: hay que seguirla
+    // para leer si el correo salió
+    void usarScript(String url, String clave, RestClient.Builder cliente) {
+        this.urlScript = url == null ? "" : url.strip();
+        this.claveScript = clave == null ? "" : clave.strip();
+        RestClient.Builder constructor = cliente != null ? cliente : RestClient.builder()
+                .requestFactory(new org.springframework.http.client.JdkClientHttpRequestFactory(
+                        java.net.http.HttpClient.newBuilder()
+                                .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+                                .connectTimeout(java.time.Duration.ofSeconds(10))
+                                .build()));
+        this.script = constructor.build();
+    }
+
+    private boolean hayScript() {
+        return !urlScript.isEmpty() && !claveScript.isEmpty();
+    }
+
     @Value("${app.correo.logo:" + LOGO_POR_DEFECTO + "}")
     void setUrlLogo(String urlLogo) {
         if (urlLogo != null && !urlLogo.isBlank()) {
@@ -84,6 +119,15 @@ public class CorreoService {
 
     // Envía un correo por Brevo (si hay clave) o por SMTP. El html es opcional.
     private void enviar(String destinatario, String asunto, String texto, String html) {
+        if (hayScript()) {
+            try {
+                enviarPorScript(destinatario, asunto, texto, html);
+                return;
+            } catch (MailException error) {
+                log.warn("El script de Gmail no envió el correo, se intenta por otro medio: {}",
+                        error.getMessage());
+            }
+        }
         if (!claveBrevo.isEmpty()) {
             enviarPorBrevo(destinatario, asunto, texto, html);
             return;
@@ -107,6 +151,31 @@ public class CorreoService {
             emisor.send(mensaje);
         } catch (MessagingException error) {
             throw new MailPreparationException("No se pudo armar el correo", error);
+        }
+    }
+
+    private void enviarPorScript(String destinatario, String asunto, String texto, String html) {
+        Map<String, Object> cuerpo = new java.util.HashMap<>(Map.of(
+                "clave", claveScript,
+                "para", destinatario,
+                "asunto", asunto,
+                "texto", texto,
+                "nombre", nombreRemitente
+        ));
+        if (html != null) cuerpo.put("html", html);
+        Map<?, ?> respuesta;
+        try {
+            respuesta = script.post().uri(urlScript)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(cuerpo)
+                    .retrieve()
+                    .body(Map.class);
+        } catch (RestClientException error) {
+            throw new MailSendException("El script de Gmail no respondió: " + error.getMessage(), error);
+        }
+        if (respuesta == null || !Boolean.TRUE.equals(respuesta.get("ok"))) {
+            Object motivo = respuesta == null ? "sin respuesta" : respuesta.get("error");
+            throw new MailSendException("El script de Gmail rechazó el correo: " + motivo);
         }
     }
 

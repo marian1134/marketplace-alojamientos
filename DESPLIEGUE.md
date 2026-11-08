@@ -55,6 +55,8 @@ Render y Vercel solo leen repositorios de la propia cuenta. Con tu cuenta de Git
 | `GEMINI_API_KEY` | la clave de Gemini |
 | `URL_FRONTEND` | la dirección de Vercel (se completa en el paso 3) |
 | `STRIPE_SECRET_KEY` y `STRIPE_PUBLISHABLE_KEY` | opcionales (sin ellas el pago es simulado) |
+| `BREVO_API_KEY` | clave de la API de Brevo (Render bloquea el correo por SMTP) |
+| `GOOGLE_SCRIPT_URL` y `GOOGLE_SCRIPT_CLAVE` | opcionales: envían los correos desde la cuenta de Gmail para que se vea su foto de perfil (ver `backend/correo-gmail/LEEME.md`) |
 
 5. **Create Web Service**. La primera vez tarda unos 10 minutos.
 6. Prueba: abre `https://stayhub-backend.onrender.com/api/estado` → debe decir

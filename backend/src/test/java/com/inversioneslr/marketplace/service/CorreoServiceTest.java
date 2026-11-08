@@ -102,6 +102,61 @@ class CorreoServiceTest {
     }
 
     @Test
+    @DisplayName("Con el script de Gmail configurado, el correo sale por la cuenta de Google")
+    void correoPorScriptDeGmail() {
+        RestClient.Builder clienteScript = RestClient.builder();
+        MockRestServiceServer google = MockRestServiceServer.bindTo(clienteScript).build();
+        google.expect(requestTo("https://script.google.com/macros/s/prueba/exec"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"clave\":\"secreta\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("ana@gmail.com")))
+                .andRespond(withSuccess("{\"ok\":true}", org.springframework.http.MediaType.APPLICATION_JSON));
+
+        CorreoService servicio = conGmail();
+        servicio.usarScript("https://script.google.com/macros/s/prueba/exec", "secreta", clienteScript);
+        servicio.enviarCodigo("ana@gmail.com", "Ana", "111222");
+
+        google.verify();
+        verify(smtp, never()).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Si el script de Gmail falla, el correo sale por Brevo")
+    void scriptFallaYUsaBrevo() {
+        RestClient.Builder clienteScript = RestClient.builder();
+        MockRestServiceServer google = MockRestServiceServer.bindTo(clienteScript).build();
+        google.expect(requestTo("https://script.google.com/macros/s/prueba/exec"))
+                .andRespond(withSuccess("{\"ok\":false,\"error\":\"clave incorrecta\"}", org.springframework.http.MediaType.APPLICATION_JSON));
+        RestClient.Builder clienteBrevo = RestClient.builder();
+        MockRestServiceServer brevo = MockRestServiceServer.bindTo(clienteBrevo).build();
+        brevo.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withSuccess("{\"messageId\":\"3\"}", org.springframework.http.MediaType.APPLICATION_JSON));
+
+        CorreoService servicio = conBrevo(clienteBrevo);
+        servicio.usarScript("https://script.google.com/macros/s/prueba/exec", "secreta", clienteScript);
+        servicio.enviarCodigo("ana@gmail.com", "Ana", "333444");
+
+        google.verify();
+        brevo.verify();
+    }
+
+    @Test
+    @DisplayName("Si el script de Gmail no responde, se usa SMTP")
+    void scriptSinRespuestaUsaSmtp() {
+        RestClient.Builder clienteScript = RestClient.builder();
+        MockRestServiceServer google = MockRestServiceServer.bindTo(clienteScript).build();
+        google.expect(requestTo("https://script.google.com/macros/s/prueba/exec"))
+                .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+        when(smtp.createMimeMessage()).thenReturn(new MimeMessage((Session) null));
+
+        CorreoService servicio = conGmail();
+        servicio.usarScript("https://script.google.com/macros/s/prueba/exec", "secreta", clienteScript);
+        servicio.enviarCodigo("ana@gmail.com", "Ana", "555666");
+
+        verify(smtp).send(any(MimeMessage.class));
+    }
+
+    @Test
     @DisplayName("Sin logo configurado se usa el de la página publicada")
     void logoPorDefecto() {
         CorreoService servicio = conGmail();
