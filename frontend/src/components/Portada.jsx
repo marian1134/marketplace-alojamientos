@@ -40,6 +40,7 @@ function IlustracionCandado() {
 }
 function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarSesion, onVerAlojamiento, onBuscar, favoritos, onFavorito, }) {
     useIdioma();
+    const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
     const [destino, setDestino] = useState('');
     const [entrada, setEntrada] = useState('');
     const [salida, setSalida] = useState('');
@@ -401,36 +402,40 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
             <span>StayHub</span>
           </button>
 
-          <nav aria-label={t("Navegaci\u00F3n principal")}>
+          <button type="button" className="portada-menu-movil" aria-expanded={menuMovilAbierto} aria-controls="portada-menu-principal" aria-label={t(menuMovilAbierto ? "Cerrar menú" : "Abrir menú")} onClick={() => setMenuMovilAbierto((abierto) => !abierto)}>
+            <span aria-hidden="true">{menuMovilAbierto ? '×' : '☰'}</span>
+          </button>
+
+          <nav id="portada-menu-principal" className={menuMovilAbierto ? 'menu-movil-abierto' : ''} aria-label={t("Navegaci\u00F3n principal")}>
             {!usuario && (<>
-                <button type="button" className="portada-enlace" onClick={() => abrirSeccion('alojamientos')}>{t("Alojamientos")}</button>
+                <button type="button" className="portada-enlace" onClick={() => { setMenuMovilAbierto(false); abrirSeccion('alojamientos'); }}>{t("Alojamientos")}</button>
 
-                <button type="button" className="portada-enlace" onClick={() => abrirSeccion('como')}>{t("C\u00F3mo funciona")}</button>
+                <button type="button" className="portada-enlace" onClick={() => { setMenuMovilAbierto(false); abrirSeccion('como'); }}>{t("C\u00F3mo funciona")}</button>
 
-                <button type="button" className="portada-enlace" onClick={() => abrirSeccion('nosotros')}>{t("Sobre nosotros")}</button>
+                <button type="button" className="portada-enlace" onClick={() => { setMenuMovilAbierto(false); abrirSeccion('nosotros'); }}>{t("Sobre nosotros")}</button>
               </>)}
           </nav>
 
-          <div className="portada-acciones">
+          <div className={menuMovilAbierto ? 'portada-acciones menu-movil-abierto' : 'portada-acciones'}>
             {!usuario && <SelectorIdioma portada/>}
 
             {usuario ? (<>
                 <CampanaNotificaciones usuario={usuario}/>
-                <button type="button" className="portada-boton-claro" onClick={() => onNavegar('viajes')}>{t("Mis viajes")}</button>
+                <button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onNavegar('viajes'); }}>{t("Mis viajes")}</button>
 
-                {usuario.rol === 'ADMINISTRADOR' && (<button type="button" className="portada-boton-claro" onClick={() => onNavegar('administracion')}>{t("Administraci\u00F3n")}</button>)}
+                {usuario.rol === 'ADMINISTRADOR' && (<button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onNavegar('administracion'); }}>{t("Administraci\u00F3n")}</button>)}
 
-                {usuario.rol === 'ANFITRION' && (<button type="button" className="portada-boton-claro" onClick={() => onNavegar('panel')}>{t("Panel anfitri\u00F3n")}</button>)}
+                {usuario.rol === 'ANFITRION' && (<button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onNavegar('panel'); }}>{t("Panel anfitri\u00F3n")}</button>)}
 
-                <button type="button" className="portada-boton-principal portada-boton-perfil" onClick={() => onNavegar('perfil')} title={t("Mi perfil")}>
+                <button type="button" className="portada-boton-principal portada-boton-perfil" onClick={() => { setMenuMovilAbierto(false); onNavegar('perfil'); }} title={t("Mi perfil")}>
   <AvatarUsuario usuario={usuario} className="avatar-portada" mostrarNombre/>
         </button>
 
-                <button type="button" className="portada-boton-claro" onClick={onCerrarSesion}>{t("Salir")}</button>
+                <button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onCerrarSesion(); }}>{t("Salir")}</button>
               </>) : (<>
-                <button type="button" className="portada-boton-claro" onClick={() => onIniciarSesion()}>{t("Iniciar sesi\u00F3n")}</button>
+                <button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onIniciarSesion(); }}>{t("Iniciar sesi\u00F3n")}</button>
 
-                <button type="button" className="portada-boton-principal" onClick={() => onRegistrarse()}>{t("Registrarse")}</button>
+                <button type="button" className="portada-boton-principal" onClick={() => { setMenuMovilAbierto(false); onRegistrarse(); }}>{t("Registrarse")}</button>
               </>)}
           </div>
         </header>

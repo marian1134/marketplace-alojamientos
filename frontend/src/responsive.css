@@ -1,0 +1,259 @@
+/* Ajustes finales para celulares y tabletas. Se carga al final para evitar
+   que reglas antiguas vuelvan a desbordar la interfaz. */
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+}
+
+.portada-menu-movil,
+.encabezado-menu-movil {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+  }
+
+  .portada-navegacion {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: calc(100% - 28px);
+    padding: 16px 0;
+    gap: 12px;
+  }
+
+  .portada-logo {
+    width: fit-content;
+    font-size: 25px;
+  }
+
+  .portada-menu-movil,
+  .encabezado-menu-movil {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: inherit;
+    background: rgb(255 255 255 / 14%);
+    border: 1px solid rgb(255 255 255 / 48%);
+    border-radius: 10px;
+    place-items: center;
+    font: inherit;
+    font-size: 25px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .portada-navegacion nav,
+  .portada-acciones {
+    display: none;
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .portada-navegacion nav.menu-movil-abierto {
+    display: grid;
+    order: initial;
+    justify-content: stretch;
+    gap: 2px;
+    padding-top: 8px;
+  }
+
+  .portada-navegacion nav.menu-movil-abierto .portada-enlace {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-align: left;
+  }
+
+  .portada-acciones.menu-movil-abierto {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-bottom: 6px;
+  }
+
+  .portada-acciones.menu-movil-abierto .portada-boton-claro,
+  .portada-acciones.menu-movil-abierto .portada-boton-principal,
+  .portada-acciones.menu-movil-abierto .portada-boton-perfil,
+  .portada-acciones.menu-movil-abierto .selector-idioma,
+  .portada-acciones.menu-movil-abierto .selector-idioma select {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .portada-contenido {
+    width: calc(100% - 28px);
+    padding: 45px 0 300px;
+  }
+
+  .portada-contenido h1 {
+    font-size: clamp(38px, 12vw, 54px);
+    letter-spacing: -1px;
+  }
+
+  .portada-contenido > p {
+    font-size: 17px;
+  }
+
+  .portada-buscador,
+  .portada-buscador .buscador-item,
+  .portada-boton-buscar {
+    width: 100%;
+  }
+
+  .lista-ciudades {
+    left: 0;
+    width: min(100%, calc(100vw - 56px));
+  }
+
+  .encabezado {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .encabezado-menu-movil {
+    color: #0d5547;
+    background: #edf5f2;
+    border-color: #bfd7cf;
+  }
+
+  .encabezado nav,
+  .encabezado-usuario {
+    display: none;
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .encabezado nav.menu-movil-abierto {
+    display: grid;
+    order: initial;
+    gap: 4px;
+    overflow: visible;
+  }
+
+  .encabezado nav.menu-movil-abierto button {
+    width: 100%;
+    min-height: 44px;
+    text-align: left;
+  }
+
+  .encabezado-usuario.menu-movil-abierto {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    margin: 0;
+    gap: 8px;
+  }
+
+  .encabezado-usuario.menu-movil-abierto .encabezado-perfil {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .encabezado-usuario.menu-movil-abierto .encabezado-nombre {
+    display: inline;
+  }
+
+  .encabezado-usuario.menu-movil-abierto .encabezado-salir {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .contenedor,
+  .panel-contenido,
+  .flujo-contenido,
+  .detalle-contenido,
+  .panel-principal,
+  .admin-panel {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .tarjeta,
+  .panel-seccion,
+  .detalle-tarjeta,
+  .resumen-lateral,
+  .admin-panel-registro {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-panel-filtros,
+  .admin-panel-acciones,
+  .botones-final {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-panel-filtros > *,
+  .admin-panel-acciones button,
+  .botones-final button {
+    width: 100%;
+  }
+
+  dialog {
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    margin: auto;
+  }
+
+  .soporte-flotante {
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .soporte-panel.soporte-panel--ia {
+    width: calc(100vw - 20px);
+    max-height: calc(100dvh - 84px);
+    padding: 16px;
+  }
+
+  .soporte-conversacion {
+    max-height: min(34dvh, 220px);
+  }
+}
+
+@media (max-width: 380px) {
+  .portada-contenido h1 {
+    font-size: 38px;
+  }
+
+  .portada-beneficios {
+    width: calc(100% - 24px);
+  }
+
+  .encabezado-logo {
+    font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
