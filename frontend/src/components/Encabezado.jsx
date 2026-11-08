@@ -1,9 +1,11 @@
 import { t, useIdioma } from '../idiomas'
 import AvatarUsuario from './AvatarUsuario';
 import CampanaNotificaciones from './CampanaNotificaciones';
+import { useState } from 'react';
 // Barra superior de las pantallas internas
 function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
     useIdioma();
+    const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
     const enlaces = [
         { id: 'portada', texto: t("Explorar") },
         { id: 'viajes', texto: t("Mis viajes") },
@@ -31,17 +33,21 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
         StayHub
       </button>
 
-      <nav aria-label={t("Men\u00FA principal")}>
+      <button type="button" className="encabezado-menu-movil" aria-expanded={menuMovilAbierto} aria-controls="encabezado-menu-principal" aria-label={t(menuMovilAbierto ? "Cerrar menú" : "Abrir menú")} onClick={() => setMenuMovilAbierto((abierto) => !abierto)}>
+        <span aria-hidden="true">{menuMovilAbierto ? '×' : '☰'}</span>
+      </button>
+
+      <nav id="encabezado-menu-principal" className={menuMovilAbierto ? 'menu-movil-abierto' : ''} aria-label={t("Men\u00FA principal")}>
         {enlaces.map((enlace) => (<button key={enlace.id} type="button" className={pantalla === enlace.id ? 'activo' : ''} aria-current={pantalla === enlace.id
                 ? 'page'
-                : undefined} onClick={() => onNavegar(enlace.id)}>
+                : undefined} onClick={() => { setMenuMovilAbierto(false); onNavegar(enlace.id); }}>
             {t(enlace.texto)}
           </button>))}
       </nav>
 
-      <div className="encabezado-usuario">
+      <div className={menuMovilAbierto ? 'encabezado-usuario menu-movil-abierto' : 'encabezado-usuario'}>
         <CampanaNotificaciones usuario={usuario}/>
-        <button type="button" className="encabezado-perfil" onClick={() => onNavegar('perfil')} title={t("Mi perfil")}>
+        <button type="button" className="encabezado-perfil" onClick={() => { setMenuMovilAbierto(false); onNavegar('perfil'); }} title={t("Mi perfil")}>
           <AvatarUsuario usuario={usuario} className="avatar-pequeno"/>
 
           <span className="encabezado-nombre">
@@ -49,7 +55,7 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
           </span>
         </button>
 
-        <button type="button" className="encabezado-salir" onClick={onCerrarSesion}>{t("Salir")}</button>
+        <button type="button" className="encabezado-salir" onClick={() => { setMenuMovilAbierto(false); onCerrarSesion(); }}>{t("Salir")}</button>
       </div>
     </header>);
 }
