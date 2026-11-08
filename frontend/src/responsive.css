@@ -30,10 +30,35 @@ video {
 
   .portada-navegacion {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     width: calc(100% - 28px);
     padding: 16px 0;
     gap: 12px;
+  }
+
+  /* Campana siempre visible junto al botón del menú */
+  .portada-derecha,
+  .encabezado-derecha {
+    display: contents;
+  }
+
+  .portada-navegacion .portada-logo,
+  .encabezado .encabezado-logo {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .portada-navegacion .stayhub-avisos,
+  .encabezado .stayhub-avisos {
+    grid-row: 1;
+    grid-column: 2;
+    align-self: center;
+  }
+
+  .portada-menu-movil,
+  .encabezado-menu-movil {
+    grid-row: 1;
+    grid-column: 3;
   }
 
   .portada-logo {
@@ -176,7 +201,7 @@ video {
 
   .encabezado {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     padding: 12px 14px;
     gap: 10px;
   }

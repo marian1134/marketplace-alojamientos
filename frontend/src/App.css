@@ -966,6 +966,12 @@ main.registro-pagina > section {
   gap: 14px;
 }
 
+.portada-derecha {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .portada-idioma {
   margin-right: 8px;
   color: white;

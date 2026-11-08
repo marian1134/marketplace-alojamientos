@@ -370,11 +370,13 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
               </>)}
           </nav>
 
+          {/* La campana queda fuera del menú para que en el celular siempre se vea */}
+          <div className="portada-derecha">
+          <CampanaNotificaciones usuario={usuario}/>
           <div className={menuMovilAbierto ? 'portada-acciones menu-movil-abierto' : 'portada-acciones'}>
             {!usuario && <SelectorIdioma portada/>}
 
             {usuario ? (<>
-                <CampanaNotificaciones usuario={usuario}/>
                 <button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onNavegar('viajes'); }}>{t("Mis viajes")}</button>
 
                 {usuario.rol === 'ADMINISTRADOR' && (<button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onNavegar('administracion'); }}>{t("Administraci\u00F3n")}</button>)}
@@ -391,6 +393,7 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
 
                 <button type="button" className="portada-boton-principal" onClick={() => { setMenuMovilAbierto(false); onRegistrarse(); }}>{t("Registrarse")}</button>
               </>)}
+          </div>
           </div>
         </header>
 
