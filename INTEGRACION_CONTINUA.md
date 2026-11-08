@@ -21,14 +21,14 @@ Están en `backend/src/test/java` y se relacionan con las historias de usuario:
 
 | Clase | Historias | Qué comprueba |
 |---|---|---|
-| `RegistroUsuarioTest` | HU-01 | Registro válido, correo repetido, celular inválido, contraseña débil |
-| `SeguridadRolesTest` | HU-04, HU-26 | Un huésped no entra a administración, sin sesión no hay búsqueda |
-| `CotizacionTest` | HU-14 | Total con limpieza, servicio 12,5 % y descuento semanal; fechas y capacidad inválidas |
-| `ReservaTest` | HU-11, HU-15, HU-17 | Reserva confirmada al instante, sin superposición, idempotente, tarjeta vencida, búsqueda sin ocupados |
-| `CancelacionYResenaTest` | HU-18, HU-22 | Devolución según política, registro de la cancelación, reseña solo al terminar y una sola vez |
-| `ServiciosYReglasTest` | HU-07 | Publicar con servicios y reglas, validaciones de capacidad y servicios |
-| `AdministracionReportesTest` | HU-26, HU-27 | Dashboard completo, reportes en Excel y PDF registrados, permisos, contrato OpenAPI |
-| `ClienteAsistenteTest` | HU-30 | Lectura de la respuesta de Gemini (prueba unitaria) |
+| `RegistroUsuarioTest` | HU-03 | Registro válido, correo repetido, celular inválido, contraseña débil |
+| `SeguridadRolesTest` | HU-05, HU-28 | Un huésped no entra a administración, sin sesión no hay búsqueda |
+| `CotizacionTest` | HU-18 | Total con limpieza, servicio 12,5 % y descuento semanal; fechas y capacidad inválidas |
+| `ReservaTest` | HU-16, HU-19, HU-20 | Reserva confirmada al instante, sin superposición, idempotente, tarjeta vencida, búsqueda sin ocupados |
+| `CancelacionYResenaTest` | HU-21, HU-23 | Devolución según política, registro de la cancelación, reseña solo al terminar y una sola vez |
+| `ServiciosYReglasTest` | HU-09 | Publicar con servicios y reglas, validaciones de capacidad y servicios |
+| `AdministracionReportesTest` | HU-28, HU-29 | Dashboard completo, reportes en Excel y PDF registrados, permisos, contrato OpenAPI |
+| `ClienteAsistenteTest` | HU-42 | Lectura de la respuesta de Gemini (prueba unitaria) |
 
 ### Correrlas en el computador
 

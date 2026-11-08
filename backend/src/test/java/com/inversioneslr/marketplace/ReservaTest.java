@@ -13,7 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// HU-15, HU-17 · RF-12, RF-16, RF-17 · RNF-02, RNF-03: reserva inmediata sin superposición
+// HU-19, HU-20 · RF-12, RF-16, RF-17 · RNF-02, RNF-03: reserva inmediata sin superposición
 class ReservaTest extends PruebaIntegracion {
 
     private long reservar(long id, LocalDate llegada, LocalDate salida, String clave, int esperado) throws Exception {
@@ -28,7 +28,7 @@ class ReservaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-15 CA1: con pago aprobado la reserva queda CONFIRMADA y bloquea sus noches")
+    @DisplayName("HU-19 CA1: con pago aprobado la reserva queda CONFIRMADA y bloquea sus noches")
     void reservaConfirmadaAlInstante() throws Exception {
         long id = alojamiento("Villa frente al mar");
         long reserva = reservar(id, enDias(50), enDias(53), nuevaClave(), 201);
@@ -43,7 +43,7 @@ class ReservaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-15 CA2 · RN-08: no se pueden reservar noches que ya están ocupadas")
+    @DisplayName("HU-19 CA2 · RN-08: no se pueden reservar noches que ya están ocupadas")
     void sinReservasSuperpuestas() throws Exception {
         long id = alojamiento("Villa frente al mar");
         reservar(id, enDias(60), enDias(64), nuevaClave(), 201);
@@ -62,7 +62,7 @@ class ReservaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-15: una tarjeta vencida no permite reservar")
+    @DisplayName("HU-19: una tarjeta vencida no permite reservar")
     void tarjetaVencida() throws Exception {
         long id = alojamiento("Villa frente al mar");
         String cuerpo = reservaJson(id, enDias(80), enDias(82), 2, nuevaClave()).replace("12/30", "01/20");
@@ -72,7 +72,7 @@ class ReservaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-17 CA1: la reserva aparece en Mis viajes del huésped")
+    @DisplayName("HU-20 CA1: la reserva aparece en Mis viajes del huésped")
     void apareceEnMisViajes() throws Exception {
         long id = alojamiento("Villa frente al mar");
         long reserva = reservar(id, enDias(90), enDias(92), nuevaClave(), 201);
@@ -82,7 +82,7 @@ class ReservaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-11 CA1: un alojamiento con esas noches ocupadas no sale en la búsqueda")
+    @DisplayName("HU-16 CA1: un alojamiento con esas noches ocupadas no sale en la búsqueda")
     void ocupadoNoSaleEnBusqueda() throws Exception {
         long id = alojamiento("Villa frente al mar");
         reservar(id, enDias(100), enDias(103), nuevaClave(), 201);

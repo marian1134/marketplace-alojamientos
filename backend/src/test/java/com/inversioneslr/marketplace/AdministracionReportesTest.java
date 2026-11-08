@@ -11,11 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// HU-26 · RF-26 (dashboard), HU-27 · RF-27 (reportes) y contrato OpenAPI
+// HU-28 · RF-26 (dashboard), HU-29 · RF-27 (reportes) y contrato OpenAPI
 class AdministracionReportesTest extends PruebaIntegracion {
 
     @Test
-    @DisplayName("HU-26: el resumen trae reservas por estado, ingresos estimados y ciudades con más demanda")
+    @DisplayName("HU-28: el resumen trae reservas por estado, ingresos estimados y ciudades con más demanda")
     void dashboardCompleto() throws Exception {
         mvc.perform(get("/api/v1/admin/resumen").with(administrador()))
                 .andExpect(status().isOk())
@@ -26,7 +26,7 @@ class AdministracionReportesTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-27 CA1: el administrador descarga el reporte de reservas en Excel y queda registrado")
+    @DisplayName("HU-29 CA1: el administrador descarga el reporte de reservas en Excel y queda registrado")
     void reporteExcel() throws Exception {
         Integer antes = jdbc.queryForObject("SELECT COUNT(*) FROM exportacion_reporte", Integer.class);
         byte[] archivo = mvc.perform(get("/api/v1/admin/exportar").with(administrador())
@@ -41,7 +41,7 @@ class AdministracionReportesTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-27: el reporte de demanda por ciudad sale en PDF")
+    @DisplayName("HU-29: el reporte de demanda por ciudad sale en PDF")
     void reportePdf() throws Exception {
         byte[] archivo = mvc.perform(get("/api/v1/admin/exportar").with(administrador())
                         .param("tipo", "DEMANDA").param("formato", "PDF")
@@ -53,7 +53,7 @@ class AdministracionReportesTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-27: un huésped no puede exportar reportes")
+    @DisplayName("HU-29: un huésped no puede exportar reportes")
     void huespedNoExporta() throws Exception {
         mvc.perform(get("/api/v1/admin/exportar").with(huesped())
                         .param("tipo", "USUARIOS").param("formato", "PDF"))

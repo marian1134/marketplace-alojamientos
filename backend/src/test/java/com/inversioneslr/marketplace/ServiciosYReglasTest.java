@@ -13,7 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// HU-07 · RF-07 y RF-10: publicar un alojamiento con servicios y reglas
+// HU-09 · RF-07 y RF-10: publicar un alojamiento con servicios y reglas
 class ServiciosYReglasTest extends PruebaIntegracion {
 
     @Test
@@ -25,7 +25,7 @@ class ServiciosYReglasTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-07 CA1 · RF-10: el anfitrión publica con servicios y reglas")
+    @DisplayName("HU-09 CA1 · RF-10: el anfitrión publica con servicios y reglas")
     void publicarConServiciosYReglas() throws Exception {
         List<Long> ids = jdbc.queryForList("SELECT id FROM servicio WHERE nombre IN ('Wifi', 'Piscina') ORDER BY id", Long.class);
         String cuerpo = """
@@ -43,7 +43,7 @@ class ServiciosYReglasTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-07 CA2 · RN-06: no se publica con capacidad 0")
+    @DisplayName("HU-09 CA2 · RN-06: no se publica con capacidad 0")
     void capacidadCero() throws Exception {
         String cuerpo = """
                 {"titulo": "Sin capacidad", "descripcion": "Prueba de validación.", "ciudad": "Cali",
