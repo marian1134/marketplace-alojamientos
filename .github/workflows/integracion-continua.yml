@@ -1,8 +1,4 @@
 # Integración continua de StayHub.
-# En cada Pull Request (y en cada cambio que llega a main):
-#   1. compila el backend y ejecuta las pruebas automatizadas contra MySQL,
-#   2. construye el frontend,
-#   3. envía el análisis a SonarCloud (cuando el secreto SONAR_TOKEN existe).
 name: Integración continua
 
 on:
@@ -61,6 +57,7 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw -B verify
+          ./mvnw -B dependency:copy-dependencies -DincludeScope=test
 
       - name: Guardar el resultado de las pruebas
         if: always()
@@ -77,6 +74,8 @@ jobs:
           name: backend-compilado
           path: |
             backend/target/classes
+            backend/target/test-classes
+            backend/target/dependency
             backend/target/site/jacoco/jacoco.xml
 
   frontend:
@@ -130,3 +129,9 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >-
+            -Dsonar.java.binaries=backend/target/classes
+            -Dsonar.java.test.binaries=backend/target/test-classes
+            -Dsonar.java.libraries=backend/target/dependency/*.jar
+            -Dsonar.java.test.libraries=backend/target/dependency/*.jar
