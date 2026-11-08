@@ -49,6 +49,7 @@ video {
   }
 
   .portada-navegacion .stayhub-avisos,
+  .portada-navegacion .selector-idioma,
   .encabezado .stayhub-avisos {
     grid-row: 1;
     grid-column: 2;
@@ -114,9 +115,7 @@ video {
 
   .portada-acciones.menu-movil-abierto .portada-boton-claro,
   .portada-acciones.menu-movil-abierto .portada-boton-principal,
-  .portada-acciones.menu-movil-abierto .portada-boton-perfil,
-  .portada-acciones.menu-movil-abierto .selector-idioma,
-  .portada-acciones.menu-movil-abierto .selector-idioma select {
+  .portada-acciones.menu-movil-abierto .portada-boton-perfil {
     display: flex;
     width: 100%;
     min-height: 44px;

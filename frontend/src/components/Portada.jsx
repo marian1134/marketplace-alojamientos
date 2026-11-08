@@ -372,9 +372,10 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
 
           {/* La campana queda fuera del menú para que en el celular siempre se vea */}
           <div className="portada-derecha">
+          {/* El idioma también queda fuera del menú, siempre a la vista */}
+          {!usuario && <SelectorIdioma portada/>}
           <CampanaNotificaciones usuario={usuario}/>
           <div className={menuMovilAbierto ? 'portada-acciones menu-movil-abierto' : 'portada-acciones'}>
-            {!usuario && <SelectorIdioma portada/>}
 
             {usuario ? (<>
                 <button type="button" className="portada-boton-claro" onClick={() => { setMenuMovilAbierto(false); onNavegar('viajes'); }}>{t("Mis viajes")}</button>

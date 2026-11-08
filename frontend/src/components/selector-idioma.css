@@ -1,7 +1,27 @@
-.selector-idioma { display: inline-flex; align-items: center; gap: 5px; color: #123d38; flex-shrink: 0; }
-.selector-idioma select { appearance: auto; border: 1px solid #c7dcd6; border-radius: 8px; background: #fff; color: #123d38; padding: 8px 4px; width: 122px; font: inherit; font-size: .85rem; cursor: pointer; }
-.selector-idioma select:focus-visible { outline: 3px solid #167e70; outline-offset: 3px; }
-.selector-idioma-portada { color: #fff; }
-.selector-idioma-portada select { background: rgba(255,255,255,.96); }
-.selector-idioma-flotante { position: fixed; top: 12px; right: 16px; z-index: 100; background: #fff; border-radius: 12px; padding: 7px 10px; box-shadow: 0 3px 15px #123d381a; }
-@media (max-width: 600px) { .selector-idioma select { width: 98px; font-size: .8rem; } .selector-idioma-flotante { top: 8px; right: 8px; } }
+/* Botón de idioma: globo + idioma actual + flecha, con el select invisible encima */
+.selector-idioma {
+  position: relative; display: inline-flex; align-items: center; gap: 7px;
+  min-height: 40px; padding: 0 12px; flex-shrink: 0;
+  color: #123d38; background: #fff; border: 1px solid #c7dcd6; border-radius: 999px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.selector-idioma:hover { background: #f1f8f5; }
+.selector-idioma:focus-within { outline: 3px solid #167e70; outline-offset: 2px; }
+.selector-idioma-texto { display: inline-flex; gap: 6px; line-height: 1; }
+.selector-idioma-corto { display: none; }
+.selector-idioma-flecha { opacity: .7; }
+.selector-idioma select {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0;
+  opacity: 0; border: 0; font-size: 16px; cursor: pointer; appearance: none;
+}
+/* En la portada va sobre la foto: botón transparente con borde claro */
+.selector-idioma-portada { color: #fff; background: rgb(255 255 255 / 12%); border-color: rgb(255 255 255 / 55%); backdrop-filter: blur(6px); }
+.selector-idioma-portada:hover { background: rgb(255 255 255 / 22%); }
+.selector-idioma-flotante { position: fixed; top: 12px; right: 16px; z-index: 100; box-shadow: 0 3px 15px #123d381a; }
+/* En el celular solo se ve el globo y "ES" */
+@media (max-width: 700px) {
+  .selector-idioma { gap: 5px; min-height: 40px; padding: 0 10px; }
+  .selector-idioma-nombre { display: none; }
+  .selector-idioma-corto { display: inline; }
+  .selector-idioma-flotante { top: 8px; right: 8px; }
+}

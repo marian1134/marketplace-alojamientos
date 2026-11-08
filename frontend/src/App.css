@@ -3228,15 +3228,6 @@ main.registro-pagina > section {
     font-size: 14px;
   }
 
-  .portada-acciones .selector-idioma > svg,
-  .portada-acciones .selector-idioma > span[aria-hidden='true'] {
-    display: none;
-  }
-
-  .portada-acciones .selector-idioma select {
-    width: 92px;
-    padding: 8px 2px;
-  }
 }
 
 /* Ventana de la portada: Alojamientos, Cómo funciona y Sobre nosotros */
