@@ -34,7 +34,11 @@ public class SeguridadConfig {
                                 "/api/v1/alojamientos",
                                 "/api/v1/alojamientos/ciudad/**",
                                 "/api/v1/alojamientos/*/imagenes",
-                                "/uploads/alojamientos/**"
+                                "/uploads/alojamientos/**",
+                                // Contrato OpenAPI y Swagger UI
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**"
                         )
                         .permitAll()
 

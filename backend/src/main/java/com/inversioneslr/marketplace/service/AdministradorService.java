@@ -59,7 +59,10 @@ public class AdministradorService {
     @Transactional(readOnly = true)
     public Map<String, Object> resumen(String correo) {
         administrador(correo);
-        return consultas.resumen();
+        Map<String, Object> resumen = new LinkedHashMap<>(consultas.resumen());
+        resumen.put("reservasPorEstado", consultas.reservasPorEstado());
+        resumen.put("ciudadesConMasDemanda", consultas.ciudadesConMasDemanda(5));
+        return resumen;
     }
 
     @Transactional(readOnly = true)

@@ -45,9 +45,9 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Crear la base de datos de pruebas (scripts 01 a 14, sin los 1.080 alojamientos)
+      - name: Crear la base de datos de pruebas (scripts 01 a 16, sin los 1.080 alojamientos)
         run: |
-          for script in 01 02 03 04 06 07 08 09 10 11 13 14; do
+          for script in 01 02 03 04 06 07 08 09 10 11 13 14 16; do
             echo "Ejecutando $script"
             mysql -h 127.0.0.1 -uroot -proot --default-character-set=utf8mb4 < backend/database/${script}_*.sql
           done

@@ -24,6 +24,7 @@ Ejecutar en MySQL Workbench, como `root`, en este orden:
 | `12_configurar_administrador.sql` | Convierte una cuenta en administradora (se edita a mano) | No |
 | `13_reservas_inmediatas.sql` | Todas las reservas se confirman al instante | Sí |
 | `14_ajustes_base.sql` | Collation igual en todas las tablas y llave compuesta en `noche_reservada` | Sí |
+| `16_servicios_y_reglas.sql` | Servicios (Wifi, piscina...) y reglas para los alojamientos que no tienen. Se puede ejecutar varias veces | Sí |
 | `15_usuario_aplicacion.sql` | Usuario de MySQL con permisos mínimos para el backend (se edita a mano) | Recomendado |
 
 Los scripts del 06 en adelante se pueden ejecutar más de una vez sin

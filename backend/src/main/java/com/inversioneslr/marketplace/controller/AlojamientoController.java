@@ -37,6 +37,13 @@ public class AlojamientoController {
                 .buscarActivosPorCiudad(ciudad);
     }
 
+    // Catálogo de servicios (Wifi, piscina, cocina...) para el formulario y los filtros
+    @GetMapping("/servicios")
+    public List<java.util.Map<String, Object>> catalogoServicios() {
+
+        return alojamientoService.catalogoServicios();
+    }
+
     @GetMapping("/mis-alojamientos")
     public List<AlojamientoResponse> listarMisAlojamientos(
             Authentication autenticacion) {

@@ -17,6 +17,8 @@ const formularioInicial = {
     precioNoche: '',
     tarifaLimpieza: '0',
     tipoPolitica: 'MODERADA',
+    servicios: [],
+    reglas: '',
 };
 function Alojamientos({ onVolver }) {
     useIdioma();
@@ -26,6 +28,22 @@ function Alojamientos({ onVolver }) {
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
     const [mensaje, setMensaje] = useState('');
+    // Catálogo de servicios (Wifi, piscina, cocina...)
+    const [catalogo, setCatalogo] = useState([]);
+    useEffect(() => {
+        fetch('/api/v1/alojamientos/servicios', { credentials: 'same-origin' })
+            .then((respuesta) => (respuesta.ok ? respuesta.json() : []))
+            .then(setCatalogo)
+            .catch(() => { });
+    }, []);
+    function cambiarServicio(id) {
+        setFormulario((actual) => ({
+            ...actual,
+            servicios: actual.servicios.includes(id)
+                ? actual.servicios.filter((elegido) => elegido !== id)
+                : [...actual.servicios, id],
+        }));
+    }
     useEffect(() => {
         let activo = true;
         async function cargarAlojamientos() {
@@ -94,6 +112,8 @@ function Alojamientos({ onVolver }) {
             horaCheckIn: formulario.horaCheckIn || '15:00',
             precioNoche: Number(formulario.precioNoche),
             tarifaLimpieza: Number(formulario.tarifaLimpieza || 0),
+            // Una regla por línea
+            reglas: formulario.reglas.split('\n').map((regla) => regla.trim()).filter(Boolean).slice(0, 10),
         };
         const ruta = editandoId
             ? `/api/v1/alojamientos/${editandoId}`
@@ -143,6 +163,8 @@ function Alojamientos({ onVolver }) {
             precioNoche: String(alojamiento.precioNoche),
             tarifaLimpieza: String(alojamiento.tarifaLimpieza ?? 0),
             tipoPolitica: alojamiento.tipoPolitica ?? 'MODERADA',
+            servicios: catalogo.filter((servicio) => (alojamiento.servicios ?? []).includes(servicio.nombre)).map((servicio) => servicio.id),
+            reglas: (alojamiento.reglas ?? []).join('\n'),
         });
         setMensaje('');
         window.scrollTo({
@@ -352,6 +374,26 @@ function Alojamientos({ onVolver }) {
                     <span>{t(detalle)}</span>
                   </label>))}
               </div>
+            </div>
+          </fieldset>
+
+          <fieldset className="seccion-formulario">
+            <legend>
+              <span className="numero-seccion">5</span>{t("Servicios y reglas")}</legend>
+
+            <div className="campo">
+              <span className="etiqueta-servicios">{t("Servicios que ofreces")}</span>
+              <div className="servicios-opciones">
+                {catalogo.map((servicio) => (<label key={servicio.id} className={formulario.servicios.includes(servicio.id) ? 'servicio-opcion elegido' : 'servicio-opcion'}>
+                    <input type="checkbox" checked={formulario.servicios.includes(servicio.id)} onChange={() => cambiarServicio(servicio.id)}/>
+                    {t(servicio.nombre)}
+                  </label>))}
+              </div>
+            </div>
+
+            <div className="campo">
+              <label htmlFor="alojamiento-reglas">{t("Reglas del alojamiento (una por línea)")}</label>
+              <textarea id="alojamiento-reglas" name="reglas" rows={4} value={formulario.reglas} onChange={actualizarCampo} placeholder={t("No se permite fumar dentro del alojamiento.")} maxLength={3000}/>
             </div>
           </fieldset>
 

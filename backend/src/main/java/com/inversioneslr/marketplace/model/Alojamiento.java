@@ -1,6 +1,10 @@
 package com.inversioneslr.marketplace.model;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -13,12 +17,17 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 // Tabla marketplace.publicacion (01_crear_marketplace.sql)
 @Entity
@@ -75,6 +84,22 @@ public class Alojamiento {
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "modo_reserva", nullable = false, length = 20)
     private ModoReserva modoReserva = ModoReserva.INMEDIATA;
+
+    // Servicios que ofrece (tabla publicacion_servicio)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "publicacion_servicio",
+            joinColumns = @JoinColumn(name = "publicacion_id", columnDefinition = "INT UNSIGNED"),
+            inverseJoinColumns = @JoinColumn(name = "servicio_id", columnDefinition = "INT UNSIGNED"))
+    @BatchSize(size = 100)
+    private Set<Servicio> servicios = new LinkedHashSet<>();
+
+    // Reglas básicas del alojamiento (tabla regla_alojamiento)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "regla_alojamiento",
+            joinColumns = @JoinColumn(name = "publicacion_id", columnDefinition = "INT UNSIGNED"))
+    @Column(name = "descripcion", nullable = false, length = 300)
+    @BatchSize(size = 100)
+    private List<String> reglas = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "politica_id", nullable = false, columnDefinition = "INT UNSIGNED")
@@ -253,5 +278,13 @@ public class Alojamiento {
 
     public LocalDateTime getFechaActualizacion() {
         return fechaActualizacion;
+    }
+
+    public Set<Servicio> getServicios() {
+        return servicios;
+    }
+
+    public List<String> getReglas() {
+        return reglas;
     }
 }

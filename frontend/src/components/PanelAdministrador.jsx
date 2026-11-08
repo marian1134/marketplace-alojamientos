@@ -2,6 +2,7 @@ import { t, useIdioma, localeActual } from '../idiomas'
 import { useEffect, useId, useRef, useState } from 'react';
 import { enviarDatos, leerError } from '../api';
 import CrearAdministrador from './CrearAdministrador';
+import ExportarReportes from './ExportarReportes';
 import './panel-administrador.css';
 const SECCIONES = [
     ['resumen', 'Resumen'], ['usuarios', 'Usuarios'], ['alojamientos', 'Alojamientos'],
@@ -151,10 +152,41 @@ export default function PanelAdministrador({ usuario, onVerAlojamiento, reporteS
                 [t("Bloqueados"), resumen?.alojamientosBloqueados],
                 [t("Pendientes de revisi\u00F3n"), resumen?.pendientesRevision],
                 [t("Reportes pendientes"), resumen?.reportesPendientes],
+                [t("Reservas"), resumen?.reservas],
+                [t("Ingresos estimados"), moneda(resumen?.ingresosEstimados || 0)],
             ].map(([nombre, total]) => <article className="tarjeta" key={nombre}>
-                <span>{t(nombre)}</span><strong>{total ?? 0}</strong>
+                <span>{t(nombre)}</span><strong className={String(total ?? 0).length > 8 ? 'valor-largo' : undefined}>{total ?? 0}</strong>
               </article>)}
             </div>
+
+            <div className="admin-panel-graficas">
+              <article className="tarjeta">
+                <h2>{t("Reservas por estado")}</h2>
+                {!resumen?.reservasPorEstado?.length ? <p className="texto-suave">{t("Todavía no hay reservas.")}</p> : (<ul className="admin-barras">
+                    {resumen.reservasPorEstado.map((fila) => {
+                    const maximo = Math.max(...resumen.reservasPorEstado.map((f) => Number(f.cantidad)));
+                    return (<li key={fila.estado}>
+                        <span>{t(etiqueta(fila.estado))}</span>
+                        <div className="admin-barra"><div style={{ width: `${(Number(fila.cantidad) / maximo) * 100}%` }}/></div>
+                        <strong>{fila.cantidad}</strong>
+                      </li>);
+                })}
+                  </ul>)}
+              </article>
+              <article className="tarjeta">
+                <h2>{t("Ciudades con mayor demanda")}</h2>
+                {!resumen?.ciudadesConMasDemanda?.length ? <p className="texto-suave">{t("Todavía no hay reservas confirmadas.")}</p> : (<table className="admin-tabla">
+                    <thead><tr><th>{t("Ciudad")}</th><th>{t("Reservas")}</th><th>{t("Ingresos")}</th></tr></thead>
+                    <tbody>
+                      {resumen.ciudadesConMasDemanda.map((fila) => (<tr key={fila.ciudad}>
+                          <td>{fila.ciudad}</td><td>{fila.reservas}</td><td>{moneda(fila.ingresos)}</td>
+                        </tr>))}
+                    </tbody>
+                  </table>)}
+              </article>
+            </div>
+
+            <ExportarReportes />
             <article className="tarjeta admin-panel-ayuda">
               <h2>{t("Acciones de administraci\u00F3n")}</h2>
               <p>{t("Restringe o reactiva cuentas, bloquea alojamientos y revisa las rese\u00F1as reportadas. Cada cambio requiere un motivo y queda registrado.")}</p>

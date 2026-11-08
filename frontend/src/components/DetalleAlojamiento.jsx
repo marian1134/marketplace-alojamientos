@@ -6,7 +6,7 @@ import { enlaceGoogleMaps, urlMapa } from '../mapa';
 import CampoFecha from './CampoFecha';
 import ReportarResena from './ReportarResena';
 import { Estrellas, IconoCorazon, IconoEstrella, IconoUbicacion } from './Iconos';
-import { aFecha, aTexto, explicarPolitica, fechaMaximaLlegada, MAXIMO_NOCHES, nombreCortoPolitica, sumarDias, fechaCorta, fotoRespaldo, hoyTexto, NOMBRES_POLITICA, pesos, } from '../formato';
+import { aFecha, aTexto, explicarPolitica, fechaMaximaLlegada, MAXIMO_NOCHES, nombreCortoPolitica, sumarDias, fechaCorta, fotoRespaldo, hoyTexto, NOMBRES_POLITICA, pesos, horaBonita, } from '../formato';
 // Agrupa noches seguidas: ['2026-11-11','2026-11-12'] -> [{desde, hasta}]
 function agruparNoches(noches) {
     const grupos = [];
@@ -298,9 +298,10 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
             <article className="tarjeta">
               <h2>{t("Reglas y cancelaci\u00F3n")}</h2>
               <ul className="lista-reglas">
-                <li>{t("Check-in: 3:00 p. m.")}</li>
+                <li>{t("Check-in desde las")}{' '}{horaBonita((alojamiento.horaCheckIn ?? '15:00').slice(0, 5))}</li>
                 <li>{t("Check-out: 11:00 a. m.")}</li>
                 <li>{t("M\u00E1ximo")}{' '}{alojamiento.capacidad}{' '}{t("hu\u00E9spedes")}</li>
+                {(alojamiento.reglas ?? []).map((regla) => <li key={regla}>{regla}</li>)}
               </ul>
               <p>
                 <strong>{t(NOMBRES_POLITICA[politica.tipo])}.</strong>{' '}
@@ -308,6 +309,13 @@ function DetalleAlojamiento({ idAlojamiento, busqueda, favoritos, onFavorito, on
               </p>
             </article>
           </div>
+
+          {(alojamiento.servicios ?? []).length > 0 && (<article className="tarjeta">
+              <h2>{t("Servicios")}</h2>
+              <ul className="detalle-servicios">
+                {alojamiento.servicios.map((servicio) => <li key={servicio}>✓ {t(servicio)}</li>)}
+              </ul>
+            </article>)}
 
           {detalle.periodosDisponibles.length > 0 && (<article className="tarjeta">
               <h2>{t("Fechas en que recibe hu\u00E9spedes")}</h2>

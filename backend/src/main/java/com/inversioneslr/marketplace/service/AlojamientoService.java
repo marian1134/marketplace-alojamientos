@@ -8,11 +8,13 @@ import com.inversioneslr.marketplace.model.EstadoUsuario;
 import com.inversioneslr.marketplace.model.ModoReserva;
 import com.inversioneslr.marketplace.model.PoliticaCancelacion;
 import com.inversioneslr.marketplace.model.Rol;
+import com.inversioneslr.marketplace.model.Servicio;
 import com.inversioneslr.marketplace.model.TipoPolitica;
 import com.inversioneslr.marketplace.model.Usuario;
 import com.inversioneslr.marketplace.repository.AlojamientoRepository;
 import com.inversioneslr.marketplace.repository.ImagenAlojamientoRepository;
 import com.inversioneslr.marketplace.repository.PoliticaCancelacionRepository;
+import com.inversioneslr.marketplace.repository.ServicioRepository;
 import com.inversioneslr.marketplace.repository.UsuarioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.time.LocalTime;
 
 @Service
@@ -31,13 +34,16 @@ public class AlojamientoService {
     private final ImagenAlojamientoRepository imagenRepository;
     private final UsuarioRepository usuarioRepository;
     private final PoliticaCancelacionRepository politicaRepository;
+    private final ServicioRepository servicioRepository;
 
     public AlojamientoService(
             AlojamientoRepository alojamientoRepository,
             ImagenAlojamientoRepository imagenRepository,
             UsuarioRepository usuarioRepository,
-            PoliticaCancelacionRepository politicaRepository) {
+            PoliticaCancelacionRepository politicaRepository,
+            ServicioRepository servicioRepository) {
 
+        this.servicioRepository = servicioRepository;
         this.alojamientoRepository = alojamientoRepository;
         this.imagenRepository = imagenRepository;
         this.usuarioRepository = usuarioRepository;
@@ -314,6 +320,29 @@ public class AlojamientoService {
                 ));
 
         alojamiento.setPolitica(politica);
+
+        // Servicios y reglas: solo se cambian si llegan en la solicitud
+        if (request.servicios() != null) {
+            List<Servicio> elegidos = servicioRepository.findAllById(request.servicios());
+            if (elegidos.size() != new java.util.HashSet<>(request.servicios()).size()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Alguno de los servicios elegidos no existe");
+            }
+            alojamiento.getServicios().clear();
+            alojamiento.getServicios().addAll(elegidos);
+        }
+        if (request.reglas() != null) {
+            alojamiento.getReglas().clear();
+            request.reglas().stream().map(String::strip).filter(regla -> !regla.isEmpty()).distinct()
+                    .forEach(alojamiento.getReglas()::add);
+        }
+    }
+
+    // Catálogo de servicios para el formulario y los filtros
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> catalogoServicios() {
+        return servicioRepository.findAllByOrderByNombreAsc().stream()
+                .map(servicio -> Map.<String, Object>of("id", servicio.getIdServicio(), "nombre", servicio.getNombre()))
+                .toList();
     }
 
     private void validarRequest(
@@ -349,7 +378,9 @@ public class AlojamientoService {
                 alojamiento.getFechaActualizacion(),
                 alojamiento.getHabitaciones(),
                 alojamiento.getBanos(),
-                alojamiento.getHoraCheckIn()
+                alojamiento.getHoraCheckIn(),
+                alojamiento.getServicios().stream().map(Servicio::getNombre).sorted().toList(),
+                List.copyOf(alojamiento.getReglas())
         );
     }
 }
