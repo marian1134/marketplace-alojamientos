@@ -72,6 +72,7 @@ public class VerificacionService {
         try {
             correoService.enviarCodigo(usuario.getCorreo(), usuario.getNombre(), codigo);
         } catch (MailException error) {
+            log.warn("No se pudo enviar el código de verificación: {}", error.getMessage());
             // Si el correo no sale, el código no se guarda (se deshace todo)
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,

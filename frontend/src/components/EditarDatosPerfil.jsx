@@ -34,8 +34,8 @@ function EditarDatosPerfil({ usuario, etiquetaRol, onUsuarioActualizado, bloquea
         const telefonoLimpio = telefono.trim();
         setError('');
         setMensaje('');
-        if (nombreLimpio.length < 2 || nombreLimpio.length > 100) {
-            setError(t("El nombre debe tener entre 2 y 100 caracteres."));
+        if (!/^\p{L}[\p{L} .'-]{2,59}$/u.test(nombreLimpio)) {
+            setError(t("El nombre debe tener entre 3 y 60 caracteres y solo letras."));
             return;
         }
         if (!/^3\d{9}$/.test(telefonoLimpio)) {
@@ -75,7 +75,7 @@ function EditarDatosPerfil({ usuario, etiquetaRol, onUsuarioActualizado, bloquea
           <fieldset disabled={guardando || bloqueado}>
             <legend>{t("Editar datos personales")}</legend>
             <label htmlFor="perfil-nombre">{t("Nombre completo")}</label>
-            <input id="perfil-nombre" name="nombre" autoComplete="name" value={nombre} onChange={(evento) => setNombre(evento.target.value)} required minLength={2} maxLength={100} autoFocus/>
+            <input id="perfil-nombre" name="nombre" autoComplete="name" value={nombre} onChange={(evento) => setNombre(evento.target.value)} required minLength={3} maxLength={60} autoFocus/>
             <label htmlFor="perfil-telefono">{t("Celular")}</label>
             <div className="campo-celular">
               <span className="prefijo-celular" aria-hidden="true">🇨🇴 +57</span>
