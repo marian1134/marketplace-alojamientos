@@ -29,8 +29,11 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    private final VerificadorCorreo verificadorCorreo;
+
+    public UsuarioService(UsuarioRepository usuarioRepository, VerificadorCorreo verificadorCorreo) {
         this.usuarioRepository = usuarioRepository;
+        this.verificadorCorreo = verificadorCorreo;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
@@ -49,6 +52,20 @@ public class UsuarioService {
         String correo = datos.correo()
                 .trim()
                 .toLowerCase(Locale.ROOT);
+
+        // Solo correos que puedan existir: formato válido y dominio que recibe correos
+        if (!VerificadorCorreo.formatoValido(correo)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Escribe un correo válido, por ejemplo nombre@gmail.com"
+            );
+        }
+        if (!verificadorCorreo.dominioRecibeCorreos(correo)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El dominio de ese correo no existe o no recibe correos. Revisa que esté bien escrito."
+            );
+        }
 
         if (usuarioRepository.existsByCorreoIgnoreCase(correo)) {
             throw new ResponseStatusException(
@@ -171,9 +188,9 @@ public class UsuarioService {
 
         String nombre = datos.nombre() == null ? "" : datos.nombre().strip();
         String telefono = datos.telefono() == null ? "" : datos.telefono().strip();
-        if (nombre.length() < 2 || nombre.length() > 100) {
+        if (nombre.length() < 3 || nombre.length() > 60 || !nombre.matches("^[\\p{L}][\\p{L} .'-]*$")) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "El nombre debe tener entre 2 y 100 caracteres"
+                    HttpStatus.BAD_REQUEST, "El nombre debe tener entre 3 y 60 caracteres y solo letras"
             );
         }
         // Celular de Colombia: +57 y 10 dígitos que empiezan por 3

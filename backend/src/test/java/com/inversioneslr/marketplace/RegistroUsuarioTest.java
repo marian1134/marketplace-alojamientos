@@ -49,6 +49,29 @@ class RegistroUsuarioTest extends PruebaIntegracion {
     }
 
     @Test
+    @DisplayName("HU-03: un correo sin dominio real (sin extensión) se rechaza")
+    void correoSinExtension() throws Exception {
+        mvc.perform(post("/api/usuarios/registro").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registro("ana@correo", "+573001234567", "Clave2026*")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("HU-03: el nombre no puede superar 60 caracteres ni tener números")
+    void nombreInvalido() throws Exception {
+        String largo = "Ana".repeat(21);
+        mvc.perform(post("/api/usuarios/registro").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registro("largo.prueba@correo.com", "+573001234567", "Clave2026*").replace("Usuario de Prueba", largo)))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/usuarios/registro").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registro("numeros.prueba@correo.com", "+573001234567", "Clave2026*").replace("Usuario de Prueba", "Ana 123")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("RNF-01: una contraseña sin símbolo se rechaza")
     void contrasenaDebil() throws Exception {
         mvc.perform(post("/api/usuarios/registro").with(csrf())

@@ -8,10 +8,15 @@ import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.mail.MailException;
+import org.springframework.mail.MailPreparationException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.HtmlUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -19,6 +24,8 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class CorreoService {
@@ -27,29 +34,93 @@ public class CorreoService {
 
     private final JavaMailSender emisor;
     private final String remitente;
+    private final String correoRemitente;
+    private final String nombreRemitente;
     private final CorreoEnviadoRepository correoRepository;
+    // Con clave de Brevo los correos salen por su API (HTTPS). Sirve en servidores
+    // que bloquean el envío por SMTP, como el plan gratis de Render.
+    private final String claveBrevo;
+    private final RestClient brevo;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public CorreoService(
             JavaMailSender emisor,
             @Value("${spring.mail.username}") String correoRemitente,
             @Value("${app.correo.nombre:Alojamientos Marketplace}") String nombreRemitente,
+            @Value("${BREVO_API_KEY:}") String claveBrevo,
             CorreoEnviadoRepository correoRepository) {
+        this(emisor, correoRemitente, nombreRemitente, claveBrevo, correoRepository, RestClient.builder());
+    }
+
+    // Para las pruebas: permite simular la API de Brevo
+    CorreoService(
+            JavaMailSender emisor,
+            String correoRemitente,
+            String nombreRemitente,
+            String claveBrevo,
+            CorreoEnviadoRepository correoRepository,
+            RestClient.Builder clienteBrevo) {
 
         this.emisor = emisor;
+        this.correoRemitente = correoRemitente;
+        this.nombreRemitente = nombreRemitente;
         // Así se ve en la bandeja: "Alojamientos Marketplace <cuenta@gmail.com>"
         this.remitente = nombreRemitente + " <" + correoRemitente + ">";
         this.correoRepository = correoRepository;
+        this.claveBrevo = claveBrevo == null ? "" : claveBrevo.strip();
+        this.brevo = clienteBrevo.baseUrl("https://api.brevo.com").build();
+    }
+
+    // Envía un correo por Brevo (si hay clave) o por SMTP. El html es opcional.
+    private void enviar(String destinatario, String asunto, String texto, String html) {
+        if (!claveBrevo.isEmpty()) {
+            enviarPorBrevo(destinatario, asunto, texto, html);
+            return;
+        }
+        if (html == null) {
+            SimpleMailMessage mensaje = new SimpleMailMessage();
+            mensaje.setFrom(remitente);
+            mensaje.setTo(destinatario);
+            mensaje.setSubject(asunto);
+            mensaje.setText(texto);
+            emisor.send(mensaje);
+            return;
+        }
+        try {
+            MimeMessage mensaje = emisor.createMimeMessage();
+            MimeMessageHelper ayudante = new MimeMessageHelper(mensaje, true, "UTF-8");
+            ayudante.setFrom(remitente);
+            ayudante.setTo(destinatario);
+            ayudante.setSubject(asunto);
+            ayudante.setText(texto, html);
+            emisor.send(mensaje);
+        } catch (MessagingException error) {
+            throw new MailPreparationException("No se pudo armar el correo", error);
+        }
+    }
+
+    private void enviarPorBrevo(String destinatario, String asunto, String texto, String html) {
+        Map<String, Object> cuerpo = new java.util.HashMap<>(Map.of(
+                "sender", Map.of("name", nombreRemitente, "email", correoRemitente),
+                "to", List.of(Map.of("email", destinatario)),
+                "subject", asunto,
+                "textContent", texto
+        ));
+        if (html != null) cuerpo.put("htmlContent", html);
+        try {
+            brevo.post().uri("/v3/smtp/email")
+                    .header("api-key", claveBrevo)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(cuerpo)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException error) {
+            throw new MailSendException("Brevo rechazó el correo: " + error.getMessage(), error);
+        }
     }
 
     public void enviarEnlace(String destinatario, String enlace) {
-
-        SimpleMailMessage mensaje = new SimpleMailMessage();
-
-        mensaje.setFrom(remitente);
-        mensaje.setTo(destinatario);
-        mensaje.setSubject("Recupera tu contraseña de StayHub");
-
-        mensaje.setText(
+        enviar(destinatario, "Recupera tu contraseña de StayHub",
                 "Hola,\n\n"
                 + "Recibimos una solicitud para cambiar tu contraseña "
                 + "de StayHub.\n\n"
@@ -58,23 +129,13 @@ public class CorreoService {
                 + "\n\nEste enlace vence en 15 minutos "
                 + "y solo puede utilizarse una vez.\n\n"
                 + "Si no solicitaste este cambio, ignora este correo.\n\n"
-                + "Equipo StayHub"
-        );
-
-        emisor.send(mensaje);
+                + "Equipo StayHub", null);
     }
 
     // Código de 6 números para entrar. No se guarda en notificacion ni en los
     // logs porque es secreto.
     public void enviarCodigo(String destinatario, String nombre, String codigo) {
-
-        SimpleMailMessage mensaje = new SimpleMailMessage();
-
-        mensaje.setFrom(remitente);
-        mensaje.setTo(destinatario);
-        mensaje.setSubject("Tu código para entrar a StayHub: " + codigo);
-
-        mensaje.setText(
+        enviar(destinatario, "Tu código para entrar a StayHub: " + codigo,
                 "Hola, " + nombre + ".\n\n"
                 + "Tu código para iniciar sesión en StayHub es:\n\n"
                 + "    " + codigo + "\n\n"
@@ -82,10 +143,7 @@ public class CorreoService {
                 + "y solo se puede usar una vez.\n\n"
                 + "Si no intentaste entrar, alguien conoce tu contraseña: "
                 + "cámbiala desde \"¿Olvidaste tu contraseña?\".\n\n"
-                + "Equipo StayHub"
-        );
-
-        emisor.send(mensaje);
+                + "Equipo StayHub", null);
     }
 
     // Avisos de reservas. Se envían en segundo plano y solo cuando la
@@ -111,15 +169,7 @@ public class CorreoService {
 
         try {
             // El correo va en dos versiones: texto simple y HTML con botón
-            MimeMessage mensaje = emisor.createMimeMessage();
-            MimeMessageHelper ayudante = new MimeMessageHelper(mensaje, true, "UTF-8");
-
-            ayudante.setFrom(remitente);
-            ayudante.setTo(correo.destinatario());
-            ayudante.setSubject(correo.asunto());
-            ayudante.setText(textoPlano(correo), html(correo));
-
-            emisor.send(mensaje);
+            enviar(correo.destinatario(), correo.asunto(), textoPlano(correo), html(correo));
             log.info("Correo enviado: {}", correo.asunto());
 
             if (registro != null) {
@@ -127,7 +177,7 @@ public class CorreoService {
                 registro.setEnviadoEn(LocalDateTime.now());
                 registro.setError(null);
             }
-        } catch (MailException | MessagingException error) {
+        } catch (MailException error) {
             log.warn("No se pudo enviar el correo \"{}\": {}",
                     correo.asunto(), error.getMessage());
 
