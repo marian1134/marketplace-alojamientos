@@ -146,10 +146,11 @@ public class ReservaService {
     @Transactional(readOnly = true)
     public DetalleAlojamientoResponse obtenerDetalle(Long idAlojamiento, String correo) {
 
-        Usuario usuario = obtenerUsuario(correo);
+        // correo es null cuando un visitante ve el alojamiento sin cuenta
+        Usuario usuario = correo == null ? null : obtenerUsuario(correo);
         Alojamiento alojamiento = buscarAlojamiento(idAlojamiento);
 
-        boolean esDueno = alojamiento.getAnfitrion()
+        boolean esDueno = usuario != null && alojamiento.getAnfitrion()
                 .getIdUsuario()
                 .equals(usuario.getIdUsuario());
 
@@ -202,7 +203,7 @@ public class ReservaService {
                 ))
                 .toList();
 
-        boolean esFavorito = favoritoRepository.existsById(
+        boolean esFavorito = usuario != null && favoritoRepository.existsById(
                 new com.inversioneslr.marketplace.model.Favorito.Llave(
                         usuario.getIdUsuario(),
                         idAlojamiento
@@ -303,7 +304,10 @@ public class ReservaService {
             Integer huespedes,
             String correo) {
 
-        obtenerUsuario(correo);
+        // Un visitante también puede buscar; si hay sesión se valida la cuenta
+        if (correo != null) {
+            obtenerUsuario(correo);
+        }
 
         boolean conFechas = llegada != null && salida != null;
 
@@ -460,7 +464,8 @@ public class ReservaService {
     @Transactional(readOnly = true)
     public CotizacionResponse cotizar(CotizacionRequest datos, String correo) {
 
-        Usuario huesped = obtenerUsuario(correo);
+        // Un visitante puede ver el precio; para reservar sí necesita cuenta
+        Usuario huesped = correo == null ? null : obtenerUsuario(correo);
         Alojamiento alojamiento = buscarAlojamiento(datos.idAlojamiento());
 
         validarSolicitud(
@@ -1043,7 +1048,8 @@ public class ReservaService {
             );
         }
 
-        if (alojamiento.getAnfitrion().getIdUsuario().equals(huesped.getIdUsuario())) {
+        if (huesped != null
+                && alojamiento.getAnfitrion().getIdUsuario().equals(huesped.getIdUsuario())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "No puedes reservar tu propio alojamiento"

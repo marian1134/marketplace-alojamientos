@@ -3,14 +3,17 @@ import AvatarUsuario from './AvatarUsuario';
 import CampanaNotificaciones from './CampanaNotificaciones';
 import { useState } from 'react';
 // Barra superior de las pantallas internas
-function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
+function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, onIniciarSesion, onRegistrarse, }) {
     useIdioma();
     const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
-    const enlaces = [
-        { id: 'portada', texto: t("Explorar") },
-        { id: 'viajes', texto: t("Mis viajes") },
-        { id: 'favoritos', texto: t("Favoritos") },
-    ];
+    // Un visitante sin cuenta solo ve "Explorar"
+    const enlaces = usuario
+        ? [
+            { id: 'portada', texto: t("Explorar") },
+            { id: 'viajes', texto: t("Mis viajes") },
+            { id: 'favoritos', texto: t("Favoritos") },
+        ]
+        : [{ id: 'portada', texto: t("Explorar") }];
     if (usuario?.rol === 'ADMINISTRADOR') {
         enlaces.push({ id: 'administracion', texto: t("Administraci\u00F3n") });
     }
@@ -45,7 +48,10 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
           </button>))}
       </nav>
 
-      <div className={menuMovilAbierto ? 'encabezado-usuario menu-movil-abierto' : 'encabezado-usuario'}>
+      {!usuario ? (<div className={menuMovilAbierto ? 'encabezado-usuario encabezado-invitado menu-movil-abierto' : 'encabezado-usuario encabezado-invitado'}>
+        <button type="button" className="encabezado-salir" onClick={() => { setMenuMovilAbierto(false); onIniciarSesion?.(); }}>{t("Iniciar sesi\u00F3n")}</button>
+        <button type="button" className="encabezado-perfil encabezado-registro" onClick={() => { setMenuMovilAbierto(false); onRegistrarse?.(); }}>{t("Crear cuenta")}</button>
+      </div>) : (<div className={menuMovilAbierto ? 'encabezado-usuario menu-movil-abierto' : 'encabezado-usuario'}>
         <CampanaNotificaciones usuario={usuario}/>
         <button type="button" className="encabezado-perfil" onClick={() => { setMenuMovilAbierto(false); onNavegar('perfil'); }} title={t("Mi perfil")}>
           <AvatarUsuario usuario={usuario} className="avatar-pequeno"/>
@@ -56,7 +62,7 @@ function Encabezado({ usuario, pantalla, onNavegar, onCerrarSesion, }) {
         </button>
 
         <button type="button" className="encabezado-salir" onClick={() => { setMenuMovilAbierto(false); onCerrarSesion(); }}>{t("Salir")}</button>
-      </div>
+      </div>)}
     </header>);
 }
 export default Encabezado;
