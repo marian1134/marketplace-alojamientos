@@ -109,7 +109,7 @@ function PanelAnfitrion({ usuario, onGestionarAlojamientos, onCalendario, }) {
               <strong>{proximasLlegadas.length}</strong>{t("Pr\u00F3ximas llegadas (30 d\u00EDas)")}</article>
             <article className="tarjeta">
               <span aria-hidden="true">▮</span>
-              <strong>{pesos(ingresos)}</strong>{t("Ingresos estimados")}</article>
+              <strong className="valor-largo">{pesos(ingresos)}</strong>{t("Ingresos estimados")}</article>
           </div>
 
           {mensaje && (<p className="aviso" role="status">

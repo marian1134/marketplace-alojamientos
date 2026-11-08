@@ -97,6 +97,14 @@ video {
     min-height: 44px;
   }
 
+  .portada-acciones.menu-movil-abierto .portada-boton-claro,
+  .portada-acciones.menu-movil-abierto .portada-boton-principal {
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
   .portada-contenido {
     width: calc(100% - 28px);
     padding: 45px 0 300px;
@@ -117,9 +125,53 @@ video {
     width: 100%;
   }
 
-  .lista-ciudades {
-    left: 0;
-    width: min(100%, calc(100vw - 56px));
+  /* Letra de 16 px en los campos: con menos, el iPhone hace zoom al tocarlos */
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* La lista de ciudades ocupa todo el ancho del buscador, debajo del campo */
+  .portada-buscador .buscador-item {
+    position: relative;
+  }
+
+  .portada-buscador .campo-ciudad {
+    position: static;
+  }
+
+  .portada-buscador .lista-ciudades {
+    top: calc(100% - 6px);
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: min(320px, 50vh);
+  }
+
+  .lista-ciudades li {
+    padding: 11px 12px;
+  }
+
+  /* Calendario del anfitrión: flechas a los lados y la leyenda en el centro */
+  .calendario-columnas .tarjeta-titulo {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .calendario-columnas .leyenda {
+    flex: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 12px;
+  }
+
+  /* Valores largos en las tarjetas del panel (por ejemplo, ingresos en pesos) */
+  .estadisticas strong.valor-largo {
+    font-size: clamp(16px, 4.6vw, 22px);
+    white-space: nowrap;
   }
 
   .encabezado {

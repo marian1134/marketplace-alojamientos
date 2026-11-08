@@ -55,3 +55,12 @@
 .admin-exportar select, .admin-exportar input { font: inherit; border: 1px solid #b7cec2; padding: 10px 12px; border-radius: 9px; background: white; color: #173b35; }
 @media (max-width: 600px) { .admin-barras li { grid-template-columns: 100px 1fr 36px; } .admin-exportar form > * { flex: 1 1 100%; } }
 .admin-panel-resumen strong.valor-largo { font-size: 24px; white-space: nowrap; letter-spacing: -0.5px; }
+
+/* En el celular, las tarjetas del resumen van de a dos para no hacer la página tan larga */
+@media (max-width: 600px) {
+  .admin-panel-resumen { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .admin-panel-resumen .tarjeta { gap: 6px; padding: 16px; }
+  .admin-panel-resumen span { font-size: 13px; }
+  .admin-panel-resumen strong { font-size: 28px; }
+  .admin-panel-resumen strong.valor-largo { font-size: 16px; white-space: normal; letter-spacing: 0; }
+}
