@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// HU-14 · RF-15: cotización (alojamiento de ejemplo a $280.000 la noche y $50.000 de limpieza)
+// HU-18 · RF-15: cotización (alojamiento de ejemplo a $280.000 la noche y $50.000 de limpieza)
 class CotizacionTest extends PruebaIntegracion {
 
     private String cotizacion(long id, int noches) {
@@ -19,7 +19,7 @@ class CotizacionTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-14 CA1: 3 noches = base + limpieza + 12,5 % de servicio, sin descuento")
+    @DisplayName("HU-18 CA1: 3 noches = base + limpieza + 12,5 % de servicio, sin descuento")
     void tresNoches() throws Exception {
         long id = alojamiento("Apartamento con vista a la ciudad");
         mvc.perform(post("/api/v1/reservas/cotizacion").with(huesped()).with(csrf())
@@ -34,7 +34,7 @@ class CotizacionTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-14 CA2: 7 noches o más aplican el descuento semanal del 10 %")
+    @DisplayName("HU-18 CA2: 7 noches o más aplican el descuento semanal del 10 %")
     void descuentoSemanal() throws Exception {
         long id = alojamiento("Apartamento con vista a la ciudad");
         mvc.perform(post("/api/v1/reservas/cotizacion").with(huesped()).with(csrf())

@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// HU-18 · RF-18 (cancelación) y HU-22 · RF-22 (reseñas)
+// HU-21 · RF-18 (cancelación) y HU-23 · RF-22 (reseñas)
 class CancelacionYResenaTest extends PruebaIntegracion {
 
     private long reservar(String titulo, int desde, int hasta) throws Exception {
@@ -23,7 +23,7 @@ class CancelacionYResenaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-18 CA1: con política Flexible y tiempo de sobra se devuelve todo y se liberan las noches")
+    @DisplayName("HU-21 CA1: con política Flexible y tiempo de sobra se devuelve todo y se liberan las noches")
     void cancelacionConDevolucionTotal() throws Exception {
         long reserva = reservar("Cabaña frente al lago", 30, 32);
 
@@ -47,7 +47,7 @@ class CancelacionYResenaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-18 CA2: con política Estricta y poca anticipación no hay devolución")
+    @DisplayName("HU-21 CA2: con política Estricta y poca anticipación no hay devolución")
     void cancelacionSinDevolucion() throws Exception {
         long reserva = reservar("Glamping en la montaña", 3, 5);
 
@@ -62,7 +62,7 @@ class CancelacionYResenaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-22 CA2 · RN-17: no se puede reseñar una reserva que aún no termina")
+    @DisplayName("HU-23 CA2 · RN-17: no se puede reseñar una reserva que aún no termina")
     void resenaAntesDeTiempo() throws Exception {
         long reserva = reservar("Cabaña frente al lago", 40, 42);
         mvc.perform(post("/api/v1/reservas/" + reserva + "/resena").with(huesped()).with(csrf())
@@ -72,7 +72,7 @@ class CancelacionYResenaTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-22 CA1 y CA3: se reseña una estancia terminada y solo una vez")
+    @DisplayName("HU-23 CA1 y CA3: se reseña una estancia terminada y solo una vez")
     void resenaDeEstanciaTerminada() throws Exception {
         long reserva = reservar("Cabaña frente al lago", 44, 46);
         // Se simula que la estancia ya pasó

@@ -9,7 +9,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-// HU-30 · RF-34: lectura de la respuesta de Google Gemini (prueba unitaria, sin internet)
+// HU-42 · RF-34: lectura de la respuesta de Google Gemini (prueba unitaria, sin internet)
 class ClienteAsistenteTest {
 
     @Test

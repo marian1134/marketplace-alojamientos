@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// HU-01 · RF-01: registro de usuarios
+// HU-03 · RF-01: registro de usuarios
 class RegistroUsuarioTest extends PruebaIntegracion {
 
     private String registro(String correo, String telefono, String contrasena) {
@@ -20,7 +20,7 @@ class RegistroUsuarioTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-01 CA1: con datos válidos se crea la cuenta")
+    @DisplayName("HU-03 CA1: con datos válidos se crea la cuenta")
     void registroValido() throws Exception {
         mvc.perform(post("/api/usuarios/registro").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -31,7 +31,7 @@ class RegistroUsuarioTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-01 CA2: un correo ya registrado se rechaza")
+    @DisplayName("HU-03 CA2: un correo ya registrado se rechaza")
     void correoRepetido() throws Exception {
         mvc.perform(post("/api/usuarios/registro").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -40,7 +40,7 @@ class RegistroUsuarioTest extends PruebaIntegracion {
     }
 
     @Test
-    @DisplayName("HU-01 CA3: un celular que no es colombiano válido se rechaza")
+    @DisplayName("HU-03 CA3: un celular que no es colombiano válido se rechaza")
     void celularInvalido() throws Exception {
         mvc.perform(post("/api/usuarios/registro").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
