@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.stayhub_fawn.twa",
+        "sha256_cert_fingerprints": ["9F:9D:A1:34:A7:76:50:E0:EB:AF:5A:18:36:68:E7:AB:23:F0:84:3D:C4:92:3C:B0:59:BD:86:64:57:0C:A8:AA"]
+      }
+    }]
