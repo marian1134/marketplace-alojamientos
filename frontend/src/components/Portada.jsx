@@ -10,6 +10,7 @@ const MAXIMO_HUESPEDES = 16;
 import { DESTINOS } from '../destinos';
 import TarjetaDestino from './TarjetaDestino';
 import CampoCiudad from './CampoCiudad';
+import DescargarApp from './DescargarApp';
 import AvisoSesion from './AvisoSesion';
 import CampoFecha from './CampoFecha';
 import { IconoBuscar, IconoCalendario, IconoCorazon, IconoPersonas, IconoSalida, IconoUbicacion, } from './Iconos';
@@ -533,6 +534,10 @@ function Portada({ usuario, onIniciarSesion, onRegistrarse, onNavegar, onCerrarS
 
       {/* Con sesión los alojamientos se ven aquí; sin sesión se abren con el botón de arriba */}
       {usuario && seccionAlojamientos}
+
+      <section className="portada-descarga" aria-label={t('Lleva StayHub en tu celular')}>
+        <DescargarApp />
+      </section>
 
       <AvisoSesion abierto={avisoSesion} onCerrar={() => setAvisoSesion(false)} onIniciarSesion={() => {
             setAvisoSesion(false);

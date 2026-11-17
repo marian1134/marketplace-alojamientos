@@ -1,0 +1,57 @@
+.descargar-app {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 24px 28px;
+  text-align: left;
+  color: #0d3b34;
+  background: #e8f3ef;
+  border: 1px solid #c9e3d9;
+  border-radius: 18px;
+}
+
+.descargar-app strong {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 24px;
+}
+
+.descargar-app p {
+  margin: 4px 0 0;
+}
+
+.descargar-app .portada-boton-principal {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.descargar-app p.descargar-app-nota {
+  flex-basis: 100%;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+@media (max-width: 640px) {
+  .descargar-app {
+    padding: 20px;
+  }
+  .descargar-app .portada-boton-principal {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.portada-descarga {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 40px 48px;
+}
+
+@media (max-width: 640px) {
+  .portada-descarga {
+    padding: 4px 16px 32px;
+  }
+}
